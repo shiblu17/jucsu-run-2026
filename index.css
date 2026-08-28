@@ -382,7 +382,7 @@ a {
   position: relative;
   display: flex;
   align-items: center;
-  padding-top: 140px;
+  padding-top: 180px;
   padding-bottom: 80px;
   overflow: hidden;
 }
@@ -1739,7 +1739,7 @@ a {
   
   /* Hero optimizations */
   .hero-section {
-    padding-top: 110px;
+    padding-top: 155px;
     padding-bottom: 30px;
     min-height: auto;
   }

@@ -2,6 +2,18 @@
    JUCSU RUN 2026 - APPLICATION SCRIPT
    ========================================== */
 
+// Supabase SDK client initialization
+let supabaseClient = null;
+if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey) {
+  try {
+    const { createClient } = window.supabase;
+    supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+    console.log('Supabase client initialized successfully!');
+  } catch (e) {
+    console.error('Failed to initialize Supabase client:', e);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   
   // Initialize Database
@@ -35,6 +47,20 @@ document.addEventListener('DOMContentLoaded', () => {
 let runnerDatabase = [];
 
 async function initDatabase() {
+  if (supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('registrations')
+        .select('*');
+      if (error) throw error;
+      runnerDatabase = data;
+      console.log('Database loaded from Supabase. Total records:', runnerDatabase.length);
+      return;
+    } catch (err) {
+      console.error('Error fetching from Supabase, falling back to local storage', err);
+    }
+  }
+
   const localData = localStorage.getItem('jucsu_registrations');
   if (localData) {
     try {
@@ -250,12 +276,12 @@ function initRegistrationChecker() {
     // Matches exact phone or checks if query is substring of name
     const found = runnerDatabase.find(runner => {
       const runnerName = runner.name.toLowerCase();
-      const runnerPhone = runner.phone.replace(/[^0-9]/g, ''); // strip formatting
+      const runnerPhone = (runner.phone || '').replace(/[^0-9]/g, ''); // strip formatting
       const cleanQuery = query.replace(/[^0-9a-zA-Z]/g, ''); // alphanumeric
 
       // Search matches: exact phone, exact bib, or name match
       return runnerPhone === cleanQuery || 
-             runner.bib === cleanQuery || 
+             (runner.bib || '') === cleanQuery || 
              runnerName.includes(query);
     });
 

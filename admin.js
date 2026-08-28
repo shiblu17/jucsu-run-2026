@@ -2,6 +2,18 @@
    JUCSU RUN 2026 - ADMIN APPLICATION SCRIPT
    ========================================== */
 
+// Supabase SDK client initialization
+let supabaseClient = null;
+if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey) {
+  try {
+    const { createClient } = window.supabase;
+    supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+    console.log('Supabase client initialized in Admin Panel!');
+  } catch (e) {
+    console.error('Failed to initialize Supabase client in Admin:', e);
+  }
+}
+
 let runnerDatabase = [];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -65,6 +77,20 @@ async function initAdminDashboard() {
 }
 
 async function loadDatabase() {
+  if (supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('registrations')
+        .select('*');
+      if (error) throw error;
+      runnerDatabase = data;
+      console.log('Database loaded from Supabase. Total records:', runnerDatabase.length);
+      return;
+    } catch (err) {
+      console.error('Error fetching from Supabase, falling back to local storage', err);
+    }
+  }
+
   const localData = localStorage.getItem('jucsu_registrations');
   if (localData) {
     try {
@@ -227,20 +253,49 @@ function renderTable(filterQuery = '') {
   footerSummary.textContent = `Showing ${filteredRunners.length} of ${runnerDatabase.length} entries`;
 }
 
-function toggleRunnerStatus(bib) {
+async function toggleRunnerStatus(bib) {
   const runner = runnerDatabase.find(r => r.bib === bib);
   if (runner) {
-    runner.status = runner.status === 'Verified' ? 'Pending' : 'Verified';
+    const newStatus = runner.status === 'Verified' ? 'Pending' : 'Verified';
+    
+    if (supabaseClient) {
+      try {
+        const { error } = await supabaseClient
+          .from('registrations')
+          .update({ status: newStatus })
+          .eq('bib', bib);
+        if (error) throw error;
+      } catch (err) {
+        alert('Supabase update failed: ' + err.message);
+        return;
+      }
+    }
+    
+    runner.status = newStatus;
     saveDatabase();
     refreshDashboard();
   }
 }
 
-function deleteRunner(bib) {
+async function deleteRunner(bib) {
   const runnerIndex = runnerDatabase.findIndex(r => r.bib === bib);
   if (runnerIndex !== -1) {
     const runner = runnerDatabase[runnerIndex];
     if (confirm(`Are you sure you want to delete runner ${runner.name} (Bib: ${runner.bib})?`)) {
+      
+      if (supabaseClient) {
+        try {
+          const { error } = await supabaseClient
+            .from('registrations')
+            .delete()
+            .eq('bib', bib);
+          if (error) throw error;
+        } catch (err) {
+          alert('Supabase delete failed: ' + err.message);
+          return;
+        }
+      }
+      
       runnerDatabase.splice(runnerIndex, 1);
       saveDatabase();
       refreshDashboard();
@@ -261,7 +316,7 @@ function setupTableSearch() {
 function setupAddRunnerForm() {
   const form = document.getElementById('addRunnerForm');
   
-  form.addEventListener('submit', () => {
+  form.addEventListener('submit', async () => {
     const bib = document.getElementById('runBib').value.trim();
     const name = document.getElementById('runName').value.trim();
     const phone = document.getElementById('runPhone').value.trim();
@@ -278,8 +333,20 @@ function setupAddRunnerForm() {
       return;
     }
 
-    // Add to array
     const newRunner = { bib, name, phone, category, tshirt, gender, blood, status, type };
+
+    if (supabaseClient) {
+      try {
+        const { error } = await supabaseClient
+          .from('registrations')
+          .insert([newRunner]);
+        if (error) throw error;
+      } catch (err) {
+        alert('Supabase insert failed: ' + err.message);
+        return;
+      }
+    }
+
     runnerDatabase.push(newRunner);
     saveDatabase();
     
@@ -323,7 +390,7 @@ function setupCsvImporter() {
     return parsedRunners;
   }
 
-  mergeBtn.addEventListener('click', () => {
+  mergeBtn.addEventListener('click', async () => {
     const text = csvArea.value.trim();
     if (!text) {
       alert('Please paste CSV raw data first.');
@@ -338,6 +405,7 @@ function setupCsvImporter() {
 
     let addedCount = 0;
     let duplicateCount = 0;
+    const runnersToInsert = [];
 
     newRunners.forEach(newR => {
       // Check if bib already exists, if so skip/warn
@@ -345,9 +413,22 @@ function setupCsvImporter() {
         duplicateCount++;
       } else {
         runnerDatabase.push(newR);
+        runnersToInsert.push(newR);
         addedCount++;
       }
     });
+
+    if (supabaseClient && runnersToInsert.length > 0) {
+      try {
+        const { error } = await supabaseClient
+          .from('registrations')
+          .insert(runnersToInsert);
+        if (error) throw error;
+      } catch (err) {
+        alert('Supabase merge insert failed: ' + err.message);
+        return;
+      }
+    }
 
     saveDatabase();
     refreshDashboard();
@@ -356,7 +437,7 @@ function setupCsvImporter() {
     alert(`Import Complete!\n- Added: ${addedCount} runners\n- Skipped Duplicates: ${duplicateCount}`);
   });
 
-  replaceBtn.addEventListener('click', () => {
+  replaceBtn.addEventListener('click', async () => {
     const text = csvArea.value.trim();
     if (!text) {
       alert('Please paste CSV raw data first.');
@@ -368,6 +449,26 @@ function setupCsvImporter() {
       if (newRunners.length === 0) {
         alert('Could not parse any valid runner profiles. Database replacement cancelled.');
         return;
+      }
+
+      if (supabaseClient) {
+        try {
+          // Delete all records from Supabase
+          const { error: delErr } = await supabaseClient
+            .from('registrations')
+            .delete()
+            .neq('bib', '');
+          if (delErr) throw delErr;
+
+          // Insert new ones
+          const { error: insErr } = await supabaseClient
+            .from('registrations')
+            .insert(newRunners);
+          if (insErr) throw insErr;
+        } catch (err) {
+          alert('Supabase database replace failed: ' + err.message);
+          return;
+        }
       }
 
       runnerDatabase = newRunners;
@@ -385,8 +486,28 @@ function setupCsvImporter() {
    ========================================== */
 function setupResetDb() {
   const resetBtn = document.getElementById('resetDbBtn');
-  resetBtn.addEventListener('click', () => {
+  resetBtn.addEventListener('click', async () => {
     if (confirm('Are you sure you want to delete all current edits and restore the initial default database?')) {
+      
+      if (supabaseClient) {
+        try {
+          // Fetch initial mock registrations
+          const response = await fetch('registrations.json');
+          if (response.ok) {
+            const defaultData = await response.json();
+            
+            // Delete all records from Supabase
+            await supabaseClient.from('registrations').delete().neq('bib', '');
+            
+            // Insert default data
+            await supabaseClient.from('registrations').insert(defaultData);
+          }
+        } catch (err) {
+          alert('Failed to reset Supabase database: ' + err.message);
+          return;
+        }
+      }
+      
       localStorage.removeItem('jucsu_registrations');
       sessionStorage.removeItem('jucsu_admin_logged');
       window.location.reload();

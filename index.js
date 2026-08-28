@@ -253,7 +253,6 @@ function initRegistrationChecker() {
 
   // Pending placeholders
   const pendingName = document.getElementById('pendingName');
-  const pendingBib = document.getElementById('pendingBib');
   const pendingCategory = document.getElementById('pendingCategory');
 
   // Download Action
@@ -318,7 +317,6 @@ function initRegistrationChecker() {
       } else {
         // Pending Status
         pendingName.textContent = found.name;
-        pendingBib.textContent = found.bib;
         pendingCategory.textContent = found.category;
         pendingSection.classList.remove('hidden');
       }
@@ -708,10 +706,9 @@ function initRegisterTriggers() {
       <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(0, 255, 128, 0.1); border: 2px solid #00ff80; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
         <span style="font-size: 2rem; color: #00ff80; line-height: 1; font-weight: bold;">✓</span>
       </div>
-      <h3 style="font-size: 1.6rem; margin: 10px 0; color:#00ff80;">Registration Successful!</h3>
+      <h3 style="font-size: 1.6rem; margin: 10px 0; color:#00ff80;">Registration Submitted!</h3>
       <p style="color:#fff; font-size:0.95rem; margin-bottom:15px; line-height:1.6;">
-        Runner Name: <strong id="successName">Name</strong><br>
-        Your Bib Number: <strong id="successBib" class="text-lime" style="font-size:1.3rem; display:block; margin-top:5px; background:rgba(193, 216, 47, 0.15); padding:6px 12px; border-radius:4px; border:1px solid rgba(193,216,47,0.3); display:inline-block;">2026XXX</strong>
+        Runner Name: <strong id="successName">Name</strong>
       </p>
       <div style="background: rgba(255,255,255,0.03); border:1px dashed var(--color-glass-border); padding: 15px; border-radius:10px; margin-bottom: 20px; font-size:0.9rem; text-align:left; color:var(--color-text-muted); line-height: 1.5;">
         <p style="margin-bottom:8px; color:#fff;"><strong>Verification Pending</strong></p>
@@ -730,8 +727,6 @@ function initRegisterTriggers() {
   const formContainer = document.getElementById('registrationFormContainer');
   const successContainer = document.getElementById('registrationSuccessContainer');
   const successName = document.getElementById('successName');
-  const successBib = document.getElementById('successBib');
-  const successBibRef = document.getElementById('successBibRef');
   const successFeeAmount = document.getElementById('successFeeAmount');
 
   // Open modal and pre-select category
@@ -869,7 +864,6 @@ function initRegisterTriggers() {
 
     // Show success view
     successName.textContent = name;
-    successBib.textContent = bib;
     document.getElementById('successTxnRef').textContent = txnid;
 
     formContainer.classList.add('hidden');

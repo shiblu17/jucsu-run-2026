@@ -665,15 +665,27 @@ function initRegisterTriggers() {
 
   // Helper to generate next unique Bib
   function generateNextBib(category) {
-    const prefix = category.includes('10K') ? '20261' : '20265';
+    const is10K = category.includes('10K');
+    const startBib = is10K ? 10001 : 5001;
+    
+    // Filter existing bibs that are numbers
     const bibs = runnerDatabase
       .map(r => parseInt(r.bib))
-      .filter(b => !isNaN(b) && b.toString().startsWith(prefix));
+      .filter(b => !isNaN(b));
     
-    if (bibs.length === 0) {
-      return prefix + '01'; // Default start 2026101 or 2026501
+    // Filter for current category range
+    const categoryBibs = bibs.filter(b => {
+      if (is10K) {
+        return b >= 10001 && b < 50000;
+      } else {
+        return b >= 5001 && b < 10000;
+      }
+    });
+    
+    if (categoryBibs.length === 0) {
+      return startBib.toString();
     }
-    const maxBib = Math.max(...bibs);
+    const maxBib = Math.max(...categoryBibs);
     return (maxBib + 1).toString();
   }
 

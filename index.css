@@ -1840,3 +1840,57 @@ a {
     text-align: center;
   }
 }
+
+/* Custom Radio Card Tiles for Premium Forms */
+.radio-tile-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+.radio-tile-group.vertical {
+  flex-direction: column;
+}
+.radio-tile-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 80px;
+}
+.radio-tile-group.vertical .radio-tile-wrapper {
+  flex: none;
+  width: 100%;
+}
+.radio-tile-wrapper input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 2;
+}
+.radio-tile-content {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-glass-border);
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: var(--transition-smooth);
+  user-select: none;
+}
+.radio-tile-group.vertical .radio-tile-content {
+  text-align: left;
+  padding: 12px 16px;
+}
+.radio-tile-wrapper input[type="radio"]:checked + .radio-tile-content {
+  background: rgba(193, 216, 47, 0.15);
+  border-color: var(--color-accent);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(193, 216, 47, 0.2);
+}
+.radio-tile-wrapper input[type="radio"]:hover + .radio-tile-content {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}

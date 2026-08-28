@@ -141,12 +141,14 @@ function renderStatistics() {
     .filter(r => r.status === 'Verified')
     .reduce((sum, r) => {
       let fee = 0;
-      const isStudent = r.type === 'Student' || !r.type; // default to student for legacy data
+      const type = r.type || 'JU Student (Batch 49 - 54)';
       
-      if (r.category.includes('10K')) {
-        fee = isStudent ? 1000 : 1200;
-      } else if (r.category.includes('5K')) {
-        fee = isStudent ? 900 : 1200;
+      if (type.includes('Student') || type === 'Student') {
+        fee = 800;
+      } else if (type.includes('Alumni') || type === 'Alumni') {
+        fee = 1200;
+      } else {
+        fee = 1300; // External Participant or Legacy Outsider
       }
       return sum + fee;
     }, 0);

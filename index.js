@@ -538,68 +538,150 @@ function initRegisterTriggers() {
   const modal = document.createElement('div');
   modal.className = 'modal-alert';
   modal.style.maxWidth = '550px';
+  modal.style.maxHeight = '85vh';
+  modal.style.overflowY = 'auto';
   modal.innerHTML = `
-    <div id="registrationFormContainer">
-      <h3 style="font-size: 1.6rem; margin-bottom: 10px; color:#fff;">Register for JUCSU RUN 2026</h3>
+    <div id="registrationFormContainer" style="padding: 5px 0;">
+      <h3 style="font-size: 1.6rem; margin-bottom: 5px; color:#fff; font-family:var(--font-headings); font-weight:800;">Register for JUCSU RUN 2026</h3>
       <p style="color:var(--color-text-muted); margin-bottom: 20px; font-size:0.85rem;">
         Fill out the form below to register. Payments must be sent manually via bKash/Nagad.
       </p>
-      <form id="publicRegisterForm" onsubmit="return false;" style="display:flex; flex-direction:column; gap:12px;">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-          <div class="form-group" style="gap:4px;">
-            <label class="form-label" style="font-size:0.75rem;">Full Name</label>
-            <input type="text" id="pubName" class="form-input" style="padding:10px; font-size:0.9rem;" required placeholder="e.g. Rafiq Ali">
-          </div>
-          <div class="form-group" style="gap:4px;">
-            <label class="form-label" style="font-size:0.75rem;">Phone Number</label>
-            <input type="tel" id="pubPhone" class="form-input" style="padding:10px; font-size:0.9rem;" required placeholder="e.g. 017XXXXXXXX">
-          </div>
-        </div>
+      
+      <form id="publicRegisterForm" onsubmit="return false;" style="display:flex; flex-direction:column; gap:20px;">
         
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-          <div class="form-group" style="gap:4px;">
-            <label class="form-label" style="font-size:0.75rem;">Category</label>
-            <select id="pubCategory" class="form-input" style="padding:10px; font-size:0.9rem; background:rgba(0,0,0,0.3); color:#fff;" required>
-              <option value="10K Mini Marathon">10K Mini Marathon</option>
-              <option value="5K Run">5K Run</option>
-            </select>
-          </div>
-          <div class="form-group" style="gap:4px;">
-            <label class="form-label" style="font-size:0.75rem;">Participant Type</label>
-            <select id="pubType" class="form-input" style="padding:10px; font-size:0.9rem; background:rgba(0,0,0,0.3); color:#fff;" required>
-              <option value="Student">Running Student</option>
-              <option value="Alumni/Outsider">Alumni / Outsider</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
-          <div class="form-group" style="gap:4px;">
-            <label class="form-label" style="font-size:0.75rem;">T-Shirt Size</label>
-            <select id="pubTshirt" class="form-input" style="padding:10px; font-size:0.9rem; background:rgba(0,0,0,0.3); color:#fff;" required>
-              <option value="S">S</option>
-              <option value="M" selected>M</option>
-              <option value="L">L</option>
-              <option value="XL">XL</option>
-              <option value="XXL">XXL</option>
-            </select>
-          </div>
-          <div class="form-group" style="gap:4px;">
-            <label class="form-label" style="font-size:0.75rem;">Gender</label>
-            <select id="pubGender" class="form-input" style="padding:10px; font-size:0.9rem; background:rgba(0,0,0,0.3); color:#fff;" required>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
-          </div>
-          <div class="form-group" style="gap:4px;">
-            <label class="form-label" style="font-size:0.75rem;">Blood Group</label>
-            <input type="text" id="pubBlood" class="form-input" style="padding:10px; font-size:0.9rem;" placeholder="e.g. O+" required>
+        <!-- Section 1: Personal Info -->
+        <div>
+          <h4 style="color:var(--color-accent); font-size:0.9rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:6px; margin-bottom:12px; font-weight:700;">1. Personal Details</h4>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group" style="gap:6px;">
+              <label class="form-label" style="font-size:0.8rem; font-weight:600;">Full Name <span style="color:#ff3b30;">*</span></label>
+              <input type="text" id="pubName" class="form-input" style="padding:12px; font-size:0.95rem;" required placeholder="e.g. Rafiq Ali">
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+              <div class="form-group" style="gap:6px;">
+                <label class="form-label" style="font-size:0.8rem; font-weight:600;">Contact Number <span style="color:#ff3b30;">*</span></label>
+                <input type="tel" id="pubPhone" class="form-input" style="padding:12px; font-size:0.95rem;" required placeholder="e.g. 017XXXXXXXX">
+              </div>
+              <div class="form-group" style="gap:6px;">
+                <label class="form-label" style="font-size:0.8rem; font-weight:600;">Email Address <span style="color:#ff3b30;">*</span></label>
+                <input type="email" id="pubEmail" class="form-input" style="padding:12px; font-size:0.95rem;" required placeholder="e.g. rafiq@gmail.com">
+              </div>
+            </div>
+            <div class="form-group" style="gap:6px;">
+              <label class="form-label" style="font-size:0.8rem; font-weight:600;">Gender <span style="color:#ff3b30;">*</span></label>
+              <div class="radio-tile-group">
+                <div class="radio-tile-wrapper">
+                  <input type="radio" name="pubGender" value="Male" checked required>
+                  <div class="radio-tile-content">Male</div>
+                </div>
+                <div class="radio-tile-wrapper">
+                  <input type="radio" name="pubGender" value="Female" required>
+                  <div class="radio-tile-content">Female</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div style="display:flex; gap:12px; justify-content: flex-end; margin-top:10px;">
-          <button type="button" class="btn btn-outline btn-sm" id="closeModalBtn" style="border-radius:6px; height:auto; padding:10px 20px;">Cancel</button>
-          <button type="submit" class="btn btn-primary btn-sm" style="border-radius:6px; height:auto; padding:10px 20px;">Submit</button>
+        <!-- Section 2: Race Details -->
+        <div>
+          <h4 style="color:var(--color-accent); font-size:0.9rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:6px; margin-bottom:12px; font-weight:700;">2. Race & Kit Details</h4>
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="form-group" style="gap:6px;">
+              <label class="form-label" style="font-size:0.8rem; font-weight:600;">Select Category <span style="color:#ff3b30;">*</span></label>
+              <div class="radio-tile-group">
+                <div class="radio-tile-wrapper">
+                  <input type="radio" name="pubCategory" id="cat10k" value="10K Mini Marathon" required>
+                  <div class="radio-tile-content">10K Mini Marathon</div>
+                </div>
+                <div class="radio-tile-wrapper">
+                  <input type="radio" name="pubCategory" id="cat5k" value="5K Run" required>
+                  <div class="radio-tile-content">5K Run</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-group" style="gap:6px;">
+              <label class="form-label" style="font-size:0.8rem; font-weight:600;">Participant Type <span style="color:#ff3b30;">*</span></label>
+              <div class="radio-tile-group vertical">
+                <div class="radio-tile-wrapper">
+                  <input type="radio" name="pubType" value="JU Student (Batch 49 - 54)" checked required>
+                  <div class="radio-tile-content">🎓 JU Student (Batch 49 - 54) - 800 BDT</div>
+                </div>
+                <div class="radio-tile-wrapper">
+                  <input type="radio" name="pubType" value="JU Alumni" required>
+                  <div class="radio-tile-content">🎓 JU Alumni - 1200 BDT</div>
+                </div>
+                <div class="radio-tile-wrapper">
+                  <input type="radio" name="pubType" value="External Participant" required>
+                  <div class="radio-tile-content">🏃 External Participant - 1300 BDT</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px;">
+              <div class="form-group" style="gap:6px;">
+                <label class="form-label" style="font-size:0.8rem; font-weight:600;">T-Shirt Size <span style="color:#ff3b30;">*</span></label>
+                <div class="radio-tile-group">
+                  <div class="radio-tile-wrapper">
+                    <input type="radio" name="pubTshirt" value="S" required>
+                    <div class="radio-tile-content">S</div>
+                  </div>
+                  <div class="radio-tile-wrapper">
+                    <input type="radio" name="pubTshirt" value="M" checked required>
+                    <div class="radio-tile-content">M</div>
+                  </div>
+                  <div class="radio-tile-wrapper">
+                    <input type="radio" name="pubTshirt" value="L" required>
+                    <div class="radio-tile-content">L</div>
+                  </div>
+                  <div class="radio-tile-wrapper">
+                    <input type="radio" name="pubTshirt" value="XL" required>
+                    <div class="radio-tile-content">XL</div>
+                  </div>
+                  <div class="radio-tile-wrapper">
+                    <input type="radio" name="pubTshirt" value="XXL" required>
+                    <div class="radio-tile-content">XXL</div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group" style="gap:6px;">
+                <label class="form-label" style="font-size:0.8rem; font-weight:600;">Blood Group</label>
+                <input type="text" id="pubBlood" class="form-input" style="padding:12px; font-size:0.95rem;" placeholder="e.g. B+">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Transportation -->
+        <div>
+          <h4 style="color:var(--color-accent); font-size:0.9rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:6px; margin-bottom:12px; font-weight:700;">3. Transportation</h4>
+          <div class="form-group" style="gap:6px;">
+            <label class="form-label" style="font-size:0.8rem; font-weight:600;">Select Pickup Bus Route <span style="color:#ff3b30;">*</span></label>
+            <div class="radio-tile-group vertical">
+              <div class="radio-tile-wrapper">
+                <input type="radio" name="pubPickup" value="Uttara" checked required>
+                <div class="radio-tile-content">🚌 Uttara Route</div>
+              </div>
+              <div class="radio-tile-wrapper">
+                <input type="radio" name="pubPickup" value="Gulshan" required>
+                <div class="radio-tile-content">🚌 Gulshan Route</div>
+              </div>
+              <div class="radio-tile-wrapper">
+                <input type="radio" name="pubPickup" value="Bongobazar" required>
+                <div class="radio-tile-content">🚌 Bongobazar Route</div>
+              </div>
+              <div class="radio-tile-wrapper">
+                <input type="radio" name="pubPickup" value="Self-Arranged" required>
+                <div class="radio-tile-content">🚶 Self-Arranged (No Bus Needed)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px; justify-content: flex-end; border-top:1px solid rgba(255,255,255,0.08); padding-top:16px; margin-top:10px;">
+          <button type="button" class="btn btn-outline btn-sm" id="closeModalBtn" style="border-radius:6px; height:auto; padding:12px 24px;">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" style="border-radius:6px; height:auto; padding:12px 24px; font-weight:700;">Submit Application</button>
         </div>
       </form>
     </div>
@@ -617,8 +699,7 @@ function initRegisterTriggers() {
         <p style="margin-bottom:8px; color:#fff;"><strong>Payment Instructions:</strong></p>
         <p>Please send the registration fee manually via bKash/Nagad Personal number: <strong>01700-000000</strong></p>
         <ul style="margin-left:20px; margin-top:5px; display:flex; flex-direction:column; gap:4px; list-style:square; color:#fff;">
-          <li>Students: <strong class="text-lime">10K: ৳1000 | 5K: ৳900</strong></li>
-          <li>Alumni/Outsiders: <strong class="text-lime">৳1200 (both)</strong></li>
+          <li>Selected Fee: <strong class="text-lime" id="successFeeAmount">৳1200 BDT</strong></li>
         </ul>
         <p style="margin-top:8px;">Write your Bib Number (<span id="successBibRef" class="text-lime" style="font-weight:700;">Bib</span>) in the **Reference/Message** box of your payment. Verification will take 24-48 hours, after which you can search and download your E-Bib card!</p>
       </div>
@@ -627,7 +708,6 @@ function initRegisterTriggers() {
   `;
   document.body.appendChild(modal);
 
-  const pubCategorySelect = document.getElementById('pubCategory');
   const closeModalBtn = document.getElementById('closeModalBtn');
   const successCloseBtn = document.getElementById('successCloseBtn');
   const publicRegisterForm = document.getElementById('publicRegisterForm');
@@ -637,12 +717,12 @@ function initRegisterTriggers() {
   const successName = document.getElementById('successName');
   const successBib = document.getElementById('successBib');
   const successBibRef = document.getElementById('successBibRef');
+  const successFeeAmount = document.getElementById('successFeeAmount');
 
   // Open modal and pre-select category
   triggers.forEach(trigger => {
     trigger.addEventListener('click', () => {
       const category = trigger.getAttribute('data-category');
-      pubCategorySelect.value = category;
       backdrop.classList.add('open');
       modal.classList.add('open');
       
@@ -650,7 +730,11 @@ function initRegisterTriggers() {
       formContainer.classList.remove('hidden');
       successContainer.classList.add('hidden');
       publicRegisterForm.reset();
-      pubCategorySelect.value = category;
+      
+      // Pre-select category based on the clicked card
+      const is10K = category.includes('10K');
+      document.getElementById('cat10k').checked = is10K;
+      document.getElementById('cat5k').checked = !is10K;
     });
   });
 
@@ -695,11 +779,13 @@ function initRegisterTriggers() {
 
     const name = document.getElementById('pubName').value.trim();
     const phone = document.getElementById('pubPhone').value.trim();
-    const category = pubCategorySelect.value;
-    const type = document.getElementById('pubType').value;
-    const tshirt = document.getElementById('pubTshirt').value;
-    const gender = document.getElementById('pubGender').value;
-    const blood = document.getElementById('pubBlood').value.trim().toUpperCase();
+    const email = document.getElementById('pubEmail').value.trim();
+    const category = document.querySelector('input[name="pubCategory"]:checked').value;
+    const type = document.querySelector('input[name="pubType"]:checked').value;
+    const tshirt = document.querySelector('input[name="pubTshirt"]:checked').value;
+    const gender = document.querySelector('input[name="pubGender"]:checked').value;
+    const pickup = document.querySelector('input[name="pubPickup"]:checked').value;
+    const blood = document.getElementById('pubBlood').value.trim().toUpperCase() || 'N/A';
 
     // Ensure database loaded
     await initDatabase();
@@ -709,12 +795,14 @@ function initRegisterTriggers() {
       bib,
       name,
       phone,
+      email,
       category,
       tshirt,
       gender,
       blood,
       status: 'Pending',
-      type
+      type,
+      pickup
     };
 
     // If Supabase connected, insert
@@ -733,6 +821,17 @@ function initRegisterTriggers() {
     // Save offline
     runnerDatabase.push(newRunner);
     localStorage.setItem('jucsu_registrations', JSON.stringify(runnerDatabase));
+
+    // Dynamic fee computation for success display
+    let feeText = '৳1200 BDT';
+    if (type.includes('Student')) {
+      feeText = '৳800 BDT';
+    } else if (type.includes('Alumni')) {
+      feeText = '৳1200 BDT';
+    } else if (type.includes('External')) {
+      feeText = '৳1300 BDT';
+    }
+    successFeeAmount.textContent = feeText;
 
     // Show success view
     successName.textContent = name;

@@ -537,32 +537,120 @@ function initRegisterTriggers() {
 
   const modal = document.createElement('div');
   modal.className = 'modal-alert';
+  modal.style.maxWidth = '550px';
   modal.innerHTML = `
-    <h3 style="font-size: 1.6rem; margin-bottom: 15px; color:#fff;">Registration Information</h3>
-    <p style="color:var(--color-text-muted); margin-bottom: 20px; font-size:0.95rem;">
-      Thank you for your interest in joining <strong class="text-lime">JUCSU RUN 2026: The Farewell</strong>!
-    </p>
-    <div style="background: rgba(255,255,255,0.03); border:1px dashed var(--color-glass-border); padding: 15px; border-radius:10px; margin-bottom: 20px; font-size:0.9rem;">
-      <p style="margin-bottom:8px;"><strong>Selected Category:</strong> <span id="modalCategory" class="text-lime" style="font-weight:700;">-</span></p>
-      <p>Official registration is processed through our university portal. Click the button below to fill out the form and submit your registration.</p>
+    <div id="registrationFormContainer">
+      <h3 style="font-size: 1.6rem; margin-bottom: 10px; color:#fff;">Register for JUCSU RUN 2026</h3>
+      <p style="color:var(--color-text-muted); margin-bottom: 20px; font-size:0.85rem;">
+        Fill out the form below to register. Payments must be sent manually via bKash/Nagad.
+      </p>
+      <form id="publicRegisterForm" onsubmit="return false;" style="display:flex; flex-direction:column; gap:12px;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div class="form-group" style="gap:4px;">
+            <label class="form-label" style="font-size:0.75rem;">Full Name</label>
+            <input type="text" id="pubName" class="form-input" style="padding:10px; font-size:0.9rem;" required placeholder="e.g. Rafiq Ali">
+          </div>
+          <div class="form-group" style="gap:4px;">
+            <label class="form-label" style="font-size:0.75rem;">Phone Number</label>
+            <input type="tel" id="pubPhone" class="form-input" style="padding:10px; font-size:0.9rem;" required placeholder="e.g. 017XXXXXXXX">
+          </div>
+        </div>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div class="form-group" style="gap:4px;">
+            <label class="form-label" style="font-size:0.75rem;">Category</label>
+            <select id="pubCategory" class="form-input" style="padding:10px; font-size:0.9rem; background:rgba(0,0,0,0.3); color:#fff;" required>
+              <option value="10K Mini Marathon">10K Mini Marathon</option>
+              <option value="5K Run">5K Run</option>
+            </select>
+          </div>
+          <div class="form-group" style="gap:4px;">
+            <label class="form-label" style="font-size:0.75rem;">Participant Type</label>
+            <select id="pubType" class="form-input" style="padding:10px; font-size:0.9rem; background:rgba(0,0,0,0.3); color:#fff;" required>
+              <option value="Student">Running Student</option>
+              <option value="Alumni/Outsider">Alumni / Outsider</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+          <div class="form-group" style="gap:4px;">
+            <label class="form-label" style="font-size:0.75rem;">T-Shirt Size</label>
+            <select id="pubTshirt" class="form-input" style="padding:10px; font-size:0.9rem; background:rgba(0,0,0,0.3); color:#fff;" required>
+              <option value="S">S</option>
+              <option value="M" selected>M</option>
+              <option value="L">L</option>
+              <option value="XL">XL</option>
+              <option value="XXL">XXL</option>
+            </select>
+          </div>
+          <div class="form-group" style="gap:4px;">
+            <label class="form-label" style="font-size:0.75rem;">Gender</label>
+            <select id="pubGender" class="form-input" style="padding:10px; font-size:0.9rem; background:rgba(0,0,0,0.3); color:#fff;" required>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+          <div class="form-group" style="gap:4px;">
+            <label class="form-label" style="font-size:0.75rem;">Blood Group</label>
+            <input type="text" id="pubBlood" class="form-input" style="padding:10px; font-size:0.9rem;" placeholder="e.g. O+" required>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px; justify-content: flex-end; margin-top:10px;">
+          <button type="button" class="btn btn-outline btn-sm" id="closeModalBtn" style="border-radius:6px; height:auto; padding:10px 20px;">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" style="border-radius:6px; height:auto; padding:10px 20px;">Submit</button>
+        </div>
+      </form>
     </div>
-    <div style="display:flex; gap:12px; justify-content: flex-end;">
-      <button class="btn btn-outline btn-sm" id="closeModalBtn" style="border-radius:6px;">Cancel</button>
-      <button class="btn btn-primary btn-sm" id="proceedRegisterBtn" style="border-radius:6px;">Go to Portal</button>
+    
+    <div id="registrationSuccessContainer" class="hidden" style="text-align:center; padding:10px 0;">
+      <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(0, 255, 128, 0.1); border: 2px solid #00ff80; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
+        <span style="font-size: 2rem; color: #00ff80; line-height: 1; font-weight: bold;">✓</span>
+      </div>
+      <h3 style="font-size: 1.6rem; margin: 10px 0; color:#00ff80;">Registration Successful!</h3>
+      <p style="color:#fff; font-size:0.95rem; margin-bottom:15px; line-height:1.6;">
+        Runner Name: <strong id="successName">Name</strong><br>
+        Your Bib Number: <strong id="successBib" class="text-lime" style="font-size:1.3rem; display:block; margin-top:5px; background:rgba(193, 216, 47, 0.15); padding:6px 12px; border-radius:4px; border:1px solid rgba(193,216,47,0.3); display:inline-block;">2026XXX</strong>
+      </p>
+      <div style="background: rgba(255,255,255,0.03); border:1px dashed var(--color-glass-border); padding: 15px; border-radius:10px; margin-bottom: 20px; font-size:0.9rem; text-align:left; color:var(--color-text-muted); line-height: 1.5;">
+        <p style="margin-bottom:8px; color:#fff;"><strong>Payment Instructions:</strong></p>
+        <p>Please send the registration fee manually via bKash/Nagad Personal number: <strong>01700-000000</strong></p>
+        <ul style="margin-left:20px; margin-top:5px; display:flex; flex-direction:column; gap:4px; list-style:square; color:#fff;">
+          <li>Students: <strong class="text-lime">10K: ৳1000 | 5K: ৳900</strong></li>
+          <li>Alumni/Outsiders: <strong class="text-lime">৳1200 (both)</strong></li>
+        </ul>
+        <p style="margin-top:8px;">Write your Bib Number (<span id="successBibRef" class="text-lime" style="font-weight:700;">Bib</span>) in the **Reference/Message** box of your payment. Verification will take 24-48 hours, after which you can search and download your E-Bib card!</p>
+      </div>
+      <button class="btn btn-primary btn-sm" id="successCloseBtn" style="border-radius:6px; padding:10px 20px; height:auto;">Done</button>
     </div>
   `;
   document.body.appendChild(modal);
 
-  const modalCategoryText = document.getElementById('modalCategory');
+  const pubCategorySelect = document.getElementById('pubCategory');
   const closeModalBtn = document.getElementById('closeModalBtn');
-  const proceedRegisterBtn = document.getElementById('proceedRegisterBtn');
+  const successCloseBtn = document.getElementById('successCloseBtn');
+  const publicRegisterForm = document.getElementById('publicRegisterForm');
 
+  const formContainer = document.getElementById('registrationFormContainer');
+  const successContainer = document.getElementById('registrationSuccessContainer');
+  const successName = document.getElementById('successName');
+  const successBib = document.getElementById('successBib');
+  const successBibRef = document.getElementById('successBibRef');
+
+  // Open modal and pre-select category
   triggers.forEach(trigger => {
     trigger.addEventListener('click', () => {
       const category = trigger.getAttribute('data-category');
-      modalCategoryText.textContent = category;
+      pubCategorySelect.value = category;
       backdrop.classList.add('open');
       modal.classList.add('open');
+      
+      // Reset views
+      formContainer.classList.remove('hidden');
+      successContainer.classList.add('hidden');
+      publicRegisterForm.reset();
+      pubCategorySelect.value = category;
     });
   });
 
@@ -572,10 +660,74 @@ function initRegisterTriggers() {
   }
 
   closeModalBtn.addEventListener('click', closeModal);
+  successCloseBtn.addEventListener('click', closeModal);
   backdrop.addEventListener('click', closeModal);
-  
-  proceedRegisterBtn.addEventListener('click', () => {
-    closeModal();
-    alert('Redirecting to Jahangirnagar University Student Portal for registration payment verification...');
+
+  // Helper to generate next unique Bib
+  function generateNextBib(category) {
+    const prefix = category.includes('10K') ? '20261' : '20265';
+    const bibs = runnerDatabase
+      .map(r => parseInt(r.bib))
+      .filter(b => !isNaN(b) && b.toString().startsWith(prefix));
+    
+    if (bibs.length === 0) {
+      return prefix + '01'; // Default start 2026101 or 2026501
+    }
+    const maxBib = Math.max(...bibs);
+    return (maxBib + 1).toString();
+  }
+
+  // Handle Submit Form
+  publicRegisterForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('pubName').value.trim();
+    const phone = document.getElementById('pubPhone').value.trim();
+    const category = pubCategorySelect.value;
+    const type = document.getElementById('pubType').value;
+    const tshirt = document.getElementById('pubTshirt').value;
+    const gender = document.getElementById('pubGender').value;
+    const blood = document.getElementById('pubBlood').value.trim().toUpperCase();
+
+    // Ensure database loaded
+    await initDatabase();
+
+    const bib = generateNextBib(category);
+    const newRunner = {
+      bib,
+      name,
+      phone,
+      category,
+      tshirt,
+      gender,
+      blood,
+      status: 'Pending',
+      type
+    };
+
+    // If Supabase connected, insert
+    if (supabaseClient) {
+      try {
+        const { error } = await supabaseClient
+          .from('registrations')
+          .insert([newRunner]);
+        if (error) throw error;
+      } catch (err) {
+        alert('Supabase registration failed: ' + err.message);
+        return;
+      }
+    }
+
+    // Save offline
+    runnerDatabase.push(newRunner);
+    localStorage.setItem('jucsu_registrations', JSON.stringify(runnerDatabase));
+
+    // Show success view
+    successName.textContent = name;
+    successBib.textContent = bib;
+    successBibRef.textContent = bib;
+
+    formContainer.classList.add('hidden');
+    successContainer.classList.remove('hidden');
   });
 }

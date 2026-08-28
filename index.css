@@ -208,7 +208,7 @@ a {
 /* Header & Floating Navigation */
 .main-header {
   position: fixed;
-  top: 0;
+  top: 32px;
   left: 0;
   width: 100%;
   height: 90px;
@@ -222,6 +222,7 @@ a {
   transition: var(--transition-smooth);
 }
 .main-header.scrolled {
+  top: 0;
   height: 75px;
   background: rgba(0, 61, 36, 0.85);
   box-shadow: 0 10px 30px rgba(0,0,0,0.15);
@@ -1893,4 +1894,55 @@ a {
 .radio-tile-wrapper input[type="radio"]:hover + .radio-tile-content {
   border-color: rgba(255, 255, 255, 0.2);
   color: #fff;
+}
+
+/* Live Announcement Ticker */
+.announcement-ticker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 32px;
+  background: #091a10;
+  border-bottom: 1px solid rgba(193, 216, 47, 0.15);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  z-index: 1001;
+}
+.ticker-wrap {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.ticker-content {
+  display: inline-block;
+  white-space: nowrap;
+  animation: ticker-slide 25s linear infinite;
+  color: var(--color-accent);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+@keyframes ticker-slide {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-33.333%, 0, 0);
+  }
+}
+
+/* Adjustments for fixed header and mobile menu siblings */
+.main-header.scrolled ~ .mobile-menu {
+  top: 75px;
+}
+@media (max-width: 991px) {
+  .mobile-menu {
+    top: 107px; /* 32px ticker + 75px header */
+  }
+  .main-header.scrolled ~ .mobile-menu {
+    top: 75px;
+  }
 }

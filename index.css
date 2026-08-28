@@ -1718,4 +1718,125 @@ a {
   .perks-list-grid {
     grid-template-columns: 1fr;
   }
+  
+  /* --- Premium Mobile Optimization Overrides --- */
+  .section {
+    padding: 40px 0;
+  }
+  .section-title {
+    font-size: 1.8rem;
+  }
+  .section-header {
+    margin-bottom: 30px;
+  }
+  
+  /* Header & Menu fixes */
+  .mobile-menu {
+    top: 75px;
+    padding: 20px;
+  }
+  
+  /* Hero optimizations */
+  .hero-section {
+    padding-top: 110px;
+    padding-bottom: 30px;
+    min-height: auto;
+  }
+  .hero-title {
+    font-size: 2.2rem;
+    line-height: 1.2;
+  }
+  .hero-subtitle {
+    font-size: 0.95rem;
+    margin-bottom: 24px;
+  }
+  .hero-ctas {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+  .hero-ctas .btn {
+    width: 100%;
+    text-align: center;
+  }
+  
+  /* Countdown adjustments to prevent wrapping */
+  .countdown-panel {
+    padding: 20px;
+    margin-top: 20px;
+  }
+  .countdown-heading {
+    font-size: 0.8rem;
+    margin-bottom: 16px;
+  }
+  .countdown-timer {
+    gap: 6px;
+  }
+  .timer-segment .timer-number {
+    font-size: 1.8rem;
+  }
+  .timer-segment .timer-label {
+    font-size: 0.65rem;
+  }
+  .timer-colon {
+    font-size: 1.5rem;
+    margin-top: -16px;
+  }
+  .event-meta-info {
+    padding-top: 20px;
+  }
+  
+  /* Panel and rules padding adjustments */
+  .panel-padding, .rules-card, .checker-container, .pending-details, .not-found-help {
+    padding: 20px !important;
+  }
+  .sub-section-title {
+    font-size: 1.4rem;
+  }
+  .rules-card-title {
+    font-size: 1.2rem;
+  }
+  
+  /* Swag and tabs fixes */
+  .swag-graphic-container {
+    padding: 16px;
+  }
+  .swag-details h3 {
+    font-size: 1.4rem;
+  }
+  
+  /* FAQ Accordion optimizations */
+  .faq-question {
+    padding: 16px;
+    font-size: 0.95rem;
+  }
+  
+  /* Digital Bib scale safety */
+  .bib-display-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .digital-bib {
+    max-width: 340px;
+    margin: 0 auto;
+    padding: 16px;
+    border-width: 4px;
+  }
+  .digital-bib::after {
+    /* Reposition safety pin mock shadows for smaller bib size */
+    box-shadow: 
+      268px 0 var(--color-primary-dark),
+      0 216px var(--color-primary-dark),
+      268px 216px var(--color-primary-dark);
+  }
+  .bib-number {
+    font-size: 4rem;
+  }
+  .bib-detail-item .value {
+    font-size: 1rem;
+  }
+  .bib-action-panel h3 {
+    font-size: 1.2rem;
+    text-align: center;
+  }
 }

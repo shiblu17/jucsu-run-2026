@@ -1743,7 +1743,7 @@ a {
     min-height: auto;
   }
   .hero-title {
-    font-size: 2.2rem;
+    font-size: min(8.5vw, 2.4rem);
     line-height: 1.2;
   }
   .hero-subtitle {

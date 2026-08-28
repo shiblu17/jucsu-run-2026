@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JUCSU RUN 2026 - The Farewell Marathon</title>
+  <meta name="description" content="Official website for JUCSU RUN 2026: The Farewell. Join the legendary marathon at Jahangirnagar University campus. Register now, check registration status, and download your E-Bib.">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- Floating Navigation -->
+  <header class="main-header">
+    <div class="container header-container">
+      <a href="#" class="logo-link">
+        <!-- SVG Logo replicating the uploaded image -->
+        <svg class="site-logo" viewBox="0 0 1000 450" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="logoBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#005432" />
+              <stop offset="100%" stop-color="#003d24" />
+            </linearGradient>
+          </defs>
+          <!-- Tilted Pill Background -->
+          <path d="M 120,50 L 880,50 C 950,50 970,120 940,225 L 880,390 C 850,405 820,405 780,405 L 120,405 C 50,405 30,330 60,225 Z" fill="url(#logoBgGrad)" stroke="#ffffff" stroke-width="12" stroke-linejoin="round"/>
+          <!-- Inner White Border Path -->
+          <path d="M 140,75 L 850,75 C 900,75 920,130 895,215 L 845,370 C 825,380 800,380 770,380 L 140,380 C 90,380 70,320 95,215 Z" fill="none" stroke="#ffffff" stroke-width="4" stroke-opacity="0.8"/>
+          
+          <!-- Logo Text Content (Italicized bold styling) -->
+          <g transform="translate(110, 100)" font-family="'Outfit', 'Arial Black', sans-serif" font-style="italic">
+            <!-- JUCSU -->
+            <text x="0" y="80" font-size="105" font-weight="900" fill="#ffffff" letter-spacing="-2">JUCSU</text>
+            <!-- RUN 2026 -->
+            <text x="0" y="175" font-size="85" font-weight="900">
+              <tspan fill="#C1D82F">RUN </tspan>
+              <tspan fill="#ffffff">2026</tspan>
+            </text>
+            <!-- FAREWELL & MILESTONES -->
+            <text x="0" y="245" font-size="30" font-weight="800" fill="#C1D82F" letter-spacing="0.5">FAREWELL & MILESTONES</text>
+            <!-- Bottom Accent Line -->
+            <line x1="0" y1="265" x2="430" y2="265" stroke="#ffffff" stroke-width="8" />
+          </g>
+
+          <!-- Track Curves (Right Section) -->
+          <g stroke="#ffffff" stroke-width="4" fill="none" stroke-opacity="0.3" transform="translate(480, 20)">
+            <path d="M 150,50 C 250,50 350,150 350,225 C 350,300 280,360 150,360" stroke-width="12"/>
+            <path d="M 120,80 C 200,80 300,160 300,225 C 300,290 240,330 120,330" stroke-width="6"/>
+            <path d="M 90,110 C 150,110 250,170 250,225 C 250,280 200,300 90,300" stroke-width="3"/>
+            <!-- Track Markings -->
+            <line x1="280" y1="130" x2="300" y2="135" stroke="#ffffff" stroke-width="4" stroke-opacity="0.5"/>
+            <line x1="320" y1="180" x2="345" y2="185" stroke="#ffffff" stroke-width="4" stroke-opacity="0.5"/>
+            <line x1="330" y1="240" x2="355" y2="242" stroke="#ffffff" stroke-width="4" stroke-opacity="0.5"/>
+            <line x1="280" y1="300" x2="305" y2="295" stroke="#ffffff" stroke-width="4" stroke-opacity="0.5"/>
+          </g>
+
+          <!-- Runners Silhouettes (White paths with speed lines) -->
+          <g fill="#ffffff" transform="translate(560, 110)">
+            <!-- Speed Trails for Runner 1 -->
+            <path d="M -50,60 L -10,60 M -80,95 L -20,95 M -40,130 L -10,130" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+            <!-- Runner 1 (Female) Silhouette -->
+            <path d="M 45,30 C 50,30 55,25 55,20 C 55,15 50,10 45,10 C 40,10 35,15 35,20 C 35,25 40,30 45,30 Z 
+                     M 25,45 L 35,35 C 40,30 48,32 50,38 L 58,55 L 75,60 C 78,61 80,65 78,68 C 76,71 72,72 69,70 L 52,62 L 46,46 L 38,55 L 48,78 L 65,102 C 67,105 66,110 63,112 C 60,114 55,113 53,110 L 38,88 L 22,88 C 18,88 15,85 15,81 C 15,77 18,74 22,74 L 32,74 L 38,62 L 20,52 C 17,50 16,46 18,43 C 20,40 23,38 25,45 Z
+                     M 38,88 L 28,118 C 26,122 22,124 18,122 C 14,120 12,116 14,112 L 26,82 L 38,88 Z" />
+            
+            <!-- Speed Trails for Runner 2 -->
+            <path d="M 80,80 L 120,80 M 60,115 L 110,115 M 90,150 L 120,150" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+            <!-- Runner 2 (Male) Silhouette -->
+            <g transform="translate(140, 20)">
+              <path d="M 45,25 C 50,25 54,21 54,16 C 54,11 50,7 45,7 C 40,7 36,11 36,16 C 36,21 40,25 45,25 Z 
+                       M 20,40 L 32,30 C 37,25 45,27 48,32 L 58,48 L 78,50 C 82,51 84,55 83,59 C 82,63 78,65 74,64 L 54,62 L 48,45 L 36,56 L 44,82 L 58,110 C 60,114 58,119 54,121 C 50,123 45,121 43,117 L 30,90 L 15,85 C 11,84 9,80 10,76 C 11,72 15,70 19,71 L 28,74 L 33,60 L 16,48 C 13,46 12,41 14,38 C 16,35 18,37 20,40 Z
+                       M 30,90 L 18,122 C 16,126 11,128 7,126 C 3,124 1,119 3,115 L 16,84 L 30,90 Z" />
+            </g>
+          </g>
+        </svg>
+        <span class="logo-text">JUCSU RUN <span class="text-lime">2026</span></span>
+      </a>
+      <nav class="nav-links">
+        <a href="#about" class="nav-link">About</a>
+        <a href="#categories" class="nav-link">Categories</a>
+        <a href="#swag" class="nav-link">Runner Swag</a>
+        <a href="#route" class="nav-link">Routes</a>
+        <a href="#checker" class="nav-link">Check Registration</a>
+        <a href="#faq" class="nav-link">FAQs</a>
+      </nav>
+      <div class="header-actions">
+        <a href="#checker" class="btn btn-outline btn-sm">Check Status</a>
+        <a href="admin.html" class="btn btn-secondary btn-sm admin-btn">Admin Portal</a>
+      </div>
+      <button class="mobile-menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Dropdown Navigation -->
+  <div class="mobile-menu" id="mobileMenu">
+    <nav class="mobile-nav-links">
+      <a href="#about" class="mobile-nav-link">About</a>
+      <a href="#categories" class="mobile-nav-link">Categories</a>
+      <a href="#swag" class="mobile-nav-link">Runner Swag</a>
+      <a href="#route" class="mobile-nav-link">Routes</a>
+      <a href="#checker" class="mobile-nav-link">Check Registration</a>
+      <a href="#faq" class="mobile-nav-link">FAQs</a>
+      <hr class="mobile-divider">
+      <a href="admin.html" class="mobile-nav-link admin-link-mob">Admin Portal</a>
+    </nav>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-bg-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+    </div>
+    <div class="container hero-container">
+      <div class="hero-content">
+        <div class="hero-badge">THE FAREWELL & MILESTONES</div>
+        <h1 class="hero-title">
+          JUCSU RUN <span class="text-gradient">2026</span>
+          <span style="font-size: 1.8rem; display: block; font-weight: 700; margin-top: 10px; opacity: 0.9;">The Farewell & Milestones</span>
+        </h1>
+        <p class="hero-subtitle">
+          Jahangirnagar University Central Student Union (JUCSU) is proud to present JUCSU RUN 2026 the farewell & milestones. Experience the scenic red-clay paths, serene lakes, and the spirit of running together one last time.
+        </p>
+        <div class="hero-ctas">
+          <a href="#categories" class="btn btn-primary btn-lg">Register Now</a>
+          <a href="#checker" class="btn btn-outline btn-lg">Check Registration</a>
+        </div>
+        <div class="reg-closed-badge">⌛ Registration Closes: 5 September 2026</div>
+      </div>
+      
+      <!-- Countdown Panel -->
+      <div class="countdown-panel glass-panel">
+        <h3 class="countdown-heading">RACE STARTS IN</h3>
+        <div class="countdown-timer" id="countdown" data-date="2026-09-25T06:00:00">
+          <div class="timer-segment">
+            <span class="timer-number" id="days">00</span>
+            <span class="timer-label">Days</span>
+          </div>
+          <div class="timer-colon">:</div>
+          <div class="timer-segment">
+            <span class="timer-number" id="hours">00</span>
+            <span class="timer-label">Hours</span>
+          </div>
+          <div class="timer-colon">:</div>
+          <div class="timer-segment">
+            <span class="timer-number" id="minutes">00</span>
+            <span class="timer-label">Mins</span>
+          </div>
+          <div class="timer-colon">:</div>
+          <div class="timer-segment">
+            <span class="timer-number" id="seconds">00</span>
+            <span class="timer-label">Secs</span>
+          </div>
+        </div>
+        <div class="event-meta-info">
+          <div class="info-item">
+            <span class="info-icon">📅</span>
+            <span>September 25, 2026</span>
+          </div>
+          <div class="info-item">
+            <span class="info-icon">📍</span>
+            <span>Jahangirnagar University</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Statistics Banner -->
+  <section class="stats-section">
+    <div class="container stats-container">
+      <div class="stat-card">
+        <h2 class="stat-number">3,000+</h2>
+        <p class="stat-desc">Expected Runners</p>
+      </div>
+      <div class="stat-card">
+        <h2 class="stat-number">10K</h2>
+        <p class="stat-desc">Maximum Distance</p>
+      </div>
+      <div class="stat-card">
+        <h2 class="stat-number">৳350K+</h2>
+        <p class="stat-desc">Prize Pool</p>
+      </div>
+      <div class="stat-card">
+        <h2 class="stat-number">100%</h2>
+        <p class="stat-desc">Eco-Friendly Campus Run</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about" class="section about-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="section-tag">About the Event</span>
+        <h2 class="section-title">JUCSU RUN 2026: The Farewell</h2>
+        <div class="header-line"></div>
+      </div>
+      <div class="grid grid-2-col about-grid">
+        <div class="about-image-card">
+          <div class="glass-image-container">
+            <svg class="about-illustration" viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="illustrationGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#C1D82F" stop-opacity="0.2" />
+                  <stop offset="100%" stop-color="#005432" stop-opacity="0" />
+                </radialGradient>
+              </defs>
+              <circle cx="250" cy="200" r="180" fill="url(#illustrationGlow)"/>
+              <!-- Abstract running paths -->
+              <path d="M 50,300 C 150,150 350,380 450,220" stroke="rgba(255, 255, 255, 0.1)" stroke-width="12" fill="none" stroke-linecap="round"/>
+              <path d="M 70,320 C 180,180 320,340 430,160" stroke="#C1D82F" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="10 15"/>
+              <path d="M 100,280 C 170,220 280,310 400,240" stroke="#ffffff" stroke-width="6" fill="none" stroke-opacity="0.3"/>
+              
+              <!-- Running Silhouette Graphic -->
+              <g transform="translate(180, 100) scale(1.8)" fill="#ffffff">
+                <path d="M 45,25 C 50,25 54,21 54,16 C 54,11 50,7 45,7 C 40,7 36,11 36,16 C 36,21 40,25 45,25 Z 
+                         M 20,40 L 32,30 C 37,25 45,27 48,32 L 58,48 L 78,50 C 82,51 84,55 83,59 C 82,63 78,65 74,64 L 54,62 L 48,45 L 36,56 L 44,82 L 58,110 C 60,114 58,119 54,121 C 50,123 45,121 43,117 L 30,90 L 15,85 C 11,84 9,80 10,76 C 11,72 15,70 19,71 L 28,74 L 33,60 L 16,48 C 13,46 12,41 14,38 C 16,35 18,37 20,40 Z
+                         M 30,90 L 18,122 C 16,126 11,128 7,126 C 3,124 1,119 3,115 L 16,84 L 30,90 Z" />
+              </g>
+              <!-- Speed rings -->
+              <circle cx="260" cy="130" r="10" stroke="#C1D82F" stroke-width="2" fill="none" stroke-opacity="0.5"/>
+              <circle cx="260" cy="130" r="22" stroke="#ffffff" stroke-width="1" fill="none" stroke-opacity="0.2"/>
+            </svg>
+            <div class="image-glass-overlay">
+              <span class="overlay-text">JU Campus Loop • 2026</span>
+            </div>
+          </div>
+        </div>
+        <div class="about-text">
+          <h3>The Last Lap at the Greenest Campus</h3>
+          <p>
+            Organized by the **Jahangirnagar University Central Students' Union (JUCSU)**, the **JUCSU RUN 2026: The Farewell** marks a historic chapter. This year, we are hosting our signature marathon as a tribute to the community, the memories, and the glorious natural canvas of Jahangirnagar University.
+          </p>
+          <p>
+            Whether you are a seasoned runner tackling our 10K Speed Run, or a hobbyist runner joining the 5K Run, you will sprint along beautiful lakes covered in migratory birds, beneath towering forest canopies, and over the signature red clay of the JU campus.
+          </p>
+          <div class="key-highlights">
+            <div class="highlight-item">
+              <span class="highlight-icon">🏆</span>
+              <div>
+                <h4>Certified Paths</h4>
+                <p>Accurate RFID chip timing on professional loop routes.</p>
+              </div>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-icon">🍃</span>
+              <div>
+                <h4>Eco-Conscious Run</h4>
+                <p>Plastic-neutral event. Hydration points use biodegradable cups.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Race Categories Section -->
+  <section id="categories" class="section categories-section bg-darker">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="section-tag">Choose Your Run</span>
+        <h2 class="section-title">Race Categories</h2>
+        <div class="header-line"></div>
+      </div>
+      <div class="grid grid-2-col categories-grid">
+        
+        <!-- Category 1 (Recommended/Popular) -->
+        <div class="category-card glass-panel popular-card">
+          <div class="popular-ribbon">Most Popular</div>
+          <div class="category-header">
+            <span class="category-badge badge-lime">Challenger</span>
+            <h3 class="category-distance">10K</h3>
+            <p class="category-name">Mini Marathon</p>
+          </div>
+          <div class="category-details">
+            <div class="detail-row">
+              <span class="detail-label">Flag Off:</span>
+              <span class="detail-val">06:00 AM</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Cut-off Time:</span>
+              <span class="detail-val">120 Minutes</span>
+            </div>
+            <div class="detail-row" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+              <span class="detail-label">Registration Fee:</span>
+              <span class="detail-val text-lime" style="font-size: 0.95rem; font-weight: 700;">• Students: ৳1,000 BDT</span>
+              <span class="detail-val text-lime" style="font-size: 0.95rem; font-weight: 700;">• Alumni & Outsiders: ৳1,200 BDT</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Minimum Age:</span>
+              <span class="detail-val">15 Years</span>
+            </div>
+          </div>
+          <ul class="category-perks">
+            <li>✓ Premium Mesh T-Shirt</li>
+            <li>✓ Timing Chip Bib (10K)</li>
+            <li>✓ Heavyweight Finisher Medal</li>
+            <li>✓ Fresh Hot Buffet Breakfast</li>
+            <li>✓ Digital Timing Certificate</li>
+          </ul>
+          <div class="category-action">
+            <button class="btn btn-lime btn-full register-trigger" data-category="10K Mini Marathon">Register Now</button>
+          </div>
+        </div>
+
+        <!-- Category 2 -->
+        <div class="category-card glass-panel">
+          <div class="category-header">
+            <span class="category-badge">Community</span>
+            <h3 class="category-distance">5K</h3>
+            <p class="category-name">Run</p>
+          </div>
+          <div class="category-details">
+            <div class="detail-row">
+              <span class="detail-label">Flag Off:</span>
+              <span class="detail-val">06:30 AM</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Cut-off Time:</span>
+              <span class="detail-val">90 Minutes</span>
+            </div>
+            <div class="detail-row" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+              <span class="detail-label">Registration Fee:</span>
+              <span class="detail-val text-lime" style="font-size: 0.95rem; font-weight: 700;">• Students: ৳900 BDT</span>
+              <span class="detail-val text-lime" style="font-size: 0.95rem; font-weight: 700;">• Alumni & Outsiders: ৳1,200 BDT</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Minimum Age:</span>
+              <span class="detail-val">15 Years</span>
+            </div>
+          </div>
+          <ul class="category-perks">
+            <li>✓ Premium Mesh T-Shirt</li>
+            <li>✓ Race Bib (5K)</li>
+            <li>✓ Finisher Medal & Certificate</li>
+            <li>✓ Snacks & Hydration pack</li>
+            <li>✓ Digital Participation E-Cert</li>
+          </ul>
+          <div class="category-action">
+            <button class="btn btn-primary btn-full register-trigger" data-category="5K Run">Register Now</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Participant Benefits & Recognition Section -->
+  <section class="section benefits-section bg-darker" style="border-top: 1px solid var(--color-glass-border); border-bottom: 1px solid var(--color-glass-border);">
+    <div class="container">
+      <div class="grid grid-2-col benefits-grid">
+        
+        <!-- Recognition / Awards Panel -->
+        <div class="glass-panel panel-padding">
+          <span class="section-tag" style="margin-bottom: 10px;">Awards & Podium</span>
+          <h3 class="sub-section-title">🏆 Recognition</h3>
+          <p class="benefits-intro">We celebrate speed, dedication, and athletic milestones.</p>
+          <div class="awards-box">
+            <div class="award-item">
+              <div class="award-icon">🥇</div>
+              <div>
+                <h4>Top Finishers</h4>
+                <p>The top three male and female finishers in both the <strong>10K Mini Marathon</strong> and <strong>5K Run</strong> categories will receive prestigious Crests and special rewards.</p>
+              </div>
+            </div>
+            <div class="award-note" style="margin-top: 15px;">
+              <p>⚠️ <strong>Note:</strong> Runners finishing after the cut-off time (120 minutes for 10K, 90 minutes for 5K) will not be eligible for official timing or finisher medals.</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Participant Benefits Panel -->
+        <div class="glass-panel panel-padding">
+          <span class="section-tag" style="margin-bottom: 10px;">Runner Perks</span>
+          <h3 class="sub-section-title">🎁 Participant Benefits</h3>
+          <div class="perks-list-grid">
+            <ul class="perks-ul">
+              <li><span class="check-icon">✓</span> Official Event Jersey</li>
+              <li><span class="check-icon">✓</span> Race Bib (for 10K & 5K)</li>
+              <li><span class="check-icon">✓</span> Finisher Medal & Certificate</li>
+              <li><span class="check-icon">✓</span> Kit Bag with surprise gifts</li>
+              <li><span class="check-icon">✓</span> Multiple Hydration Stations</li>
+            </ul>
+            <ul class="perks-ul">
+              <li><span class="check-icon">✓</span> Post-Race Snacks & Washrooms</li>
+              <li><span class="check-icon">✓</span> Medical & First Aid Support</li>
+              <li><span class="check-icon">✓</span> Photography & Media Coverage</li>
+              <li><span class="check-icon">✓</span> Bus Shuttle (Uttara, Gulshan, & Bongobazar)</li>
+              <li><span class="check-icon">✓</span> Natural Tracking System</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  <!-- Interactive Runner Swag & Kit Section -->
+  <section id="swag" class="section swag-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="section-tag">Race Kit</span>
+        <h2 class="section-title">Runner's Swag</h2>
+        <div class="header-line"></div>
+        <p class="section-subtitle">Every registered runner receives a premium gear kit. Click the tabs to explore your items.</p>
+      </div>
+
+      <div class="swag-showcase glass-panel">
+        <!-- Tabs -->
+        <div class="swag-tabs">
+          <button class="swag-tab-btn active" data-tab="tshirt">Official T-Shirt</button>
+          <button class="swag-tab-btn" data-tab="medal">Finisher Medal</button>
+          <button class="swag-tab-btn" data-tab="bib">Race Bib</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="swag-tab-contents">
+          <!-- T-Shirt Tab -->
+          <div class="swag-content active" id="tab-tshirt">
+            <div class="grid grid-2-col swag-item-grid">
+              <div class="swag-graphic-container">
+                <svg class="swag-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                  <!-- T-shirt base path -->
+                  <path d="M 120,60 C 130,75 170,85 200,85 C 230,85 270,75 280,60 L 340,110 L 290,160 L 290,360 L 110,360 L 110,160 L 60,110 Z" fill="#00472a" stroke="#ffffff" stroke-width="4"/>
+                  <!-- Collar trim -->
+                  <path d="M 120,60 C 130,75 170,85 200,85 C 230,85 270,75 280,60" fill="none" stroke="#C1D82F" stroke-width="8"/>
+                  <!-- Sleeve trims -->
+                  <path d="M 340,110 L 290,160" fill="none" stroke="#C1D82F" stroke-width="6"/>
+                  <path d="M 60,110 L 110,160" fill="none" stroke="#C1D82F" stroke-width="6"/>
+                  <!-- Logo design in center of T-Shirt -->
+                  <g transform="translate(145, 140) scale(0.12)">
+                    <path d="M 120,50 L 880,50 C 950,50 970,120 940,225 L 880,390 C 850,405 820,405 780,405 L 120,405 C 50,405 30,330 60,225 Z" fill="#005432" stroke="#ffffff" stroke-width="15"/>
+                    <g transform="translate(110, 100)" font-family="Arial, sans-serif" font-style="italic">
+                      <text x="0" y="80" font-size="110" font-weight="900" fill="#ffffff">JUCSU</text>
+                      <text x="0" y="175" font-size="90" font-weight="900"><tspan fill="#C1D82F">RUN </tspan><tspan fill="#ffffff">2026</tspan></text>
+                      <text x="0" y="240" font-size="46" font-weight="800" fill="#C1D82F">THE FAREWELL</text>
+                    </g>
+                  </g>
+                  <!-- Speed lines design on T-shirt side -->
+                  <path d="M 290,260 L 250,280 M 290,290 L 240,315 M 290,320 L 260,335" stroke="#C1D82F" stroke-width="4" stroke-opacity="0.6"/>
+                </svg>
+              </div>
+              <div class="swag-details">
+                <span class="swag-tag">Premium Apparel</span>
+                <h3>The Farewell Signature Jersey</h3>
+                <p>A high-performance running jersey engineered with lightweight, moisture-wicking dry-fit mesh. Features a deep forest green base with high-visibility neon-lime collar accents and dynamic speed line elements.</p>
+                <ul class="swag-specs">
+                  <li><strong>Fabric:</strong> 100% Recycled Polyester Mock Eyelet</li>
+                  <li><strong>Technology:</strong> Sweat-wicking fast-dry tech</li>
+                  <li><strong>Safety:</strong> Reflective logos for low-light morning runs</li>
+                  <li><strong>Sizes:</strong> S, M, L, XL, XXL, XXXL</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Medal Tab -->
+          <div class="swag-content" id="tab-medal">
+            <div class="grid grid-2-col swag-item-grid">
+              <div class="swag-graphic-container">
+                <svg class="swag-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Ribbon -->
+                  <path d="M 150,0 L 200,160 L 250,0 Z" fill="#005432" stroke="#C1D82F" stroke-width="4"/>
+                  <!-- Ribbon stripes -->
+                  <path d="M 185,0 L 200,160 L 215,0 Z" fill="#C1D82F"/>
+                  <!-- Medal Loop -->
+                  <circle cx="200" cy="170" r="15" fill="none" stroke="#d4af37" stroke-width="8"/>
+                  
+                  <!-- Medal Outer ring -->
+                  <circle cx="200" cy="250" r="80" fill="#d4af37" stroke="#ffffff" stroke-width="4"/>
+                  <!-- Medal Inner Ring -->
+                  <circle cx="200" cy="250" r="70" fill="#aa7c11" stroke="#ffffff" stroke-width="2" stroke-opacity="0.3"/>
+                  
+                  <!-- Embedded Logo and details inside Medal -->
+                  <circle cx="200" cy="250" r="50" fill="#005432"/>
+                  <!-- Mini runners inside medal -->
+                  <g fill="#ffffff" transform="translate(180, 235) scale(0.35)">
+                    <path d="M 45,25 C 50,25 54,21 54,16 C 54,11 50,7 45,7 C 40,7 36,11 36,16 C 36,21 40,25 45,25 Z 
+                             M 20,40 L 32,30 C 37,25 45,27 48,32 L 58,48 L 78,50 C 82,51 84,55 83,59 C 82,63 78,65 74,64 L 54,62 L 48,45 L 36,56 L 44,82 L 58,110 C 60,114 58,119 54,121 C 50,123 45,121 43,117 L 30,90 L 15,85 C 11,84 9,80 10,76 C 11,72 15,70 19,71 L 28,74 L 33,60 L 16,48 C 13,46 12,41 14,38 C 16,35 18,37 20,40 Z" />
+                  </g>
+                  <!-- Engraved text -->
+                  <path id="medalTextPath" d="M 137,250 A 63,63 0 0 1 263,250" fill="none"/>
+                  <text font-family="Outfit, sans-serif" font-size="11" font-weight="700" fill="#d4af37" letter-spacing="1">
+                    <textPath href="#medalTextPath" startOffset="50%" text-anchor="middle">
+                      FINISHER • JUCSU RUN 2026
+                    </textPath>
+                  </text>
+                </svg>
+              </div>
+              <div class="swag-details">
+                <span class="swag-tag">Victory Medal</span>
+                <h3>The Farewell Finisher Medal</h3>
+                <p>A heavyweight, solid zinc-alloy die-cast finisher medal with antique gold plating. Features a layered 3D engraving of the iconic runner duo on a running track background, combined with premium dark-green/lime lanyard ribbons.</p>
+                <ul class="swag-specs">
+                  <li><strong>Diameter:</strong> 75mm Premium Size</li>
+                  <li><strong>Thickness:</strong> 4.5mm</li>
+                  <li><strong>Weight:</strong> ~120g Heavyweight feel</li>
+                  <li><strong>Lanyard:</strong> Dye-sublimated satin ribbon, 38mm width</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bib Tab -->
+          <div class="swag-content" id="tab-bib">
+            <div class="grid grid-2-col swag-item-grid">
+              <div class="swag-graphic-container">
+                <svg class="swag-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Bib Base -->
+                  <rect x="50" y="100" width="300" height="200" rx="15" fill="#ffffff" stroke="#C1D82F" stroke-width="6"/>
+                  <!-- Corner Safety Pin Holes -->
+                  <circle cx="70" cy="120" r="6" fill="#cccccc"/>
+                  <circle cx="330" cy="120" r="6" fill="#cccccc"/>
+                  <circle cx="70" cy="280" r="6" fill="#cccccc"/>
+                  <circle cx="330" cy="280" r="6" fill="#cccccc"/>
+                  <!-- Top Bar -->
+                  <path d="M 50,103 L 50,150 L 350,150 L 350,103 Z" fill="#005432"/>
+                  <!-- JUCSU RUN 2026 title in bib -->
+                  <text x="200" y="132" font-family="Outfit, sans-serif" font-weight="900" font-style="italic" font-size="20" fill="#ffffff" text-anchor="middle" letter-spacing="1">JUCSU RUN 2026</text>
+                  <!-- Bib Number -->
+                  <text x="200" y="235" font-family="Outfit, sans-serif" font-weight="900" font-size="75" fill="#111111" text-anchor="middle">2026101</text>
+                  <!-- Runner Name -->
+                  <text x="70" y="275" font-family="Inter, sans-serif" font-weight="700" font-size="14" fill="#555555">MAHMUDUL HASAN</text>
+                  <!-- Category tag -->
+                  <rect x="245" y="258" width="85" height="22" rx="5" fill="#C1D82F"/>
+                  <text x="287" y="274" font-family="Outfit, sans-serif" font-weight="700" font-size="11" fill="#005432" text-anchor="middle">10K CHIP</text>
+                </svg>
+              </div>
+              <div class="swag-details">
+                <span class="swag-tag">Identification & Timing</span>
+                <h3>RFID Timing Bib</h3>
+                <p>Every runner receives a tear-resistant, waterproof bib. For the 10K category, the bib is equipped with an integrated high-precision RFID timing chip on the back to record net start and finish times.</p>
+                <ul class="swag-specs">
+                  <li><strong>Material:</strong> DuPont Tyvek waterproof tear-resistant sheet</li>
+                  <li><strong>Hardware:</strong> Dual RFID UHF timing strip (for the 10K category)</li>
+                  <li><strong>Personalization:</strong> Custom printed runner name, blood group, and emergency contact details</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Route / Venue Section -->
+  <section id="route" class="section route-section bg-darker">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="section-tag">Race Map</span>
+        <h2 class="section-title">JU Campus Route</h2>
+        <div class="header-line"></div>
+        <p class="section-subtitle">Experience a unique running track tracing the natural wonders of Jahangirnagar University.</p>
+      </div>
+
+      <div class="grid grid-2-col route-grid">
+        <div class="route-map-panel glass-panel">
+          <svg class="route-map-svg" viewBox="0 0 500 450" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="routeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#C1D82F" />
+                <stop offset="100%" stop-color="#00ff88" />
+              </linearGradient>
+            </defs>
+            <!-- Map background decorations representing campus roads -->
+            <path d="M 50,400 L 100,200 L 150,150 L 300,100 L 420,180 L 450,380 Z" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="30" stroke-linejoin="round"/>
+            <path d="M 120,380 L 160,240 L 220,180 L 350,180 L 380,350 Z" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="20" stroke-linejoin="round"/>
+            
+            <!-- Lakes (Scenic points) -->
+            <ellipse cx="200" cy="140" rx="35" ry="15" fill="#003d24" opacity="0.6" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+            <ellipse cx="140" cy="300" rx="25" ry="12" fill="#003d24" opacity="0.6" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+            <ellipse cx="360" cy="270" rx="40" ry="18" fill="#003d24" opacity="0.6" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+
+            <!-- Route Loops (21.1K / 10K overlapping route) -->
+            <path id="routePath" d="M 250,380 L 100,320 L 80,180 L 200,90 L 350,90 L 430,200 L 380,320 L 250,380 Z" fill="none" stroke="url(#routeGrad)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+            
+            <!-- Arrow markers along track -->
+            <path d="M 160,344 L 150,340 L 158,349" fill="none" stroke="#111" stroke-width="3"/>
+            <path d="M 85,250 L 80,240 L 90,242" fill="none" stroke="#111" stroke-width="3"/>
+            <path d="M 270,90 L 285,90 L 278,85" fill="none" stroke="#111" stroke-width="3"/>
+            
+            <!-- Landmark markers -->
+            <!-- Shaheed Minar (Start / Finish) -->
+            <g transform="translate(250, 380)">
+              <circle cx="0" cy="0" r="14" fill="#ff3b30" stroke="#ffffff" stroke-width="3"/>
+              <text x="0" y="25" font-family="Outfit, sans-serif" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">START/FINISH</text>
+              <text x="0" y="38" font-family="Inter, sans-serif" font-size="9" fill="#C1D82F" text-anchor="middle">(JU Shaheed Minar)</text>
+            </g>
+            
+            <!-- Central Library Water Point -->
+            <g transform="translate(80, 180)">
+              <circle cx="0" cy="0" r="8" fill="#007bff" stroke="#ffffff" stroke-width="2"/>
+              <text x="-15" y="-12" font-family="Outfit, sans-serif" font-size="10" font-weight="600" fill="#ffffff">Water 1</text>
+            </g>
+
+            <!-- Botanical Garden Point -->
+            <g transform="translate(350, 90)">
+              <circle cx="0" cy="0" r="8" fill="#007bff" stroke="#ffffff" stroke-width="2"/>
+              <text x="0" y="-12" font-family="Outfit, sans-serif" font-size="10" font-weight="600" fill="#ffffff" text-anchor="middle">Water 2 & Medic</text>
+            </g>
+
+            <!-- Mir Mogni Lake -->
+            <g transform="translate(380, 320)">
+              <circle cx="0" cy="0" r="8" fill="#007bff" stroke="#ffffff" stroke-width="2"/>
+              <text x="15" y="15" font-family="Outfit, sans-serif" font-size="10" font-weight="600" fill="#ffffff">Water 3</text>
+            </g>
+          </svg>
+        </div>
+        <div class="route-details-panel">
+          <span class="swag-tag">The Experience</span>
+          <h3>JU Campus Circuit Highlights</h3>
+          <p>The route consists of a loop around the green borders of the campus. 10K runners complete the full circuit, while 5K runners take a scenic shortcut halfway through the loop.</p>
+          <div class="route-points">
+            <div class="point-item">
+              <span class="point-num">01</span>
+              <div>
+                <strong>Shaheed Minar Square:</strong> The grand flag-off point. Features baggage counters, physical warm-up zone, and energy bars distribution.
+              </div>
+            </div>
+            <div class="point-item">
+              <span class="point-num">02</span>
+              <div>
+                <strong>Lakeside Corridor:</strong> Run alongside the university's famous lakes. Feel the morning breeze and watch the migratory birds.
+              </div>
+            </div>
+            <div class="point-item">
+              <span class="point-num">03</span>
+              <div>
+                <strong>Forest Canopy Path:</strong> Run under shades of towering trees near the Botanical Garden, providing pure oxygen and naturally cool temperatures.
+              </div>
+            </div>
+            <div class="point-item">
+              <span class="point-num">04</span>
+              <div>
+                <strong>Medical & Hydration Stations:</strong> Standard hydration setups located exactly at every 3 km containing mineral water, saline, bananas, and first-aid kits.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Registration Checker Section -->
+  <section id="checker" class="section status-checker-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="section-tag">Verify Info</span>
+        <h2 class="section-title">Registration Status</h2>
+        <div class="header-line"></div>
+        <p class="section-subtitle">Search using your registered Phone Number or Name to check status, verify details, and download your Official E-Bib.</p>
+      </div>
+
+      <div class="checker-container glass-panel">
+        <div class="search-form-row">
+          <div class="form-group search-input-group">
+            <label for="searchQuery" class="form-label">Phone Number or Full Name</label>
+            <input type="text" id="searchQuery" class="form-input" placeholder="e.g. 01711122233 or Anik Rahman...">
+            <span class="input-hint">Search requires full mobile number or exact name matches.</span>
+          </div>
+          <button id="searchBtn" class="btn btn-lime btn-lg btn-search">Search Status</button>
+        </div>
+
+        <!-- Dynamic Results Display -->
+        <div id="checkerResults" class="checker-results-box hidden">
+          <!-- Found Section -->
+          <div id="resultFound" class="result-found hidden">
+            <div class="alert-box alert-success">
+              <span class="alert-icon">✓</span>
+              <div>
+                <strong>Registration Verified!</strong> Your record is active and timing bib is generated.
+              </div>
+            </div>
+            
+            <div class="bib-display-grid">
+              <!-- Animated Digital Bib Card -->
+              <div class="digital-bib" id="digitalBibCard">
+                <div class="bib-header">
+                  <div class="bib-logo-area">
+                    <svg class="bib-logo-svg" viewBox="0 0 1000 450" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M 120,50 L 880,50 C 950,50 970,120 940,225 L 880,390 C 850,405 820,405 780,405 L 120,405 C 50,405 30,330 60,225 Z" fill="#005432" stroke="#ffffff" stroke-width="15"/>
+                      <g transform="translate(110, 100)" font-family="Arial, sans-serif" font-style="italic">
+                        <text x="0" y="80" font-size="110" font-weight="900" fill="#ffffff">JUCSU</text>
+                        <text x="0" y="175" font-size="90" font-weight="900"><tspan fill="#C1D82F">RUN </tspan><tspan fill="#ffffff">2026</tspan></text>
+                        <text x="0" y="240" font-size="46" font-weight="800" fill="#C1D82F">THE FAREWELL</text>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="bib-type-badge" id="bibTypeTag">10K CHIP</div>
+                </div>
+                
+                <div class="bib-body">
+                  <h1 class="bib-number" id="bibNumText">2026101</h1>
+                </div>
+                
+                <div class="bib-footer">
+                  <div class="bib-runner-details">
+                    <div class="bib-detail-item">
+                      <span class="label">RUNNER NAME</span>
+                      <span class="value" id="bibNameText">Anik Rahman</span>
+                    </div>
+                    <div class="bib-detail-item">
+                      <span class="label">BLOOD GROUP</span>
+                      <span class="value" id="bibBloodText">O+</span>
+                    </div>
+                  </div>
+                  <div class="bib-qr-area">
+                    <!-- Standard vector QR-like grid representation -->
+                    <svg class="qr-svg" viewBox="0 0 100 100">
+                      <rect x="0" y="0" width="100" height="100" fill="#ffffff"/>
+                      <rect x="5" y="5" width="25" height="25" fill="#000000"/>
+                      <rect x="10" y="10" width="15" height="15" fill="#ffffff"/>
+                      <rect x="70" y="5" width="25" height="25" fill="#000000"/>
+                      <rect x="75" y="10" width="15" height="15" fill="#ffffff"/>
+                      <rect x="5" y="70" width="25" height="25" fill="#000000"/>
+                      <rect x="10" y="75" width="15" height="15" fill="#ffffff"/>
+                      <!-- Random QR mock paths -->
+                      <path d="M 40,10 H 50 V 20 H 40 Z M 55,5 H 65 V 15 H 55 Z M 40,40 H 60 V 50 H 40 Z M 70,40 H 80 V 60 H 70 Z M 85,70 H 95 V 95 H 85 Z M 40,75 H 50 V 90 H 40 Z M 55,60 H 70 V 70 H 55 Z M 70,80 H 80 V 90 H 70 Z" fill="#000"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Actions & Stats -->
+              <div class="bib-action-panel">
+                <h3>Your Registration Details</h3>
+                <div class="verified-table glass-panel">
+                  <div class="table-row">
+                    <span class="table-label">Category:</span>
+                    <span class="table-value" id="resCategory">10K Run</span>
+                  </div>
+                  <div class="table-row">
+                    <span class="table-label">T-Shirt Size:</span>
+                    <span class="table-value" id="resTshirt">M</span>
+                  </div>
+                  <div class="table-row">
+                    <span class="table-label">Gender:</span>
+                    <span class="table-value" id="resGender">Male</span>
+                  </div>
+                  <div class="table-row">
+                    <span class="table-label">Emergency Phone:</span>
+                    <span class="table-value" id="resPhone">01711122233</span>
+                  </div>
+                  <div class="table-row">
+                    <span class="table-label">Payment Status:</span>
+                    <span class="table-value"><span class="badge badge-verified" id="resStatus">VERIFIED</span></span>
+                  </div>
+                </div>
+                <button id="downloadBibBtn" class="btn btn-primary btn-full btn-lg">Download Digital E-Bib</button>
+                <canvas id="bibCanvas" width="800" height="500" class="hidden-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pending Section -->
+          <div id="resultPending" class="result-pending hidden">
+            <div class="alert-box alert-warning">
+              <span class="alert-icon">⚠</span>
+              <div>
+                <strong>Verification Pending!</strong> We found your registration, but your payment or documentation is under verification.
+              </div>
+            </div>
+            <div class="pending-details glass-panel">
+              <p><strong>Runner Name:</strong> <span id="pendingName">Tahsin Ahmed</span></p>
+              <p><strong>Category:</strong> <span id="pendingCategory">5K Fun Run</span></p>
+              <p><strong>Registration Status:</strong> <span class="badge badge-pending">PENDING</span></p>
+              <div class="pending-instructions">
+                <h4>What should you do?</h4>
+                <p>If you made a payment via Bkash/Nagad within the last 24 hours, our finance team is matching your transaction code. This process can take up to 24-48 hours. If it's been longer than 48 hours, please email your transaction snapshot to <strong>support@jucsurun2026.com</strong>.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error/Not Found Section -->
+          <div id="resultNotFound" class="result-not-found hidden">
+            <div class="alert-box alert-danger">
+              <span class="alert-icon">🗙</span>
+              <div>
+                <strong>No Registration Found!</strong> We couldn't find any record matching your search query.
+              </div>
+            </div>
+            <div class="not-found-help glass-panel">
+              <p>Please double-check the spelling of the name or make sure you entered the correct 11-digit phone number used during registration (e.g. 017XXXXXXXX).</p>
+              <div class="action-help-buttons">
+                <a href="#categories" class="btn btn-primary">Go to Register</a>
+                <a href="mailto:support@jucsurun2026.com" class="btn btn-outline">Email Support</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Rules and Regulations Section -->
+  <section id="rules" class="section rules-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="section-tag">Race Guidelines</span>
+        <h2 class="section-title">Terms & Conditions</h2>
+        <div class="header-line"></div>
+      </div>
+      
+      <div class="grid grid-2-col rules-grid">
+        <!-- General Rules -->
+        <div class="rules-card glass-panel">
+          <h3 class="rules-card-title">📋 General Rules</h3>
+          <ul class="rules-list">
+            <li>
+              <strong>Eligibility:</strong> Open to all students and adventure enthusiasts who are registered.
+            </li>
+            <li>
+              <strong>Conduct:</strong> Participants must follow the organizer's instructions and maintain decorum throughout the event.
+            </li>
+            <li>
+              <strong>Safety & Liability:</strong> Participants are responsible for their own well-being. Organizers are not liable for injuries, accidents, or loss of belongings.
+            </li>
+            <li>
+              <strong>Photography:</strong> By participating, you consent to being photographed/filmed for promotional and media coverage purposes.
+            </li>
+            <li>
+              <strong>Refunds:</strong> Registration fees are non-refundable except in the event of cancellation.
+            </li>
+          </ul>
+        </div>
+
+        <!-- Race-Specific Rules -->
+        <div class="rules-card glass-panel">
+          <h3 class="rules-card-title">🏃 Race-Specific Rules</h3>
+          <ul class="rules-list">
+            <li>
+              <strong>Age Limit:</strong> Must be at least 15 years old on race day (September 25, 2026).
+            </li>
+            <li>
+              <strong>Health Profile:</strong> Participants must be physically fit. A medical certificate may be requested.
+            </li>
+            <li>
+              <strong>Time Limits (Cut-off):</strong>
+              <ul>
+                <li>10K Mini Marathon: <strong>120 Minutes</strong></li>
+                <li>5K Run: <strong>90 Minutes</strong></li>
+              </ul>
+            </li>
+            <li>
+              <strong>Compliance:</strong> You must follow the designated route and checkpoints. Deviating will lead to immediate disqualification.
+            </li>
+            <li>
+              <strong>Prohibited Items:</strong> Bicycles, skates, mobility aids (unless pre-approved), drugs, and smoking are strictly prohibited.
+            </li>
+            <li>
+              <strong>Reporting Time:</strong> Runners must report at the starting line at least <strong>30 minutes</strong> before the start time.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section id="faq" class="section faq-section bg-darker">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="section-tag">Got Questions?</span>
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <div class="header-line"></div>
+      </div>
+      <div class="faq-accordion-container">
+        
+        <div class="faq-item">
+          <button class="faq-question">
+            <span>When and where is the run taking place?</span>
+            <span class="faq-toggle-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <p>The run is scheduled for September 25, 2026. The starting assembly point is the Jahangirnagar University Central Shaheed Minar Square. Runners must assemble by 05:00 AM.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            <span>How do I collect my running kit (T-shirt & bib)?</span>
+            <span class="faq-toggle-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <p>Kit collection booths will be open from September 21 to September 24, 2026, from 10:00 AM to 06:00 PM at the JUCSU office building. You must show your registration confirmation email or verified E-Bib on your phone to collect your kit.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            <span>Is timing chip included for all categories?</span>
+            <span class="faq-toggle-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <p>The timing chip is included in the 10K Mini Marathon category. The 5K Run category does not include a timing chip; instead, 5K finishers will receive a participation certificate.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            <span>Is there any transportation/shuttle service provided?</span>
+            <span class="faq-toggle-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <p>Yes, a complimentary Bus Shuttle Service is available for all registered participants. Shuttle routes depart from Dhaka (Uttara, Gulshan, and Bongobazar) directly to the Jahangirnagar University campus. Specific timings and stops will be sent via SMS and email closer to the event.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            <span>Can I change my race category or transfer my registration?</span>
+            <span class="faq-toggle-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <p>No, category changes or registration transfers to other names are strictly not allowed due to safety, medical profiles, and chip configuration protocols.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            <span>What are the water points and medical facilities on route?</span>
+            <span class="faq-toggle-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <p>We have medical posts and drinking water points at every 3 km. Each hydration station has volunteers, fresh drinking water, electrolyte drinks, bananas, and a first-aid representative. Ambulances will be on standby for immediate evacuation.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer Section -->
+  <footer class="main-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <h3 class="footer-title">JUCSU RUN <span class="text-lime">2026</span></h3>
+        <p class="footer-desc">
+          Organized by Jahangirnagar University Central Students' Union (JUCSU). Celebrating athletics, campus beauty, and community bonding.
+        </p>
+        <div class="social-icons">
+          <a href="#" class="social-link" aria-label="Facebook">🌐</a>
+          <a href="#" class="social-link" aria-label="Instagram">📸</a>
+          <a href="#" class="social-link" aria-label="YouTube">📺</a>
+        </div>
+      </div>
+      <div class="footer-links-group">
+        <h4>Navigation</h4>
+        <ul class="footer-links">
+          <li><a href="#about">About Event</a></li>
+          <li><a href="#categories">Race Categories</a></li>
+          <li><a href="#swag">Runner Swag</a></li>
+          <li><a href="#route">Route Maps</a></li>
+        </ul>
+      </div>
+      <div class="footer-links-group">
+        <h4>Support</h4>
+        <ul class="footer-links">
+          <li><a href="#checker">Search Registration</a></li>
+          <li><a href="#faq">FAQs</a></li>
+          <li><a href="mailto:support@jucsurun2026.com">support@jucsurun2026.com</a></li>
+          <li><a href="tel:+8801700000000">Helpline: +880 1700 000 000</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container footer-bottom-container">
+        <p>&copy; 2026 JUCSU RUN. All Rights Reserved. Designed for JUCSU Run Organizing Committee.</p>
+        <a href="admin.html" class="admin-entry-link">Organizer Login</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="index.js"></script>
+</body>
+</html>

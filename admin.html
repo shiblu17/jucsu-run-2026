@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JUCSU RUN 2026 - Organizer Admin Panel</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <!-- Admin Header -->
+  <header class="admin-header">
+    <div class="container header-container">
+      <div class="brand-group">
+        <a href="index.html" class="back-link">← Main Site</a>
+        <h1 class="admin-title">Organizer Control Panel</h1>
+      </div>
+      <div class="status-indicator">
+        <span class="indicator-dot"></span>
+        <span>Connected (Local DB)</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Login Overlay Gate (For aesthetic professionalism) -->
+  <div class="login-gate" id="loginGate">
+    <div class="login-box glass-panel">
+      <h3 class="login-heading">Organizer Verification</h3>
+      <p class="login-desc">Please verify your organizer credentials to access registration databases.</p>
+      <form id="loginForm" onsubmit="return false;">
+        <div class="form-group">
+          <label for="adminPass" class="form-label">Access Passcode</label>
+          <input type="password" id="adminPass" class="form-input" placeholder="Hint: Enter 'admin' to test" required>
+        </div>
+        <button type="submit" id="loginBtn" class="btn btn-lime btn-full">Unlock Dashboard</button>
+        <p id="loginError" class="login-error hidden">Invalid passcode. Please try again.</p>
+      </form>
+    </div>
+  </div>
+
+  <main class="admin-main container hidden" id="adminContent">
+    
+    <!-- Stats Row -->
+    <section class="admin-stats-grid">
+      <div class="admin-stat-card glass-panel">
+        <span class="card-icon">👥</span>
+        <div class="card-info">
+          <h4 id="statTotal">0</h4>
+          <p>Total Registered</p>
+        </div>
+      </div>
+      <div class="admin-stat-card glass-panel border-success">
+        <span class="card-icon text-success">✓</span>
+        <div class="card-info">
+          <h4 id="statVerified">0</h4>
+          <p>Verified Profiles</p>
+        </div>
+      </div>
+      <div class="admin-stat-card glass-panel border-warning">
+        <span class="card-icon text-warning">⚠</span>
+        <div class="card-info">
+          <h4 id="statPending">0</h4>
+          <p>Pending Review</p>
+        </div>
+      </div>
+      <div class="admin-stat-card glass-panel border-lime">
+        <span class="card-icon text-lime">৳</span>
+        <div class="card-info">
+          <h4 id="statRevenue">৳0 BDT</h4>
+          <p>Revenue Checked</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Two Column Utility Section -->
+    <div class="admin-layout-grid">
+      
+      <!-- Left Column: Database Actions, CSV Importer, charts -->
+      <div class="admin-left-col">
+        
+        <!-- CSV Importer Panel -->
+        <div class="panel glass-panel">
+          <h3 class="panel-title">Batch Import Registrations</h3>
+          <p class="panel-desc">Paste comma-separated runner records to merge into the active database. Excellent for exporting Google Forms CSVs directly here.</p>
+          
+          <div class="csv-format-help">
+            <strong>Format (one runner per line):</strong><br>
+            <code>Bib, Full Name, Phone, Category, Tshirt, Gender, BloodGroup, Status, ParticipantType</code><br>
+            <span class="text-lime">Example:</span> <code>2026999, Rafiq Ali, 01799998888, 10K Mini Marathon, XL, Male, B+, Verified, Student</code>
+          </div>
+
+          <form id="csvImportForm" onsubmit="return false;">
+            <div class="form-group">
+              <label for="csvTextArea" class="form-label">CSV Raw Data Input</label>
+              <textarea id="csvTextArea" class="form-textarea" placeholder="Paste CSV rows here..." rows="6"></textarea>
+            </div>
+            <div class="csv-actions">
+              <button id="importMergeBtn" class="btn btn-lime btn-sm">Merge Data</button>
+              <button id="importReplaceBtn" class="btn btn-outline btn-sm text-danger">Replace Database</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Visual Analytics Panel -->
+        <div class="panel glass-panel">
+          <h3 class="panel-title">Race Analytics</h3>
+          
+          <div class="analytics-block">
+            <h4>Category Breakdown</h4>
+            <div class="chart-container">
+              <div class="chart-bar-row">
+                <span class="bar-label">10K Run</span>
+                <div class="bar-outer"><div class="bar-inner bg-lime" id="bar10K" style="width: 0%"></div></div>
+                <span class="bar-count" id="count10K">0</span>
+              </div>
+              <div class="chart-bar-row">
+                <span class="bar-label">5K Run</span>
+                <div class="bar-outer"><div class="bar-inner bg-lime" id="bar5K" style="width: 0%"></div></div>
+                <span class="bar-count" id="count5K">0</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="analytics-block" style="margin-top: 30px;">
+            <h4>T-Shirt Sizes</h4>
+            <div class="shirt-stats-grid" id="shirtGrid">
+              <!-- Dynamically populated sizes -->
+              <div class="shirt-badge">S: <span id="shirtS">0</span></div>
+              <div class="shirt-badge">M: <span id="shirtM">0</span></div>
+              <div class="shirt-badge">L: <span id="shirtL">0</span></div>
+              <div class="shirt-badge">XL: <span id="shirtXL">0</span></div>
+              <div class="shirt-badge">XXL: <span id="shirtXXL">0</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reset Panel -->
+        <div class="panel glass-panel border-danger-dim">
+          <h3 class="panel-title text-danger">Danger Zone</h3>
+          <p class="panel-desc">Resetting clears out all customizations and returns data to the default mock dataset.</p>
+          <button id="resetDbBtn" class="btn btn-outline btn-sm text-danger" style="border-color: rgba(235, 50, 65, 0.4)">Restore Default Database</button>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Registration Table and Form -->
+      <div class="admin-right-col">
+        
+        <!-- Add Runner Panel -->
+        <div class="panel glass-panel">
+          <h3 class="panel-title">Add Runner Manually</h3>
+          <form id="addRunnerForm" onsubmit="return false;" class="runner-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="runBib" class="form-label">Bib Number</label>
+                <input type="text" id="runBib" class="form-input form-input-sm" placeholder="e.g. 2026106" required>
+              </div>
+              <div class="form-group">
+                <label for="runName" class="form-label">Full Name</label>
+                <input type="text" id="runName" class="form-input form-input-sm" placeholder="e.g. Shakib Al Hasan" required>
+              </div>
+              <div class="form-group">
+                <label for="runPhone" class="form-label">Phone Number</label>
+                <input type="text" id="runPhone" class="form-input form-input-sm" placeholder="e.g. 01700000000" required>
+              </div>
+              <div class="form-group">
+                <label for="runCategory" class="form-label">Category</label>
+                <select id="runCategory" class="form-select" required>
+                  <option value="10K Mini Marathon" selected>10K Mini Marathon</option>
+                  <option value="5K Run">5K Run</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="runType" class="form-label">Participant Type</label>
+                <select id="runType" class="form-select" required>
+                  <option value="Student" selected>Running Student</option>
+                  <option value="Alumni/Outsider">Alumni / Outsider</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="runTshirt" class="form-label">T-Shirt Size</label>
+                <select id="runTshirt" class="form-select" required>
+                  <option value="S">S</option>
+                  <option value="M" selected>M</option>
+                  <option value="L">L</option>
+                  <option value="XL">XL</option>
+                  <option value="XXL">XXL</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="runGender" class="form-label">Gender</label>
+                <select id="runGender" class="form-select" required>
+                  <option value="Male" selected>Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="runBlood" class="form-label">Blood Group</label>
+                <input type="text" id="runBlood" class="form-input form-input-sm" placeholder="e.g. A+" required>
+              </div>
+              <div class="form-group">
+                <label for="runStatus" class="form-label">Status</label>
+                <select id="runStatus" class="form-select" required>
+                  <option value="Verified" selected>Verified</option>
+                  <option value="Pending">Pending</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" id="addRunnerBtn" class="btn btn-lime btn-sm btn-submit-runner">Add Runner</button>
+          </form>
+        </div>
+
+        <!-- Database Table Panel -->
+        <div class="panel glass-panel">
+          <div class="panel-header-table">
+            <h3 class="panel-title">Registration Database</h3>
+            <div class="table-search-box">
+              <input type="text" id="tableSearch" class="form-input form-input-sm" placeholder="Search by name, bib, or phone...">
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="db-table" id="dbTable">
+              <thead>
+                <tr>
+                  <th>Bib</th>
+                  <th>Name</th>
+                  <th>Phone</th>
+                  <th>Category</th>
+                  <th>Type</th>
+                  <th>T-Shirt</th>
+                  <th>Blood</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody">
+                <!-- Dynamically Populated Rows -->
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer-summary" id="tableFooterSummary">
+            Showing 0 of 0 entries
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Script links -->
+  <script src="admin.js"></script>
+</body>
+</html>

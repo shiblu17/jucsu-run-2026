@@ -1,0 +1,10 @@
+{
+  "name": "jucsu-run-2026",
+  "version": "1.0.0",
+  "description": "Official website for JUCSU RUN 2026: The Farewell marathon",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx -y http-server -p 3000"
+  },
+  "dependencies": {}
+}

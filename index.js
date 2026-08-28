@@ -253,6 +253,7 @@ function initRegistrationChecker() {
 
   // Pending placeholders
   const pendingName = document.getElementById('pendingName');
+  const pendingBib = document.getElementById('pendingBib');
   const pendingCategory = document.getElementById('pendingCategory');
 
   // Download Action
@@ -317,6 +318,7 @@ function initRegistrationChecker() {
       } else {
         // Pending Status
         pendingName.textContent = found.name;
+        pendingBib.textContent = found.bib;
         pendingCategory.textContent = found.category;
         pendingSection.classList.remove('hidden');
       }
@@ -679,6 +681,22 @@ function initRegisterTriggers() {
           </div>
         </div>
 
+        <!-- Section 4: Payment Details -->
+        <div>
+          <h4 style="color:var(--color-accent); font-size:0.9rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:6px; margin-bottom:12px; font-weight:700;">4. bKash Payment Details</h4>
+          <div style="background: rgba(255,255,255,0.03); border:1px dashed var(--color-glass-border); padding: 15px; border-radius:10px; margin-bottom: 12px; font-size:0.85rem; color:#fff; line-height: 1.5; text-align: left;">
+            <p style="margin-bottom:6px; color:#fff; font-weight:600;">How to Pay:</p>
+            <p>Please use **Send Money** to send your fee to this bKash Personal Number: <strong class="text-lime" style="font-size:1.05rem; display:inline-block; letter-spacing:0.03em;">01317982413</strong></p>
+            <div style="margin-top:6px; display:inline-block; padding:2px 8px; background:rgba(193, 216, 47, 0.15); border-radius:4px; border:1px solid rgba(193,216,47,0.3); font-weight:700;">
+              Fee: <span id="paymentFeeDisplay">৳800 BDT</span>
+            </div>
+          </div>
+          <div class="form-group" style="gap:6px;">
+            <label class="form-label" style="font-size:0.8rem; font-weight:600;">bKash Transaction ID <span style="color:#ff3b30;">*</span></label>
+            <input type="text" id="pubTxnId" class="form-input" style="padding:12px; font-size:0.95rem; text-transform:uppercase;" required placeholder="e.g. A1B2C3D4E5">
+          </div>
+        </div>
+
         <div style="display:flex; gap:12px; justify-content: flex-end; border-top:1px solid rgba(255,255,255,0.08); padding-top:16px; margin-top:10px;">
           <button type="button" class="btn btn-outline btn-sm" id="closeModalBtn" style="border-radius:6px; height:auto; padding:12px 24px;">Cancel</button>
           <button type="submit" class="btn btn-primary btn-sm" style="border-radius:6px; height:auto; padding:12px 24px; font-weight:700;">Submit Application</button>
@@ -696,12 +714,9 @@ function initRegisterTriggers() {
         Your Bib Number: <strong id="successBib" class="text-lime" style="font-size:1.3rem; display:block; margin-top:5px; background:rgba(193, 216, 47, 0.15); padding:6px 12px; border-radius:4px; border:1px solid rgba(193,216,47,0.3); display:inline-block;">2026XXX</strong>
       </p>
       <div style="background: rgba(255,255,255,0.03); border:1px dashed var(--color-glass-border); padding: 15px; border-radius:10px; margin-bottom: 20px; font-size:0.9rem; text-align:left; color:var(--color-text-muted); line-height: 1.5;">
-        <p style="margin-bottom:8px; color:#fff;"><strong>Payment Instructions:</strong></p>
-        <p>Please send the registration fee manually via bKash/Nagad Personal number: <strong>01700-000000</strong></p>
-        <ul style="margin-left:20px; margin-top:5px; display:flex; flex-direction:column; gap:4px; list-style:square; color:#fff;">
-          <li>Selected Fee: <strong class="text-lime" id="successFeeAmount">৳1200 BDT</strong></li>
-        </ul>
-        <p style="margin-top:8px;">Write your Bib Number (<span id="successBibRef" class="text-lime" style="font-weight:700;">Bib</span>) in the **Reference/Message** box of your payment. Verification will take 24-48 hours, after which you can search and download your E-Bib card!</p>
+        <p style="margin-bottom:8px; color:#fff;"><strong>Verification Pending</strong></p>
+        <p>We received your transaction ID: <strong id="successTxnRef" class="text-lime">TXNID</strong></p>
+        <p style="margin-top:8px;">The JUCSU RUN 2026 committee will verify your payment against this Transaction ID within 24-48 hours. Once verified, your status will change from **Pending** to **Verified**, and you will be able to search and download your Digital E-Bib card!</p>
       </div>
       <button class="btn btn-primary btn-sm" id="successCloseBtn" style="border-radius:6px; padding:10px 20px; height:auto;">Done</button>
     </div>
@@ -735,7 +750,35 @@ function initRegisterTriggers() {
       const is10K = category.includes('10K');
       document.getElementById('cat10k').checked = is10K;
       document.getElementById('cat5k').checked = !is10K;
+
+      // Update fee display
+      updateFeeDisplay();
     });
+  });
+
+  // Bind dynamic fee display to participant type options
+  const pubTypeRadios = document.querySelectorAll('input[name="pubType"]');
+  const paymentFeeDisplay = document.getElementById('paymentFeeDisplay');
+
+  function updateFeeDisplay() {
+    const selectedTypeEl = document.querySelector('input[name="pubType"]:checked');
+    if (!selectedTypeEl) return;
+    const selectedType = selectedTypeEl.value;
+    let feeText = '৳1200 BDT';
+    if (selectedType.includes('Student')) {
+      feeText = '৳800 BDT';
+    } else if (selectedType.includes('Alumni')) {
+      feeText = '৳1200 BDT';
+    } else if (selectedType.includes('External')) {
+      feeText = '৳1300 BDT';
+    }
+    if (paymentFeeDisplay) {
+      paymentFeeDisplay.textContent = feeText;
+    }
+  }
+
+  pubTypeRadios.forEach(radio => {
+    radio.addEventListener('change', updateFeeDisplay);
   });
 
   function closeModal() {
@@ -786,6 +829,7 @@ function initRegisterTriggers() {
     const gender = document.querySelector('input[name="pubGender"]:checked').value;
     const pickup = document.querySelector('input[name="pubPickup"]:checked').value;
     const blood = document.getElementById('pubBlood').value.trim().toUpperCase() || 'N/A';
+    const txnid = document.getElementById('pubTxnId').value.trim().toUpperCase();
 
     // Ensure database loaded
     await initDatabase();
@@ -802,7 +846,8 @@ function initRegisterTriggers() {
       blood,
       status: 'Pending',
       type,
-      pickup
+      pickup,
+      txnid
     };
 
     // If Supabase connected, insert
@@ -822,21 +867,10 @@ function initRegisterTriggers() {
     runnerDatabase.push(newRunner);
     localStorage.setItem('jucsu_registrations', JSON.stringify(runnerDatabase));
 
-    // Dynamic fee computation for success display
-    let feeText = '৳1200 BDT';
-    if (type.includes('Student')) {
-      feeText = '৳800 BDT';
-    } else if (type.includes('Alumni')) {
-      feeText = '৳1200 BDT';
-    } else if (type.includes('External')) {
-      feeText = '৳1300 BDT';
-    }
-    successFeeAmount.textContent = feeText;
-
     // Show success view
     successName.textContent = name;
     successBib.textContent = bib;
-    successBibRef.textContent = bib;
+    document.getElementById('successTxnRef').textContent = txnid;
 
     formContainer.classList.add('hidden');
     successContainer.classList.remove('hidden');

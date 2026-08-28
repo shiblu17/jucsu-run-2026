@@ -211,6 +211,7 @@ function renderTable(filterQuery = '') {
     return runner.name.toLowerCase().includes(cleanQuery) || 
            runner.bib.toLowerCase().includes(cleanQuery) || 
            runner.phone.toLowerCase().includes(cleanQuery) || 
+           (runner.txnid || '').toLowerCase().includes(cleanQuery) || 
            runner.category.toLowerCase().includes(cleanQuery);
   });
 
@@ -218,8 +219,8 @@ function renderTable(filterQuery = '') {
     const tr = document.createElement('tr');
     
     const statusClass = runner.status.toLowerCase() === 'verified' ? 'verified' : 'pending';
-    
-    const typeLabel = runner.type === 'Student' ? 'Student' : 'Alumni/Outsider';
+    const typeLabel = runner.type || 'JU Student (Batch 49 - 54)';
+    const txnLabel = runner.txnid || 'N/A';
     
     tr.innerHTML = `
       <td><strong>${runner.bib}</strong></td>
@@ -229,7 +230,8 @@ function renderTable(filterQuery = '') {
       <td><span class="badge" style="background: rgba(255,255,255,0.05); color: #fff; font-size: 0.75rem;">${typeLabel}</span></td>
       <td>${runner.tshirt}</td>
       <td>${runner.blood || 'N/A'}</td>
-      <td><span class="badge-status ${statusClass}" data-bib="${runner.bib}">${runner.status}</span></td>
+      <td><code style="color:var(--color-accent); font-weight:700; font-family:monospace; font-size:0.85rem;">${txnLabel}</code></td>
+      <td><span class="badge-status ${statusClass}" data-bib="${runner.bib}" style="cursor:pointer;">${runner.status}</span></td>
       <td><button class="btn-delete" data-bib="${runner.bib}">Delete</button></td>
     `;
     
@@ -328,6 +330,7 @@ function setupAddRunnerForm() {
     const blood = document.getElementById('runBlood').value.trim().toUpperCase();
     const status = document.getElementById('runStatus').value;
     const type = document.getElementById('runType').value;
+    const txnid = document.getElementById('runTxnId').value.trim().toUpperCase() || 'N/A';
 
     // Check if bib number already exists
     if (runnerDatabase.some(r => r.bib === bib)) {
@@ -335,7 +338,7 @@ function setupAddRunnerForm() {
       return;
     }
 
-    const newRunner = { bib, name, phone, category, tshirt, gender, blood, status, type };
+    const newRunner = { bib, name, phone, category, tshirt, gender, blood, status, type, txnid };
 
     if (supabaseClient) {
       try {
@@ -384,9 +387,10 @@ function setupCsvImporter() {
       const gender = parts[5] || 'Male';
       const blood = parts[6] || 'O+';
       const status = parts[7] || 'Verified';
-      const type = parts[8] || 'Student';
+      const type = parts[8] || 'JU Student (Batch 49 - 54)';
+      const txnid = parts[9] || 'N/A';
 
-      parsedRunners.push({ bib, name, phone, category, tshirt, gender, blood, status, type });
+      parsedRunners.push({ bib, name, phone, category, tshirt, gender, blood, status, type, txnid });
     });
 
     return parsedRunners;

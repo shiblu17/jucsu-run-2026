@@ -31,6 +31,8 @@
 html {
   scroll-behavior: smooth;
   font-size: 16px;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {
@@ -39,6 +41,7 @@ body {
   color: var(--color-text-main);
   line-height: 1.6;
   overflow-x: hidden;
+  max-width: 100%;
 }
 
 /* Scrollbar Style */
@@ -1542,7 +1545,7 @@ a {
     height: 75px;
   }
   .logo-text {
-    display: inline-block;
+    display: none;
   }
   .nav-links, .header-actions {
     display: none;

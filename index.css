@@ -1506,6 +1506,13 @@ a {
     gap: 40px;
     text-align: center;
   }
+  .hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+  }
   .hero-title {
     font-size: 3.2rem;
   }
@@ -1752,10 +1759,12 @@ a {
   .hero-subtitle {
     font-size: 0.95rem;
     margin-bottom: 24px;
+    text-align: center;
   }
   .hero-ctas {
     flex-direction: column;
     width: 100%;
+    max-width: 320px;
     gap: 12px;
   }
   .hero-ctas .btn {

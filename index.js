@@ -557,15 +557,13 @@ function initRegisterTriggers() {
               <label class="form-label" style="font-size:0.8rem; font-weight:600;">Full Name <span style="color:#ff3b30;">*</span></label>
               <input type="text" id="pubName" class="form-input" style="padding:12px; font-size:0.95rem;" required placeholder="e.g. Rafiq Ali">
             </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-              <div class="form-group" style="gap:6px;">
-                <label class="form-label" style="font-size:0.8rem; font-weight:600;">Contact Number <span style="color:#ff3b30;">*</span></label>
-                <input type="tel" id="pubPhone" class="form-input" style="padding:12px; font-size:0.95rem;" required placeholder="e.g. 017XXXXXXXX">
-              </div>
-              <div class="form-group" style="gap:6px;">
-                <label class="form-label" style="font-size:0.8rem; font-weight:600;">Email Address <span style="color:#ff3b30;">*</span></label>
-                <input type="email" id="pubEmail" class="form-input" style="padding:12px; font-size:0.95rem;" required placeholder="e.g. rafiq@gmail.com">
-              </div>
+            <div class="form-group" style="gap:6px;">
+              <label class="form-label" style="font-size:0.8rem; font-weight:600;">Contact Number <span style="color:#ff3b30;">*</span></label>
+              <input type="tel" id="pubPhone" class="form-input" style="padding:12px; font-size:0.95rem;" required placeholder="e.g. 017XXXXXXXX">
+            </div>
+            <div class="form-group" style="gap:6px;">
+              <label class="form-label" style="font-size:0.8rem; font-weight:600;">Email Address <span style="color:#ff3b30;">*</span></label>
+              <input type="email" id="pubEmail" class="form-input" style="padding:12px; font-size:0.95rem;" required placeholder="e.g. rafiq@gmail.com">
             </div>
             <div class="form-group" style="gap:6px;">
               <label class="form-label" style="font-size:0.8rem; font-weight:600;">Gender <span style="color:#ff3b30;">*</span></label>
@@ -619,36 +617,34 @@ function initRegisterTriggers() {
               </div>
             </div>
 
-            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px;">
-              <div class="form-group" style="gap:6px;">
-                <label class="form-label" style="font-size:0.8rem; font-weight:600;">T-Shirt Size <span style="color:#ff3b30;">*</span></label>
-                <div class="radio-tile-group">
-                  <div class="radio-tile-wrapper">
-                    <input type="radio" name="pubTshirt" value="S" required>
-                    <div class="radio-tile-content">S</div>
-                  </div>
-                  <div class="radio-tile-wrapper">
-                    <input type="radio" name="pubTshirt" value="M" checked required>
-                    <div class="radio-tile-content">M</div>
-                  </div>
-                  <div class="radio-tile-wrapper">
-                    <input type="radio" name="pubTshirt" value="L" required>
-                    <div class="radio-tile-content">L</div>
-                  </div>
-                  <div class="radio-tile-wrapper">
-                    <input type="radio" name="pubTshirt" value="XL" required>
-                    <div class="radio-tile-content">XL</div>
-                  </div>
-                  <div class="radio-tile-wrapper">
-                    <input type="radio" name="pubTshirt" value="XXL" required>
-                    <div class="radio-tile-content">XXL</div>
-                  </div>
+            <div class="form-group" style="gap:6px;">
+              <label class="form-label" style="font-size:0.8rem; font-weight:600;">T-Shirt Size <span style="color:#ff3b30;">*</span></label>
+              <div class="radio-tile-group">
+                <div class="radio-tile-wrapper">
+                  <input type="radio" name="pubTshirt" value="S" required>
+                  <div class="radio-tile-content">S</div>
+                </div>
+                <div class="radio-tile-wrapper">
+                  <input type="radio" name="pubTshirt" value="M" checked required>
+                  <div class="radio-tile-content">M</div>
+                </div>
+                <div class="radio-tile-wrapper">
+                  <input type="radio" name="pubTshirt" value="L" required>
+                  <div class="radio-tile-content">L</div>
+                </div>
+                <div class="radio-tile-wrapper">
+                  <input type="radio" name="pubTshirt" value="XL" required>
+                  <div class="radio-tile-content">XL</div>
+                </div>
+                <div class="radio-tile-wrapper">
+                  <input type="radio" name="pubTshirt" value="XXL" required>
+                  <div class="radio-tile-content">XXL</div>
                 </div>
               </div>
-              <div class="form-group" style="gap:6px;">
-                <label class="form-label" style="font-size:0.8rem; font-weight:600;">Blood Group</label>
-                <input type="text" id="pubBlood" class="form-input" style="padding:12px; font-size:0.95rem;" placeholder="e.g. B+">
-              </div>
+            </div>
+            <div class="form-group" style="gap:6px;">
+              <label class="form-label" style="font-size:0.8rem; font-weight:600;">Blood Group</label>
+              <input type="text" id="pubBlood" class="form-input" style="padding:12px; font-size:0.95rem;" placeholder="e.g. B+">
             </div>
           </div>
         </div>
@@ -682,11 +678,18 @@ function initRegisterTriggers() {
         <!-- Section 4: Payment Details -->
         <div>
           <h4 style="color:var(--color-accent); font-size:0.9rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:6px; margin-bottom:12px; font-weight:700;">4. bKash Payment Details</h4>
-          <div style="background: rgba(255,255,255,0.03); border:1px dashed var(--color-glass-border); padding: 15px; border-radius:10px; margin-bottom: 12px; font-size:0.85rem; color:#fff; line-height: 1.5; text-align: left;">
-            <p style="margin-bottom:6px; color:#fff; font-weight:600;">How to Pay:</p>
-            <p>Please use **Send Money** to send your fee to this bKash Personal Number: <strong class="text-lime" style="font-size:1.05rem; display:inline-block; letter-spacing:0.03em;">01317982413</strong></p>
-            <div style="margin-top:6px; display:inline-block; padding:2px 8px; background:rgba(193, 216, 47, 0.15); border-radius:4px; border:1px solid rgba(193,216,47,0.3); font-weight:700;">
-              Fee: <span id="paymentFeeDisplay">৳800 BDT</span>
+          <div style="background: rgba(193, 216, 47, 0.04); border: 1px solid rgba(193, 216, 47, 0.15); padding: 16px; border-radius: 12px; margin-bottom: 15px; font-size: 0.85rem; color: #e0e0e0; line-height: 1.6; text-align: left;">
+            <p style="margin-bottom: 8px; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+              <span>💸</span> Payment Instructions:
+            </p>
+            <p style="margin-bottom: 8px;">Please send the registration fee using <strong>Send Money</strong> to this bKash Personal Number:</p>
+            <p style="margin-bottom: 10px; background: rgba(0, 0, 0, 0.25); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05); display: flex; justify-content: space-between; align-items: center;">
+              <span class="text-lime" style="font-size: 1.1rem; font-weight: 700; letter-spacing: 0.05em;">01317982413</span>
+              <span style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase;">bKash Personal</span>
+            </p>
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(193, 216, 47, 0.12); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(193, 216, 47, 0.2); font-weight: 700; color: #fff;">
+              <span>Total Fee:</span>
+              <span class="text-lime" id="paymentFeeDisplay" style="font-size: 1rem;">৳800 BDT</span>
             </div>
           </div>
           <div class="form-group" style="gap:6px;">

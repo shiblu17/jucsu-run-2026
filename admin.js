@@ -28,6 +28,7 @@ async function initLoginGate() {
   const loginGate = document.getElementById('loginGate');
   const adminContent = document.getElementById('adminContent');
   const loginForm = document.getElementById('loginForm');
+  const adminEmailInput = document.getElementById('adminEmail');
   const adminPassInput = document.getElementById('adminPass');
   const loginError = document.getElementById('loginError');
   const loginBtn = document.getElementById('loginBtn');
@@ -80,6 +81,7 @@ async function initLoginGate() {
 
   // Handle Login submission
   loginForm.addEventListener('submit', async () => {
+    const email = adminEmailInput ? adminEmailInput.value.trim() : '';
     const password = adminPassInput.value.trim();
     loginError.classList.add('hidden');
     
@@ -90,7 +92,7 @@ async function initLoginGate() {
       
       try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({
-          email: 'admin@jucsu.com',
+          email: email,
           password: password
         });
         
@@ -103,7 +105,7 @@ async function initLoginGate() {
         initAdminDashboard();
       } catch (err) {
         console.error('Authentication failed:', err);
-        loginError.textContent = 'Verification failed: ' + (err.message || 'Invalid passcode.');
+        loginError.textContent = 'Verification failed: ' + (err.message || 'Invalid credentials.');
         loginError.classList.remove('hidden');
         adminPassInput.value = '';
         adminPassInput.focus();

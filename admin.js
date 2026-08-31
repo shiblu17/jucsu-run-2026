@@ -143,6 +143,7 @@ async function initAdminDashboard() {
   setupAddRunnerForm();
   setupCsvImporter();
   setupResetDb();
+  setupCsvExporter();
 }
 
 async function loadDatabase() {
@@ -190,6 +191,7 @@ function refreshDashboard() {
   renderStatistics();
   renderAnalyticsCharts();
   renderTable();
+  updateLogisticsSummary();
 }
 
 /* ==========================================
@@ -588,4 +590,145 @@ function setupResetDb() {
       window.location.reload();
     }
   });
+}
+
+/* ==========================================
+   ADMIN CSV EXPORT FUNCTIONALITY
+   ========================================== */
+function setupCsvExporter() {
+  const exportBtn = document.getElementById('exportCsvBtn');
+  if (!exportBtn) return;
+
+  exportBtn.addEventListener('click', () => {
+    if (runnerDatabase.length === 0) {
+      alert('No records to export!');
+      return;
+    }
+
+    // Define CSV Headers
+    const headers = [
+      'Bib',
+      'Name',
+      'Phone',
+      'Category',
+      'T-Shirt Size',
+      'Gender',
+      'Blood Group',
+      'Status',
+      'Participant Type',
+      'Transaction ID'
+    ];
+
+    // Map database records to rows
+    const rows = runnerDatabase.map(r => {
+      // Escape field values to prevent CSV injection / malformed quotes
+      const clean = (val) => {
+        if (val === undefined || val === null) return '';
+        const str = String(val).trim();
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      return [
+        clean(r.bib),
+        clean(r.name),
+        clean(r.phone),
+        clean(r.category),
+        clean(r.tshirt),
+        clean(r.gender || 'Male'),
+        clean(r.blood || 'N/A'),
+        clean(r.status),
+        clean(r.type || 'JU Student (Batch 48 - 55)'),
+        clean(r.txnid || 'N/A')
+      ].join(',');
+    });
+
+    // Combine headers and rows with UTF-8 BOM for proper Excel rendering of Bengali/special chars
+    const csvContent = "\uFEFF" + [headers.join(','), ...rows].join('\n');
+
+    // Download File Blob
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `JUCSU_RUN_2026_Registrations_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+}
+
+/* ==========================================
+   LOGISTICS SUMMARY RENDERING
+   ========================================== */
+function updateLogisticsSummary() {
+  // 1. T-Shirt sizes breakdown
+  const sizes = { S: 0, M: 0, L: 0, XL: 0, XXL: 0 };
+  
+  // 2. Bus routes breakdown
+  const routes = { Uttara: 0, Gulshan: 0, Bongobazar: 0, 'Self-Arranged': 0 };
+
+  // 3. Category count
+  let count10k = 0;
+  let count5k = 0;
+
+  runnerDatabase.forEach(r => {
+    // T-shirt counts
+    const t = (r.tshirt || '').toUpperCase().trim();
+    if (sizes.hasOwnProperty(t)) {
+      sizes[t]++;
+    }
+
+    // Bus counts
+    const p = r.pickup || 'Self-Arranged';
+    if (routes.hasOwnProperty(p)) {
+      routes[p]++;
+    } else {
+      // Fallback for variation in names
+      if (p.includes('Uttara')) routes['Uttara']++;
+      else if (p.includes('Gulshan')) routes['Gulshan']++;
+      else if (p.includes('Bongobazar')) routes['Bongobazar']++;
+      else routes['Self-Arranged']++;
+    }
+
+    // Category counts
+    const c = r.category || '';
+    if (c.includes('10K')) {
+      count10k++;
+    } else if (c.includes('5K')) {
+      count5k++;
+    }
+  });
+
+  // Populate T-shirt counts in DOM
+  const sS = document.getElementById('tshirtCountS');
+  const sM = document.getElementById('tshirtCountM');
+  const sL = document.getElementById('tshirtCountL');
+  const sXL = document.getElementById('tshirtCountXL');
+  const sXXL = document.getElementById('tshirtCountXXL');
+
+  if (sS) sS.textContent = sizes.S;
+  if (sM) sM.textContent = sizes.M;
+  if (sL) sL.textContent = sizes.L;
+  if (sXL) sXL.textContent = sizes.XL;
+  if (sXXL) sXXL.textContent = sizes.XXL;
+
+  // Populate Bus counts in DOM
+  const bUttara = document.getElementById('busCountUttara');
+  const bGulshan = document.getElementById('busCountGulshan');
+  const bBongobazar = document.getElementById('busCountBongobazar');
+  const bSelf = document.getElementById('busCountSelf');
+
+  if (bUttara) bUttara.textContent = routes.Uttara;
+  if (bGulshan) bGulshan.textContent = routes.Gulshan;
+  if (bBongobazar) bBongobazar.textContent = routes.Bongobazar;
+  if (bSelf) bSelf.textContent = routes['Self-Arranged'];
+
+  // Populate category counts in DOM
+  const l10k = document.getElementById('logistics10kCount');
+  const l5k = document.getElementById('logistics5kCount');
+
+  if (l10k) l10k.textContent = count10k;
+  if (l5k) l5k.textContent = count5k;
 }

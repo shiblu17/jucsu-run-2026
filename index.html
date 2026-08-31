@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="index.css?v=2.7">
+  <link rel="stylesheet" href="index.css?v=2.8">
 </head>
 <body>
 
@@ -94,6 +94,7 @@
         <a href="#swag" class="nav-link">Runner Swag</a>
         <a href="#route" class="nav-link">Routes</a>
         <a href="#checker" class="nav-link">Check Registration</a>
+        <a href="#badges" class="nav-link">Runner Card</a>
         <a href="#faq" class="nav-link">FAQs</a>
       </nav>
       <div class="header-actions">
@@ -116,6 +117,7 @@
       <a href="#swag" class="mobile-nav-link">Runner Swag</a>
       <a href="#route" class="mobile-nav-link">Routes</a>
       <a href="#checker" class="mobile-nav-link">Check Registration</a>
+      <a href="#badges" class="mobile-nav-link">Runner Card</a>
       <a href="#faq" class="mobile-nav-link">FAQs</a>
       <hr class="mobile-divider">
       <a href="admin.html" class="mobile-nav-link admin-link-mob">Admin Portal</a>
@@ -875,6 +877,74 @@
     </div>
   </section>
 
+  <!-- Badge Generator Section -->
+  <section id="badges" class="section badge-generator-section bg-darker" style="border-top: 1px solid rgba(255,255,255,0.03);">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="section-tag">Share Your Spirit</span>
+        <h2 class="section-title">Runner Card Generator</h2>
+        <div class="header-line"></div>
+        <p class="section-desc" style="max-width: 600px; margin: 15px auto 0 auto; color: var(--color-text-muted);">
+          Show the community you are ready! Upload your photo, fill in your details, and generate a customized shareable badge for social media.
+        </p>
+      </div>
+
+      <div class="badge-generator-grid">
+        <!-- Left: Form Controls -->
+        <div class="badge-form-panel glass-panel" style="padding: 30px; border-radius: 16px; display: flex; flex-direction: column; gap: 20px;">
+          <h3 style="color: #fff; font-family: var(--font-headings); font-size: 1.2rem; font-weight: 700; margin-bottom: 5px;">Configure Your Card</h3>
+          
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.85rem;">Full Name</label>
+            <input type="text" id="badgeName" class="form-input" placeholder="e.g. Tahsin Ahmed" style="padding: 12px; font-size: 0.95rem;">
+          </div>
+
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.85rem;">Batch / Affiliation</label>
+            <input type="text" id="badgeBatch" class="form-input" placeholder="e.g. Batch 48 / Alumni / External" style="padding: 12px; font-size: 0.95rem;">
+          </div>
+
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.85rem;">Run Category</label>
+            <select id="badgeCategory" class="form-input" style="padding: 12px; font-size: 0.95rem; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--color-glass-border); border-radius: 8px; color: #fff;">
+              <option value="10K Mini Marathon">10K Mini Marathon</option>
+              <option value="5K Run">5K Run</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.85rem;">Upload Profile Photo</label>
+            <div id="photoUploadArea" class="photo-upload-zone">
+              <span style="font-size: 2.2rem; display: block; margin-bottom: 8px;">📷</span>
+              <span style="font-size: 0.85rem; color: var(--color-text-muted); display: block; margin-bottom: 5px; font-weight: 600;">Drag & Drop or Click to Upload</span>
+              <span style="font-size: 0.75rem; color: rgba(255,255,255,0.3); display: block;">PNG, JPG (Square size works best)</span>
+              <input type="file" id="badgePhoto" accept="image/*" style="display: none;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Preview Display -->
+        <div style="display: flex; flex-direction: column; gap: 20px; align-items: center; width: 100%;">
+          <div class="badge-preview-container">
+            <!-- Hidden Canvas -->
+            <canvas id="badgeCanvas" width="800" height="800" style="display: none;"></canvas>
+            <!-- Render Image -->
+            <img id="badgePreview" src="" alt="Live Badge Preview" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+            <!-- Placeholder -->
+            <div id="badgePlaceholder" style="text-align: center; padding: 30px; color: var(--color-text-muted);">
+              <span style="font-size: 3rem; display: block; margin-bottom: 12px; opacity: 0.5;">🏃‍♂️</span>
+              <p style="font-size: 0.9rem; line-height: 1.5;">Fill in your details and upload a photo to generate your customized runner badge!</p>
+            </div>
+          </div>
+
+          <button id="downloadBadgeBtn" class="btn btn-lime btn-full disabled" disabled style="width: 100%; max-width: 380px; display: flex; align-items: center; justify-content: center; gap: 8px; height: auto; padding: 14px 20px;">
+            <span>📥</span> Download My Badge
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- FAQ Section -->
   <section id="faq" class="section faq-section bg-darker">
     <div class="container">
@@ -997,6 +1067,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="index.js?v=2.5"></script>
+  <script src="index.js?v=2.6"></script>
 </body>
 </html>

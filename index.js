@@ -39,6 +39,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Add modal registration click listeners (decorative)
   initRegisterTriggers();
+
+  // Initialize Runner Badge Generator
+  initBadgeGenerator();
 });
 
 /* ==========================================
@@ -882,4 +885,224 @@ function initRegisterTriggers() {
     formContainer.classList.add('hidden');
     successContainer.classList.remove('hidden');
   });
+}
+
+/* ==========================================
+   SHAREABLE RUNNER BADGE GENERATOR
+   ========================================== */
+function initBadgeGenerator() {
+  const badgeNameInput = document.getElementById('badgeName');
+  const badgeBatchInput = document.getElementById('badgeBatch');
+  const badgeCategoryInput = document.getElementById('badgeCategory');
+  const badgePhotoInput = document.getElementById('badgePhoto');
+  const photoUploadArea = document.getElementById('photoUploadArea');
+  const badgeCanvas = document.getElementById('badgeCanvas');
+  const badgePreview = document.getElementById('badgePreview');
+  const badgePlaceholder = document.getElementById('badgePlaceholder');
+  const downloadBadgeBtn = document.getElementById('downloadBadgeBtn');
+
+  let uploadedImage = null;
+
+  if (!badgeNameInput || !badgeCanvas) return;
+
+  // Handle Drag and Drop / Click for photo upload
+  if (photoUploadArea) {
+    photoUploadArea.addEventListener('click', () => badgePhotoInput.click());
+
+    photoUploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      photoUploadArea.classList.add('dragover');
+    });
+
+    photoUploadArea.addEventListener('dragleave', () => {
+      photoUploadArea.classList.remove('dragover');
+    });
+
+    photoUploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      photoUploadArea.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleImageUpload(e.dataTransfer.files[0]);
+      }
+    });
+  }
+
+  if (badgePhotoInput) {
+    badgePhotoInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleImageUpload(e.target.files[0]);
+      }
+    });
+  }
+
+  // Bind inputs to draw
+  [badgeNameInput, badgeBatchInput, badgeCategoryInput].forEach(input => {
+    if (input) {
+      input.addEventListener('input', drawBadge);
+      input.addEventListener('change', drawBadge);
+    }
+  });
+
+  function handleImageUpload(file) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        uploadedImage = img;
+        drawBadge();
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function drawBadge() {
+    if (!uploadedImage) return;
+
+    const ctx = badgeCanvas.getContext('2d');
+    const size = 800; // High resolution square
+
+    // Clear Canvas
+    ctx.clearRect(0, 0, size, size);
+
+    // 1. Draw Background (Rich Forest Green Gradient)
+    const bgGrad = ctx.createRadialGradient(size/2, size/2, 50, size/2, size/2, size*0.7);
+    bgGrad.addColorStop(0, '#04170d');
+    bgGrad.addColorStop(1, '#020d07');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, size, size);
+
+    // 2. Draw Decorative Neon Glowing Line Frame
+    ctx.strokeStyle = '#c1d82f';
+    ctx.lineWidth = 12;
+    ctx.strokeRect(20, 20, size - 40, size - 40);
+
+    // Inner thin border
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(35, 35, size - 70, size - 70);
+
+    // 3. Draw Branding Header
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 32px "Outfit", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.letterSpacing = '2px';
+    ctx.fillText('JAHANGIRNAGAR UNIVERSITY', size / 2, 85);
+
+    ctx.fillStyle = '#c1d82f';
+    ctx.font = '900 46px "Outfit", sans-serif';
+    ctx.fillText('JUCSU RUN 2026', size / 2, 140);
+
+    // Subtle horizontal divider line
+    ctx.strokeStyle = 'rgba(193, 216, 47, 0.2)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(150, 165);
+    ctx.lineTo(size - 150, 165);
+    ctx.stroke();
+
+    // Large decorative watermark text in background
+    ctx.fillStyle = 'rgba(193, 216, 47, 0.02)';
+    ctx.font = '900 130px "Outfit", sans-serif';
+    ctx.fillText('RUNNER', size / 2, 420);
+
+    // 4. Draw Circular Mask Profile Picture
+    const pX = size / 2;
+    const pY = 385;
+    const pRadius = 160;
+
+    // Draw profile outer neon circle
+    ctx.strokeStyle = '#c1d82f';
+    ctx.lineWidth = 8;
+    ctx.shadowColor = 'rgba(193, 216, 47, 0.4)';
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.arc(pX, pY, pRadius + 4, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Reset shadow
+    ctx.shadowBlur = 0;
+
+    // Mask image in circle
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(pX, pY, pRadius, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+
+    // Draw photo with crop cover math
+    const imgAspect = uploadedImage.width / uploadedImage.height;
+    let dWidth = pRadius * 2;
+    let dHeight = pRadius * 2;
+    let dx = pX - pRadius;
+    let dy = pY - pRadius;
+
+    if (imgAspect > 1) {
+      dWidth = dHeight * imgAspect;
+      dx = pX - dWidth / 2;
+    } else {
+      dHeight = dWidth / imgAspect;
+      dy = pY - dHeight / 2;
+    }
+
+    ctx.drawImage(uploadedImage, dx, dy, dWidth, dHeight);
+    ctx.restore();
+
+    // 5. Draw Badge Type Indicator Ribbon
+    ctx.fillStyle = '#c1d82f';
+    ctx.fillRect(size/2 - 120, pY + pRadius - 20, 240, 40);
+    ctx.fillStyle = '#000000';
+    ctx.font = '800 20px "Outfit", sans-serif';
+    ctx.fillText('OFFICIAL RUNNER', size / 2, pY + pRadius + 6);
+
+    // 6. Draw Runner Details at Bottom
+    const name = (badgeNameInput.value.trim() || 'YOUR NAME').toUpperCase();
+    const batch = (badgeBatchInput.value.trim() || 'AFFILIATION').toUpperCase();
+    const category = (badgeCategoryInput.value || '10K Mini Marathon').toUpperCase();
+
+    // Runner Name
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 38px "Outfit", sans-serif';
+    ctx.fillText(name, size / 2, 620);
+
+    // Details Grid (Batch & Category)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '600 22px "Inter", sans-serif';
+    ctx.fillText(batch, size / 2, 660);
+
+    ctx.fillStyle = '#c1d82f';
+    ctx.font = '800 26px "Outfit", sans-serif';
+    ctx.fillText(category, size / 2, 710);
+
+    // Footer decoration details
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.font = '500 16px "Inter", sans-serif';
+    ctx.fillText('OCTOBER 2, 2026 • JAHANGIRNAGAR UNIVERSITY CAMPUS', size / 2, 755);
+
+    // Render Canvas to Preview Image tag so mobile users can easily save it
+    if (badgePreview) {
+      badgePreview.src = badgeCanvas.toDataURL('image/png');
+      badgePreview.style.display = 'block';
+    }
+    if (badgePlaceholder) {
+      badgePlaceholder.style.display = 'none';
+    }
+
+    // Enable Download button
+    if (downloadBadgeBtn) {
+      downloadBadgeBtn.classList.remove('disabled');
+      downloadBadgeBtn.removeAttribute('disabled');
+    }
+  }
+
+  if (downloadBadgeBtn) {
+    downloadBadgeBtn.addEventListener('click', () => {
+      if (!uploadedImage) return;
+      const link = document.createElement('a');
+      const nameClean = (badgeNameInput.value.trim() || 'Runner').replace(/\s+/g, '_');
+      link.download = `JUCSU_RUN_2026_${nameClean}_Badge.png`;
+      link.href = badgeCanvas.toDataURL('image/png');
+      link.click();
+    });
+  }
 }

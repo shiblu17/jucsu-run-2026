@@ -538,4 +538,8 @@ body {
   .table-search-box {
     width: 100%;
   }
+  .logistics-grid {
+    grid-template-columns: 1fr !important;
+    gap: 15px !important;
+  }
 }

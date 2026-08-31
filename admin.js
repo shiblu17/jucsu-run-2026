@@ -251,9 +251,10 @@ function renderAnalyticsCharts() {
   bar5K.style.width = `${(num5K / total) * 100}%`;
 
   // Render T-Shirt sizes breakdown
-  const tShirtSizes = { S: 0, M: 0, L: 0, XL: 0, XXL: 0 };
+  const tShirtSizes = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
   runnerDatabase.forEach(r => {
-    const size = r.tshirt ? r.tshirt.toUpperCase() : '';
+    let size = r.tshirt ? r.tshirt.toUpperCase().trim() : '';
+    if (size === 'XXXL') size = '3XL';
     if (tShirtSizes[size] !== undefined) {
       tShirtSizes[size]++;
     }
@@ -264,6 +265,8 @@ function renderAnalyticsCharts() {
   document.getElementById('shirtL').textContent = tShirtSizes.L;
   document.getElementById('shirtXL').textContent = tShirtSizes.XL;
   document.getElementById('shirtXXL').textContent = tShirtSizes.XXL;
+  const s3XL = document.getElementById('shirt3XL');
+  if (s3XL) s3XL.textContent = tShirtSizes['3XL'];
 }
 
 /* ==========================================
@@ -664,7 +667,7 @@ function setupCsvExporter() {
    ========================================== */
 function updateLogisticsSummary() {
   // 1. T-Shirt sizes breakdown
-  const sizes = { S: 0, M: 0, L: 0, XL: 0, XXL: 0 };
+  const sizes = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
   
   // 2. Bus routes breakdown
   const routes = { Uttara: 0, Gulshan: 0, Bongobazar: 0, 'Self-Arranged': 0 };
@@ -675,7 +678,8 @@ function updateLogisticsSummary() {
 
   runnerDatabase.forEach(r => {
     // T-shirt counts
-    const t = (r.tshirt || '').toUpperCase().trim();
+    let t = (r.tshirt || '').toUpperCase().trim();
+    if (t === 'XXXL') t = '3XL';
     if (sizes.hasOwnProperty(t)) {
       sizes[t]++;
     }
@@ -707,12 +711,14 @@ function updateLogisticsSummary() {
   const sL = document.getElementById('tshirtCountL');
   const sXL = document.getElementById('tshirtCountXL');
   const sXXL = document.getElementById('tshirtCountXXL');
+  const s3XL = document.getElementById('tshirtCount3XL');
 
   if (sS) sS.textContent = sizes.S;
   if (sM) sM.textContent = sizes.M;
   if (sL) sL.textContent = sizes.L;
   if (sXL) sXL.textContent = sizes.XL;
   if (sXXL) sXXL.textContent = sizes.XXL;
+  if (s3XL) s3XL.textContent = sizes['3XL'];
 
   // Populate Bus counts in DOM
   const bUttara = document.getElementById('busCountUttara');

@@ -235,8 +235,12 @@ function initFaqAccordion() {
 function initRegistrationChecker() {
   const searchInput = document.getElementById('searchQuery');
   const searchBtn = document.getElementById('searchBtn');
+  const searchBtnText = document.getElementById('searchBtnText');
+  const clearSearchBtn = document.getElementById('clearSearchBtn');
   const resultsBox = document.getElementById('checkerResults');
   
+  const multipleSection = document.getElementById('resultMultiple');
+  const multipleMatchesList = document.getElementById('multipleMatchesList');
   const foundSection = document.getElementById('resultFound');
   const pendingSection = document.getElementById('resultPending');
   const notFoundSection = document.getElementById('resultNotFound');
@@ -249,87 +253,157 @@ function initRegistrationChecker() {
 
   // Detail table placeholders
   const resCategory = document.getElementById('resCategory');
+  const resType = document.getElementById('resType');
   const resTshirt = document.getElementById('resTshirt');
-  const resGender = document.getElementById('resGender');
+  const resPickup = document.getElementById('resPickup');
   const resPhone = document.getElementById('resPhone');
   const resStatus = document.getElementById('resStatus');
 
   // Pending placeholders
   const pendingName = document.getElementById('pendingName');
   const pendingCategory = document.getElementById('pendingCategory');
+  const pendingType = document.getElementById('pendingType');
+  const pendingTshirt = document.getElementById('pendingTshirt');
+  const pendingTxnid = document.getElementById('pendingTxnid');
 
-  // Download Action
+  // Action Buttons
   const downloadBtn = document.getElementById('downloadBibBtn');
+  const quickBadgeBtn = document.getElementById('quickGenerateBadgeBtn');
 
   // Variable to store currently found runner details for download
   let currentRunner = null;
 
-  async function performSearch() {
-    const query = searchInput.value.trim().toLowerCase();
-    
-    if (!query) {
-      alert('Please enter a phone number or name to search.');
-      return;
-    }
-
-    // Refresh database in case admin updated it in another tab
-    await initDatabase();
-
-    // Look up in database
-    // Matches exact phone or checks if query is substring of name
-    const found = runnerDatabase.find(runner => {
-      const runnerName = runner.name.toLowerCase();
-      const runnerPhone = (runner.phone || '').replace(/[^0-9]/g, ''); // strip formatting
-      const cleanQuery = query.replace(/[^0-9a-zA-Z]/g, ''); // alphanumeric
-
-      // Search matches: exact phone, exact bib, or name match
-      return runnerPhone === cleanQuery || 
-             (runner.bib || '') === cleanQuery || 
-             runnerName.includes(query);
+  // Clear button toggle
+  if (searchInput && clearSearchBtn) {
+    searchInput.addEventListener('input', () => {
+      clearSearchBtn.style.display = searchInput.value ? 'block' : 'none';
     });
+    clearSearchBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      clearSearchBtn.style.display = 'none';
+      searchInput.focus();
+    });
+  }
 
-    // Reset results display
-    resultsBox.classList.remove('hidden');
+  function displayRunnerDetails(runner) {
+    currentRunner = runner;
+    if (multipleSection) multipleSection.classList.add('hidden');
     foundSection.classList.add('hidden');
     pendingSection.classList.add('hidden');
     notFoundSection.classList.add('hidden');
 
-    if (found) {
-      currentRunner = found;
-      if (found.status === 'Verified') {
-        // Setup E-Bib visual display
-        bibNumText.textContent = found.bib;
-        bibNameText.textContent = found.name;
-        bibBloodText.textContent = found.blood || 'N/A';
-        
-        let typeBadge = '5K RUN';
-        if (found.category.includes('10K')) {
-          typeBadge = '10K CHIP';
-        }
-        bibTypeTag.textContent = typeBadge;
+    if (runner.status === 'Verified') {
+      // Setup E-Bib visual display
+      bibNumText.textContent = runner.bib;
+      bibNameText.textContent = runner.name;
+      bibBloodText.textContent = runner.blood || 'N/A';
+      
+      let typeBadge = '5K RUN';
+      if ((runner.category || '').includes('10K')) {
+        typeBadge = '10K CHIP';
+      }
+      bibTypeTag.textContent = typeBadge;
 
-        // Setup detail table
-        resCategory.textContent = found.category;
-        resTshirt.textContent = found.tshirt;
-        resGender.textContent = found.gender;
-        resPhone.textContent = found.phone.replace(/.(?=.{4})/g, '*'); // mask phone number except last 4 digits
+      // Setup detail table
+      if (resCategory) resCategory.textContent = runner.category;
+      if (resType) resType.textContent = runner.type || 'JU Student';
+      if (resTshirt) resTshirt.textContent = runner.tshirt;
+      if (resPickup) resPickup.textContent = runner.pickup || 'Self-Arranged';
+      if (resPhone) resPhone.textContent = (runner.phone || '').replace(/.(?=.{4})/g, '*');
+      if (resStatus) {
         resStatus.textContent = 'VERIFIED';
         resStatus.className = 'badge badge-verified';
-
-        foundSection.classList.remove('hidden');
-      } else {
-        // Pending Status
-        pendingName.textContent = found.name;
-        pendingCategory.textContent = found.category;
-        pendingSection.classList.remove('hidden');
       }
+
+      foundSection.classList.remove('hidden');
     } else {
-      currentRunner = null;
-      notFoundSection.classList.remove('hidden');
+      // Pending Status
+      if (pendingName) pendingName.textContent = runner.name;
+      if (pendingCategory) pendingCategory.textContent = runner.category;
+      if (pendingType) pendingType.textContent = runner.type || 'JU Student (Batch 48 - 55)';
+      if (pendingTshirt) pendingTshirt.textContent = runner.tshirt || 'M';
+      if (pendingTxnid) pendingTxnid.textContent = runner.txnid || 'bKash Transaction Pending';
+      
+      pendingSection.classList.remove('hidden');
     }
 
-    // Scroll down to results smoothly
     resultsBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  async function performSearch() {
+    const rawQuery = searchInput.value.trim();
+    const query = rawQuery.toLowerCase();
+    
+    if (!query) {
+      alert('Please enter a phone number, bib number, name, or bKash TrxID to search.');
+      return;
+    }
+
+    if (searchBtnText) searchBtnText.textContent = 'Searching...';
+    searchBtn.disabled = true;
+
+    try {
+      // Refresh database in case admin updated it in another tab
+      await initDatabase();
+
+      const cleanQuery = query.replace(/[^0-9a-zA-Z]/g, ''); // alphanumeric
+
+      // Filter all matches in database
+      const matches = runnerDatabase.filter(runner => {
+        const runnerName = (runner.name || '').toLowerCase();
+        const runnerPhone = (runner.phone || '').replace(/[^0-9]/g, '');
+        const runnerBib = (runner.bib || '').toLowerCase();
+        const runnerTxnid = (runner.txnid || '').toLowerCase();
+
+        return (cleanQuery && runnerPhone === cleanQuery) ||
+               (cleanQuery && runnerBib === cleanQuery) ||
+               (cleanQuery && runnerTxnid.includes(cleanQuery)) ||
+               (runnerName.includes(query));
+      });
+
+      // Reset results display
+      resultsBox.classList.remove('hidden');
+      if (multipleSection) multipleSection.classList.add('hidden');
+      foundSection.classList.add('hidden');
+      pendingSection.classList.add('hidden');
+      notFoundSection.classList.add('hidden');
+
+      if (matches.length === 1) {
+        displayRunnerDetails(matches[0]);
+      } else if (matches.length > 1) {
+        // Render Multiple Matches Selector
+        multipleMatchesList.innerHTML = '';
+        matches.forEach(runner => {
+          const item = document.createElement('div');
+          item.className = 'match-card-item glass-panel';
+          const isVerified = runner.status === 'Verified';
+          item.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-weight: 700; font-family: var(--font-headings); font-size: 1.1rem; color: ${isVerified ? 'var(--color-accent)' : '#ffaa00'};">
+                ${isVerified ? '#' + runner.bib : 'PENDING'}
+              </span>
+              <div>
+                <strong style="color: #fff; font-size: 0.95rem;">${runner.name}</strong>
+                <div style="font-size: 0.8rem; color: var(--color-text-muted);">${runner.category} • ${runner.tshirt}</div>
+              </div>
+            </div>
+            <button class="btn ${isVerified ? 'btn-lime' : 'btn-outline'} btn-sm">Select</button>
+          `;
+          item.addEventListener('click', () => displayRunnerDetails(runner));
+          multipleMatchesList.appendChild(item);
+        });
+
+        multipleSection.classList.remove('hidden');
+        resultsBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else {
+        currentRunner = null;
+        notFoundSection.classList.remove('hidden');
+        resultsBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    } finally {
+      if (searchBtnText) searchBtnText.textContent = 'Search Status';
+      searchBtn.disabled = false;
+    }
   }
 
   // Trigger search on button click
@@ -343,10 +417,42 @@ function initRegistrationChecker() {
   });
 
   // Canvas Downloader Handler
-  downloadBtn.addEventListener('click', () => {
-    if (!currentRunner) return;
-    generateCanvasBib(currentRunner);
-  });
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', () => {
+      if (!currentRunner) return;
+      generateCanvasBib(currentRunner);
+    });
+  }
+
+  // Quick link from verified E-Bib to Runner Badge Generator
+  if (quickBadgeBtn) {
+    quickBadgeBtn.addEventListener('click', () => {
+      if (!currentRunner) return;
+      
+      const badgeNameInput = document.getElementById('badgeName');
+      const badgeBatchInput = document.getElementById('badgeBatch');
+      const badgeCategoryInput = document.getElementById('badgeCategory');
+
+      if (badgeNameInput) badgeNameInput.value = currentRunner.name;
+      if (badgeBatchInput) badgeBatchInput.value = currentRunner.type || 'JU Student (Batch 48 - 55)';
+      if (badgeCategoryInput) {
+        if ((currentRunner.category || '').includes('10K')) {
+          badgeCategoryInput.value = '10K Mini Marathon';
+        } else {
+          badgeCategoryInput.value = '5K Run';
+        }
+      }
+
+      // Trigger input event to refresh preview if photo is uploaded
+      if (badgeNameInput) badgeNameInput.dispatchEvent(new Event('input'));
+
+      // Smooth scroll to badges section
+      const badgesSection = document.getElementById('badges');
+      if (badgesSection) {
+        badgesSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  }
 }
 
 /* ==========================================
@@ -642,6 +748,10 @@ function initRegisterTriggers() {
                 <div class="radio-tile-wrapper">
                   <input type="radio" name="pubTshirt" value="XXL" required>
                   <div class="radio-tile-content">XXL</div>
+                </div>
+                <div class="radio-tile-wrapper">
+                  <input type="radio" name="pubTshirt" value="3XL" required>
+                  <div class="radio-tile-content">3XL</div>
                 </div>
               </div>
             </div>

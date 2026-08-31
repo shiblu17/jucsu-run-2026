@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="index.css?v=2.8">
+  <link rel="stylesheet" href="index.css?v=2.9">
 </head>
 <body>
 
@@ -672,16 +672,33 @@
 
       <div class="checker-container glass-panel">
         <div class="search-form-row">
-          <div class="form-group search-input-group">
-            <label for="searchQuery" class="form-label">Phone Number or Full Name</label>
-            <input type="text" id="searchQuery" class="form-input" placeholder="e.g. 01711122233 or Anik Rahman...">
-            <span class="input-hint">Search requires full mobile number or exact name matches.</span>
+          <div class="form-group search-input-group" style="position: relative;">
+            <label for="searchQuery" class="form-label" style="font-weight: 600;">Search Registration</label>
+            <div style="position: relative; display: flex; align-items: center; width: 100%;">
+              <input type="text" id="searchQuery" class="form-input" placeholder="Enter Phone (017XXXXXXXX), Bib, Name, or TrxID..." style="padding-right: 40px;">
+              <button id="clearSearchBtn" type="button" style="position: absolute; right: 12px; background: none; border: none; color: var(--color-text-muted); cursor: pointer; font-size: 1.1rem; display: none; line-height: 1;" title="Clear">✕</button>
+            </div>
+            <span class="input-hint">Search by 11-digit mobile number, Bib Number (e.g. 2026101), Full Name, or bKash TrxID.</span>
           </div>
-          <button id="searchBtn" class="btn btn-lime btn-lg btn-search">Search Status</button>
+          <button id="searchBtn" class="btn btn-lime btn-lg btn-search">
+            <span id="searchBtnText">Search Status</span>
+          </button>
         </div>
 
         <!-- Dynamic Results Display -->
         <div id="checkerResults" class="checker-results-box hidden">
+
+          <!-- Multiple Matches Section -->
+          <div id="resultMultiple" class="result-multiple hidden" style="margin-bottom: 25px;">
+            <div class="alert-box alert-warning" style="margin-bottom: 15px;">
+              <span class="alert-icon">🔍</span>
+              <div>
+                <strong>Multiple Registrations Found!</strong> We found more than one matching profile. Please select your record below:
+              </div>
+            </div>
+            <div id="multipleMatchesList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+          </div>
+
           <!-- Found Section -->
           <div id="resultFound" class="result-found hidden">
             <div class="alert-box alert-success">
@@ -724,7 +741,6 @@
                     </div>
                   </div>
                   <div class="bib-qr-area">
-                    <!-- Standard vector QR-like grid representation -->
                     <svg class="qr-svg" viewBox="0 0 100 100">
                       <rect x="0" y="0" width="100" height="100" fill="#ffffff"/>
                       <rect x="5" y="5" width="25" height="25" fill="#000000"/>
@@ -733,7 +749,6 @@
                       <rect x="75" y="10" width="15" height="15" fill="#ffffff"/>
                       <rect x="5" y="70" width="25" height="25" fill="#000000"/>
                       <rect x="10" y="75" width="15" height="15" fill="#ffffff"/>
-                      <!-- Random QR mock paths -->
                       <path d="M 40,10 H 50 V 20 H 40 Z M 55,5 H 65 V 15 H 55 Z M 40,40 H 60 V 50 H 40 Z M 70,40 H 80 V 60 H 70 Z M 85,70 H 95 V 95 H 85 Z M 40,75 H 50 V 90 H 40 Z M 55,60 H 70 V 70 H 55 Z M 70,80 H 80 V 90 H 70 Z" fill="#000"/>
                     </svg>
                   </div>
@@ -742,19 +757,23 @@
 
               <!-- Actions & Stats -->
               <div class="bib-action-panel">
-                <h3>Your Registration Details</h3>
+                <h3>Your Verified Registration Details</h3>
                 <div class="verified-table glass-panel">
                   <div class="table-row">
                     <span class="table-label">Category:</span>
                     <span class="table-value" id="resCategory">10K Run</span>
                   </div>
                   <div class="table-row">
+                    <span class="table-label">Participant Type:</span>
+                    <span class="table-value" id="resType">JU Student</span>
+                  </div>
+                  <div class="table-row">
                     <span class="table-label">T-Shirt Size:</span>
                     <span class="table-value" id="resTshirt">M</span>
                   </div>
                   <div class="table-row">
-                    <span class="table-label">Gender:</span>
-                    <span class="table-value" id="resGender">Male</span>
+                    <span class="table-label">Bus Pickup:</span>
+                    <span class="table-value" id="resPickup">Self-Arranged</span>
                   </div>
                   <div class="table-row">
                     <span class="table-label">Emergency Phone:</span>
@@ -765,7 +784,14 @@
                     <span class="table-value"><span class="badge badge-verified" id="resStatus">VERIFIED</span></span>
                   </div>
                 </div>
-                <button id="downloadBibBtn" class="btn btn-primary btn-full btn-lg">Download Digital E-Bib</button>
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                  <button id="downloadBibBtn" class="btn btn-primary btn-full btn-lg" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span>📥</span> Download Digital E-Bib
+                  </button>
+                  <button id="quickGenerateBadgeBtn" class="btn btn-lime btn-full" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span>🖼️</span> Generate Social Media Runner Card
+                  </button>
+                </div>
                 <canvas id="bibCanvas" width="800" height="500" class="hidden-canvas"></canvas>
               </div>
             </div>
@@ -779,14 +805,40 @@
                 <strong>Verification Pending!</strong> We found your registration, but your payment or documentation is under verification.
               </div>
             </div>
-            <div class="pending-details glass-panel">
-              <p><strong>Runner Name:</strong> <span id="pendingName">Tahsin Ahmed</span></p>
-              <p><strong>Bib Number:</strong> <span class="text-amber" style="font-weight: 700; font-size: 0.95rem;">Pending Payment Verification</span></p>
-              <p><strong>Category:</strong> <span id="pendingCategory">5K Fun Run</span></p>
-              <p><strong>Registration Status:</strong> <span class="badge badge-pending">PENDING</span></p>
-              <div class="pending-instructions">
-                <h4>What should you do?</h4>
-                <p>If you made a payment via bKash to <strong>01317982413</strong>, our finance team is matching your transaction ID against your Bib registration. Verification will take 24-48 hours. If it takes longer, please contact <a href="https://wa.me/8801317982413" target="_blank" class="text-lime" style="font-weight: 700; text-decoration: underline;">WhatsApp Support</a> or join our <a href="https://chat.whatsapp.com/Hauj6W8EzPp17mGwKkMBTD" target="_blank" class="text-lime" style="font-weight: 700; text-decoration: underline;">WhatsApp Group</a>.</p>
+
+            <!-- Visual Progress Stepper -->
+            <div class="checker-stepper">
+              <div class="step-item completed">
+                <div class="step-circle">✓</div>
+                <span class="step-label">Registration Submitted</span>
+              </div>
+              <div class="step-item active">
+                <div class="step-circle">2</div>
+                <span class="step-label">bKash Verification</span>
+              </div>
+              <div class="step-item">
+                <div class="step-circle">3</div>
+                <span class="step-label">Bib Issuance</span>
+              </div>
+            </div>
+
+            <div class="pending-details glass-panel" style="padding: 25px; border-radius: 14px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;" class="pending-info-grid">
+                <div><strong style="color: var(--color-text-muted); font-size: 0.8rem; text-transform: uppercase;">Runner Name:</strong><br><span id="pendingName" style="color: #fff; font-weight: 700; font-size: 1.05rem;">Tahsin Ahmed</span></div>
+                <div><strong style="color: var(--color-text-muted); font-size: 0.8rem; text-transform: uppercase;">Bib Status:</strong><br><span class="text-amber" style="font-weight: 700; font-size: 1.05rem;">Awaiting Verification</span></div>
+                <div><strong style="color: var(--color-text-muted); font-size: 0.8rem; text-transform: uppercase;">Category:</strong><br><span id="pendingCategory" style="color: #fff; font-weight: 600;">5K Fun Run</span></div>
+                <div><strong style="color: var(--color-text-muted); font-size: 0.8rem; text-transform: uppercase;">Participant Type:</strong><br><span id="pendingType" style="color: #fff; font-weight: 600;">JU Student</span></div>
+                <div><strong style="color: var(--color-text-muted); font-size: 0.8rem; text-transform: uppercase;">T-Shirt Size:</strong><br><span id="pendingTshirt" style="color: #fff; font-weight: 600;">L</span></div>
+                <div><strong style="color: var(--color-text-muted); font-size: 0.8rem; text-transform: uppercase;">bKash Transaction ID:</strong><br><span id="pendingTxnid" style="color: var(--color-accent); font-weight: 700; font-family: monospace;">BL9XXXXXXXX</span></div>
+              </div>
+
+              <div class="pending-instructions" style="background: rgba(0,0,0,0.25); padding: 18px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                <h4 style="color: #fff; font-size: 0.95rem; margin-bottom: 8px;">What should you do?</h4>
+                <p style="font-size: 0.9rem; color: var(--color-text-muted); line-height: 1.6; margin-bottom: 12px;">If you sent payment via bKash to <strong>01317982413</strong>, our finance team is matching your Transaction ID against your registration. Verification takes <strong>24-48 hours</strong>.</p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                  <a href="https://wa.me/8801317982413" target="_blank" class="btn btn-lime btn-sm">WhatsApp Helpline: 01317982413</a>
+                  <a href="https://chat.whatsapp.com/Hauj6W8EzPp17mGwKkMBTD" target="_blank" class="btn btn-outline btn-sm">Join WhatsApp Group</a>
+                </div>
               </div>
             </div>
           </div>
@@ -800,7 +852,7 @@
               </div>
             </div>
             <div class="not-found-help glass-panel">
-              <p>Please double-check the spelling of the name or make sure you entered the correct 11-digit phone number used during registration (e.g. 017XXXXXXXX).</p>
+              <p>Please double-check the spelling of the name or make sure you entered the correct 11-digit phone number used during registration (e.g. 017XXXXXXXX) or bKash TrxID.</p>
               <div class="action-help-buttons" style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <a href="#categories" class="btn btn-primary">Go to Register</a>
                 <a href="https://wa.me/8801317982413" target="_blank" class="btn btn-lime">WhatsApp Support</a>
@@ -1067,6 +1119,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="index.js?v=2.6"></script>
+  <script src="index.js?v=2.7"></script>
 </body>
 </html>

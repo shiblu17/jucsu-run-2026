@@ -213,7 +213,7 @@ function renderStatistics() {
       const type = r.type || 'JU Student (Batch 48 - 55)';
       
       if (type.includes('Student') || type === 'Student') {
-        fee = 800;
+        fee = (r.category && r.category.includes('10K')) ? 1000 : 800;
       } else if (type.includes('Alumni') || type === 'Alumni') {
         fee = 1200;
       } else {

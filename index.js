@@ -762,9 +762,19 @@ function initRegisterTriggers() {
     const selectedTypeEl = document.querySelector('input[name="pubType"]:checked');
     if (!selectedTypeEl) return;
     const selectedType = selectedTypeEl.value;
+    
+    // Check if 10K is selected
+    const is10K = document.getElementById('cat10k') && document.getElementById('cat10k').checked;
+    
+    // Dynamically update the student option label to match selected category fee
+    const studentLabel = document.querySelector('input[value="JU Student (Batch 48 - 55)"] ~ .radio-tile-content');
+    if (studentLabel) {
+      studentLabel.textContent = `🎓 JU Student (Batch 48 - 55) - ${is10K ? '1000' : '800'} BDT`;
+    }
+    
     let feeText = '৳1200 BDT';
     if (selectedType.includes('Student')) {
-      feeText = '৳800 BDT';
+      feeText = is10K ? '৳1000 BDT' : '৳800 BDT';
     } else if (selectedType.includes('Alumni')) {
       feeText = '৳1200 BDT';
     } else if (selectedType.includes('External')) {

@@ -210,7 +210,7 @@ function renderStatistics() {
     .filter(r => r.status === 'Verified')
     .reduce((sum, r) => {
       let fee = 0;
-      const type = r.type || 'JU Student (Batch 49 - 54)';
+      const type = r.type || 'JU Student (Batch 49 - 55)';
       
       if (type.includes('Student') || type === 'Student') {
         fee = 800;
@@ -288,7 +288,7 @@ function renderTable(filterQuery = '') {
     const tr = document.createElement('tr');
     
     const statusClass = runner.status.toLowerCase() === 'verified' ? 'verified' : 'pending';
-    const typeLabel = runner.type || 'JU Student (Batch 49 - 54)';
+    const typeLabel = runner.type || 'JU Student (Batch 49 - 55)';
     const txnLabel = runner.txnid || 'N/A';
     
     tr.innerHTML = `
@@ -456,7 +456,7 @@ function setupCsvImporter() {
       const gender = parts[5] || 'Male';
       const blood = parts[6] || 'O+';
       const status = parts[7] || 'Verified';
-      const type = parts[8] || 'JU Student (Batch 49 - 54)';
+      const type = parts[8] || 'JU Student (Batch 49 - 55)';
       const txnid = parts[9] || 'N/A';
 
       parsedRunners.push({ bib, name, phone, category, tshirt, gender, blood, status, type, txnid });

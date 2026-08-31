@@ -17,47 +17,114 @@ if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CO
 let runnerDatabase = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-  
   // 1. Password Verification Gate
   initLoginGate();
-
-  // 2. Database Load and Rendering
-  initAdminDashboard();
 });
 
 /* ==========================================
    PASSWORD LOCK GATE
    ========================================== */
-function initLoginGate() {
+async function initLoginGate() {
   const loginGate = document.getElementById('loginGate');
   const adminContent = document.getElementById('adminContent');
   const loginForm = document.getElementById('loginForm');
   const adminPassInput = document.getElementById('adminPass');
   const loginError = document.getElementById('loginError');
+  const loginBtn = document.getElementById('loginBtn');
+  const connectionStatus = document.getElementById('connectionStatus');
+  const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+
+  // Update status indicators
+  if (supabaseClient) {
+    if (connectionStatus) connectionStatus.textContent = 'Connected (Supabase)';
+  } else {
+    if (connectionStatus) connectionStatus.textContent = 'Connected (Local DB)';
+  }
+
+  // Setup Logout click
+  if (adminLogoutBtn) {
+    adminLogoutBtn.addEventListener('click', async () => {
+      if (supabaseClient) {
+        await supabaseClient.auth.signOut();
+      }
+      sessionStorage.removeItem('jucsu_admin_logged');
+      window.location.reload();
+    });
+  }
+
+  // Check Supabase active auth session
+  if (supabaseClient) {
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        sessionStorage.setItem('jucsu_admin_logged', 'true');
+        loginGate.classList.add('hidden');
+        adminContent.classList.remove('hidden');
+        if (adminLogoutBtn) adminLogoutBtn.style.display = 'block';
+        initAdminDashboard();
+        return;
+      }
+    } catch (e) {
+      console.error('Error checking active Supabase session:', e);
+    }
+  }
 
   // Check Session Storage for existing login
   if (sessionStorage.getItem('jucsu_admin_logged') === 'true') {
     loginGate.classList.add('hidden');
     adminContent.classList.remove('hidden');
+    if (adminLogoutBtn) adminLogoutBtn.style.display = 'block';
+    initAdminDashboard();
     return;
   }
 
   // Handle Login submission
-  loginForm.addEventListener('submit', () => {
+  loginForm.addEventListener('submit', async () => {
     const password = adminPassInput.value.trim();
+    loginError.classList.add('hidden');
     
-    // Check credentials (simple client side passcode 'admin')
-    if (password === 'admin' || password === 'jucsu2026') {
-      sessionStorage.setItem('jucsu_admin_logged', 'true');
-      loginGate.classList.add('hidden');
-      adminContent.classList.remove('hidden');
-      loginError.classList.add('hidden');
-      // Load initial tables and statistics
-      initAdminDashboard();
+    if (supabaseClient) {
+      const originalText = loginBtn.textContent;
+      loginBtn.textContent = 'Verifying...';
+      loginBtn.disabled = true;
+      
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: 'admin@jucsu.com',
+          password: password
+        });
+        
+        if (error) throw error;
+        
+        sessionStorage.setItem('jucsu_admin_logged', 'true');
+        loginGate.classList.add('hidden');
+        adminContent.classList.remove('hidden');
+        if (adminLogoutBtn) adminLogoutBtn.style.display = 'block';
+        initAdminDashboard();
+      } catch (err) {
+        console.error('Authentication failed:', err);
+        loginError.textContent = 'Verification failed: ' + (err.message || 'Invalid passcode.');
+        loginError.classList.remove('hidden');
+        adminPassInput.value = '';
+        adminPassInput.focus();
+      } finally {
+        loginBtn.textContent = originalText;
+        loginBtn.disabled = false;
+      }
     } else {
-      loginError.classList.remove('hidden');
-      adminPassInput.value = '';
-      adminPassInput.focus();
+      // Offline fallback
+      if (password === 'admin' || password === 'jucsu2026') {
+        sessionStorage.setItem('jucsu_admin_logged', 'true');
+        loginGate.classList.add('hidden');
+        adminContent.classList.remove('hidden');
+        if (adminLogoutBtn) adminLogoutBtn.style.display = 'block';
+        initAdminDashboard();
+      } else {
+        loginError.textContent = 'Invalid passcode. Please try again.';
+        loginError.classList.remove('hidden');
+        adminPassInput.value = '';
+        adminPassInput.focus();
+      }
     }
   });
 }

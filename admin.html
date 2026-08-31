@@ -142,6 +142,12 @@
             <div><strong>10K Run:</strong> <span id="logistics10kCount" class="text-lime" style="font-weight: 700;">0</span></div>
             <div><strong>5K Run:</strong> <span id="logistics5kCount" class="text-lime" style="font-weight: 700;">0</span></div>
           </div>
+
+          <!-- Kit Point Breakdown -->
+          <div style="margin-top: 10px; padding: 10px 15px; background: rgba(0,210,255,0.05); border-radius: 8px; border: 1px solid rgba(0,210,255,0.15); display: flex; justify-content: space-between; font-size: 0.85rem; color: #fff;">
+            <div><strong>📍 DU Kit Point:</strong> <span id="kitCountDU" class="text-lime" style="font-weight: 700;">0</span></div>
+            <div><strong>📍 JU Kit Point:</strong> <span id="kitCountJU" class="text-lime" style="font-weight: 700;">0</span></div>
+          </div>
         </div>
 
         <!-- CSV Importer Panel -->
@@ -162,27 +168,29 @@
             </div>
             <div class="csv-actions">
               <button id="importMergeBtn" class="btn btn-lime btn-sm">Merge Data</button>
-              <button id="importReplaceBtn" class="btn btn-outline btn-sm text-danger">Replace Database</button>
+              <button id="importClearBtn" class="btn btn-outline btn-sm">Clear</button>
             </div>
           </form>
         </div>
 
-        <!-- Visual Analytics Panel -->
+        <!-- Analytics Block: Category and T-Shirt Distribution -->
         <div class="panel glass-panel">
-          <h3 class="panel-title">Race Analytics</h3>
+          <h3 class="panel-title">Registration Demographics</h3>
           
           <div class="analytics-block">
             <h4>Category Breakdown</h4>
-            <div class="chart-container">
-              <div class="chart-bar-row">
-                <span class="bar-label">10K Run</span>
-                <div class="bar-outer"><div class="bar-inner bg-lime" id="bar10K" style="width: 0%"></div></div>
-                <span class="bar-count" id="count10K">0</span>
+            <div class="chart-bar-container">
+              <div class="chart-bar-wrapper">
+                <span class="chart-label">10K Run (<span id="count10K">0</span>)</span>
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill fill-10k" id="bar10K" style="width: 0%"></div>
+                </div>
               </div>
-              <div class="chart-bar-row">
-                <span class="bar-label">5K Run</span>
-                <div class="bar-outer"><div class="bar-inner bg-lime" id="bar5K" style="width: 0%"></div></div>
-                <span class="bar-count" id="count5K">0</span>
+              <div class="chart-bar-wrapper">
+                <span class="chart-label">5K Run (<span id="count5K">0</span>)</span>
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill fill-5k" id="bar5K" style="width: 0%"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -257,6 +265,13 @@
                 </select>
               </div>
               <div class="form-group">
+                <label for="runKitPoint" class="form-label">Kit Point</label>
+                <select id="runKitPoint" class="form-select" required>
+                  <option value="Dhaka University" selected>Dhaka University</option>
+                  <option value="Jahangirnagar University">Jahangirnagar University</option>
+                </select>
+              </div>
+              <div class="form-group">
                 <label for="runGender" class="form-label">Gender</label>
                 <select id="runGender" class="form-select" required>
                   <option value="Male" selected>Male</option>
@@ -305,6 +320,7 @@
                   <th>Category</th>
                   <th>Type</th>
                   <th>T-Shirt</th>
+                  <th>Kit Point</th>
                   <th>Blood</th>
                   <th>Transaction ID</th>
                   <th>Status</th>
@@ -330,6 +346,6 @@
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=2.0"></script>
+  <script src="admin.js?v=2.1"></script>
 </body>
 </html>

@@ -256,6 +256,7 @@ function initRegistrationChecker() {
   const resType = document.getElementById('resType');
   const resTshirt = document.getElementById('resTshirt');
   const resPickup = document.getElementById('resPickup');
+  const resKitPoint = document.getElementById('resKitPoint');
   const resPhone = document.getElementById('resPhone');
   const resStatus = document.getElementById('resStatus');
 
@@ -264,6 +265,7 @@ function initRegistrationChecker() {
   const pendingCategory = document.getElementById('pendingCategory');
   const pendingType = document.getElementById('pendingType');
   const pendingTshirt = document.getElementById('pendingTshirt');
+  const pendingKitPoint = document.getElementById('pendingKitPoint');
   const pendingTxnid = document.getElementById('pendingTxnid');
 
   // Action Buttons
@@ -309,6 +311,7 @@ function initRegistrationChecker() {
       if (resType) resType.textContent = runner.type || 'JU Student';
       if (resTshirt) resTshirt.textContent = runner.tshirt;
       if (resPickup) resPickup.textContent = runner.pickup || 'Self-Arranged';
+      if (resKitPoint) resKitPoint.textContent = runner.kitpoint || 'Jahangirnagar University';
       if (resPhone) resPhone.textContent = (runner.phone || '').replace(/.(?=.{4})/g, '*');
       if (resStatus) {
         resStatus.textContent = 'VERIFIED';
@@ -322,6 +325,7 @@ function initRegistrationChecker() {
       if (pendingCategory) pendingCategory.textContent = runner.category;
       if (pendingType) pendingType.textContent = runner.type || 'JU Student (Batch 48 - 55)';
       if (pendingTshirt) pendingTshirt.textContent = runner.tshirt || 'M';
+      if (pendingKitPoint) pendingKitPoint.textContent = runner.kitpoint || 'Jahangirnagar University';
       if (pendingTxnid) pendingTxnid.textContent = runner.txnid || 'bKash Transaction Pending';
       
       pendingSection.classList.remove('hidden');
@@ -759,6 +763,19 @@ function initRegisterTriggers() {
               <label class="form-label" style="font-size:0.8rem; font-weight:600;">Blood Group</label>
               <input type="text" id="pubBlood" class="form-input" style="padding:12px; font-size:0.95rem;" placeholder="e.g. B+">
             </div>
+            <div class="form-group" style="gap:6px;">
+              <label class="form-label" style="font-size:0.8rem; font-weight:600;">Kit Collection Point <span style="color:#ff3b30;">*</span></label>
+              <div class="radio-tile-group">
+                <div class="radio-tile-wrapper">
+                  <input type="radio" name="pubKitPoint" value="Dhaka University" checked required>
+                  <div class="radio-tile-content">📍 Dhaka University</div>
+                </div>
+                <div class="radio-tile-wrapper">
+                  <input type="radio" name="pubKitPoint" value="Jahangirnagar University" required>
+                  <div class="radio-tile-content">📍 Jahangirnagar University</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -949,6 +966,7 @@ function initRegisterTriggers() {
     const tshirt = document.querySelector('input[name="pubTshirt"]:checked').value;
     const gender = document.querySelector('input[name="pubGender"]:checked').value;
     const pickup = document.querySelector('input[name="pubPickup"]:checked').value;
+    const kitpoint = document.querySelector('input[name="pubKitPoint"]:checked') ? document.querySelector('input[name="pubKitPoint"]:checked').value : 'Jahangirnagar University';
     const blood = document.getElementById('pubBlood').value.trim().toUpperCase() || 'N/A';
     const txnid = document.getElementById('pubTxnId').value.trim().toUpperCase();
 
@@ -968,6 +986,7 @@ function initRegisterTriggers() {
       status: 'Pending',
       type,
       pickup,
+      kitpoint,
       txnid
     };
 

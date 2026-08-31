@@ -303,6 +303,7 @@ function renderTable(filterQuery = '') {
       <td>${runner.category}</td>
       <td><span class="badge" style="background: rgba(255,255,255,0.05); color: #fff; font-size: 0.75rem;">${typeLabel}</span></td>
       <td>${runner.tshirt}</td>
+      <td><span style="font-size: 0.8rem; color: var(--color-accent);">${runner.kitpoint || 'Jahangirnagar University'}</span></td>
       <td>${runner.blood || 'N/A'}</td>
       <td><code style="color:var(--color-accent); font-weight:700; font-family:monospace; font-size:0.85rem;">${txnLabel}</code></td>
       <td><span class="badge-status ${statusClass}" data-bib="${runner.bib}" style="cursor:pointer;">${runner.status}</span></td>
@@ -400,6 +401,7 @@ function setupAddRunnerForm() {
     const phone = document.getElementById('runPhone').value.trim();
     const category = document.getElementById('runCategory').value;
     const tshirt = document.getElementById('runTshirt').value;
+    const kitpoint = document.getElementById('runKitPoint') ? document.getElementById('runKitPoint').value : 'Jahangirnagar University';
     const gender = document.getElementById('runGender').value;
     const blood = document.getElementById('runBlood').value.trim().toUpperCase();
     const status = document.getElementById('runStatus').value;
@@ -412,7 +414,7 @@ function setupAddRunnerForm() {
       return;
     }
 
-    const newRunner = { bib, name, phone, category, tshirt, gender, blood, status, type, txnid };
+    const newRunner = { bib, name, phone, category, tshirt, kitpoint, gender, blood, status, type, txnid };
 
     if (supabaseClient) {
       try {
@@ -615,6 +617,7 @@ function setupCsvExporter() {
       'Phone',
       'Category',
       'T-Shirt Size',
+      'Kit Collection Point',
       'Gender',
       'Blood Group',
       'Status',
@@ -640,6 +643,7 @@ function setupCsvExporter() {
         clean(r.phone),
         clean(r.category),
         clean(r.tshirt),
+        clean(r.kitpoint || 'Jahangirnagar University'),
         clean(r.gender || 'Male'),
         clean(r.blood || 'N/A'),
         clean(r.status),
@@ -676,6 +680,10 @@ function updateLogisticsSummary() {
   let count10k = 0;
   let count5k = 0;
 
+  // 4. Kit Collection points breakdown
+  let countKitDU = 0;
+  let countKitJU = 0;
+
   runnerDatabase.forEach(r => {
     // T-shirt counts
     let t = (r.tshirt || '').toUpperCase().trim();
@@ -702,6 +710,14 @@ function updateLogisticsSummary() {
       count10k++;
     } else if (c.includes('5K')) {
       count5k++;
+    }
+
+    // Kit Collection Point counts
+    const kp = (r.kitpoint || '').toLowerCase();
+    if (kp.includes('dhaka')) {
+      countKitDU++;
+    } else {
+      countKitJU++;
     }
   });
 
@@ -737,4 +753,11 @@ function updateLogisticsSummary() {
 
   if (l10k) l10k.textContent = count10k;
   if (l5k) l5k.textContent = count5k;
+
+  // Populate Kit Point counts in DOM
+  const kDU = document.getElementById('kitCountDU');
+  const kJU = document.getElementById('kitCountJU');
+
+  if (kDU) kDU.textContent = countKitDU;
+  if (kJU) kJU.textContent = countKitJU;
 }

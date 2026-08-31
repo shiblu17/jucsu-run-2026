@@ -603,8 +603,8 @@ function initRegisterTriggers() {
               <label class="form-label" style="font-size:0.8rem; font-weight:600;">Participant Type <span style="color:#ff3b30;">*</span></label>
               <div class="radio-tile-group vertical">
                 <div class="radio-tile-wrapper">
-                  <input type="radio" name="pubType" value="JU Student (Batch 49 - 55)" checked required>
-                  <div class="radio-tile-content">🎓 JU Student (Batch 49 - 55) - 800 BDT</div>
+                  <input type="radio" name="pubType" value="JU Student (Batch 48 - 55)" checked required>
+                  <div class="radio-tile-content">🎓 JU Student (Batch 48 - 55) - 800 BDT</div>
                 </div>
                 <div class="radio-tile-wrapper">
                   <input type="radio" name="pubType" value="JU Alumni" required>

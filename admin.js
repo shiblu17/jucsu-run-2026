@@ -19,6 +19,8 @@ let runnerDatabase = [];
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Password Verification Gate
   initLoginGate();
+  // 2. AI Copilot
+  initAiCopilot();
 });
 
 /* ==========================================
@@ -782,49 +784,74 @@ function initAiCopilot() {
   const closeBtn = document.getElementById('closeAiChatBtn');
   const chatForm = document.getElementById('aiChatForm');
   const queryInput = document.getElementById('aiQueryInput');
+  const sendBtn = document.getElementById('aiSendBtn');
   const messagesContainer = document.getElementById('aiChatMessages');
   const quickPromptsContainer = document.getElementById('aiQuickPrompts');
 
   if (!triggerBtn || !chatDrawer) return;
 
   // Toggle drawer visibility
-  triggerBtn.addEventListener('click', () => {
+  triggerBtn.onclick = (e) => {
+    e.preventDefault();
     chatDrawer.classList.toggle('hidden');
-    if (!chatDrawer.classList.contains('hidden')) {
+    if (!chatDrawer.classList.contains('hidden') && queryInput) {
       queryInput.focus();
     }
-  });
+  };
 
   if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
+    closeBtn.onclick = (e) => {
+      e.preventDefault();
       chatDrawer.classList.add('hidden');
-    });
+    };
   }
 
   // Bind quick prompt buttons
   if (quickPromptsContainer) {
     quickPromptsContainer.querySelectorAll('.quick-prompt-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.onclick = (e) => {
+        e.preventDefault();
         const query = btn.getAttribute('data-query');
         if (query) {
-          queryInput.value = query;
+          if (queryInput) queryInput.value = query;
           handleUserQuery(query);
         }
-      });
+      };
     });
   }
 
   // Handle Form submit
   if (chatForm) {
-    chatForm.addEventListener('submit', (e) => {
+    chatForm.onsubmit = (e) => {
       e.preventDefault();
-      const query = queryInput.value.trim();
+      const query = queryInput ? queryInput.value.trim() : '';
       if (!query) return;
       handleUserQuery(query);
-    });
+    };
+  }
+
+  if (sendBtn) {
+    sendBtn.onclick = (e) => {
+      e.preventDefault();
+      const query = queryInput ? queryInput.value.trim() : '';
+      if (!query) return;
+      handleUserQuery(query);
+    };
+  }
+
+  if (queryInput) {
+    queryInput.onkeydown = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const query = queryInput.value.trim();
+        if (!query) return;
+        handleUserQuery(query);
+      }
+    };
   }
 
   function appendMessage(text, isUser = false) {
+    if (!messagesContainer) return;
     const msgDiv = document.createElement('div');
     msgDiv.className = `ai-msg ${isUser ? 'ai-msg-user' : 'ai-msg-bot'}`;
     msgDiv.innerHTML = `<div class="msg-bubble">${text}</div>`;
@@ -832,15 +859,19 @@ function initAiCopilot() {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
 
-  function handleUserQuery(query) {
+  async function handleUserQuery(query) {
     appendMessage(query, true);
-    queryInput.value = '';
+    if (queryInput) queryInput.value = '';
 
-    // Show quick typing indicator then compute response
+    if (!runnerDatabase || runnerDatabase.length === 0) {
+      await loadDatabase();
+    }
+
+    // Show quick response
     setTimeout(() => {
       const responseHtml = processCopilotQuery(query);
       appendMessage(responseHtml, false);
-    }, 200);
+    }, 100);
   }
 
   function processCopilotQuery(rawQuery) {

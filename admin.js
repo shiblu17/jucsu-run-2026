@@ -144,6 +144,7 @@ async function initAdminDashboard() {
   setupCsvImporter();
   setupResetDb();
   setupCsvExporter();
+  initAiCopilot();
 }
 
 async function loadDatabase() {
@@ -760,4 +761,319 @@ function updateLogisticsSummary() {
 
   if (kDU) kDU.textContent = countKitDU;
   if (kJU) kJU.textContent = countKitJU;
+}
+
+/* ==========================================
+   JUCSU ADMIN AI COPILOT & DATA INTELLIGENCE
+   ========================================== */
+function initAiCopilot() {
+  const triggerBtn = document.getElementById('aiCopilotBtn');
+  const chatDrawer = document.getElementById('aiChatDrawer');
+  const closeBtn = document.getElementById('closeAiChatBtn');
+  const chatForm = document.getElementById('aiChatForm');
+  const queryInput = document.getElementById('aiQueryInput');
+  const messagesContainer = document.getElementById('aiChatMessages');
+  const quickPromptsContainer = document.getElementById('aiQuickPrompts');
+
+  if (!triggerBtn || !chatDrawer) return;
+
+  // Toggle drawer visibility
+  triggerBtn.addEventListener('click', () => {
+    chatDrawer.classList.toggle('hidden');
+    if (!chatDrawer.classList.contains('hidden')) {
+      queryInput.focus();
+    }
+  });
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      chatDrawer.classList.add('hidden');
+    });
+  }
+
+  // Bind quick prompt buttons
+  if (quickPromptsContainer) {
+    quickPromptsContainer.querySelectorAll('.quick-prompt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const query = btn.getAttribute('data-query');
+        if (query) {
+          queryInput.value = query;
+          handleUserQuery(query);
+        }
+      });
+    });
+  }
+
+  // Handle Form submit
+  if (chatForm) {
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const query = queryInput.value.trim();
+      if (!query) return;
+      handleUserQuery(query);
+    });
+  }
+
+  function appendMessage(text, isUser = false) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `ai-msg ${isUser ? 'ai-msg-user' : 'ai-msg-bot'}`;
+    msgDiv.innerHTML = `<div class="msg-bubble">${text}</div>`;
+    messagesContainer.appendChild(msgDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  function handleUserQuery(query) {
+    appendMessage(query, true);
+    queryInput.value = '';
+
+    // Show quick typing indicator then compute response
+    setTimeout(() => {
+      const responseHtml = processCopilotQuery(query);
+      appendMessage(responseHtml, false);
+    }, 200);
+  }
+
+  function processCopilotQuery(rawQuery) {
+    const q = rawQuery.toLowerCase().trim();
+    const totalRunners = runnerDatabase.length;
+    const verifiedRunners = runnerDatabase.filter(r => r.status === 'Verified');
+    const pendingRunners = runnerDatabase.filter(r => r.status === 'Pending');
+
+    // 1. T-Shirt Size Queries (টি-শার্ট, t-shirt, shirt, সাইজ, size, xxl, 3xl, ইত্যাদি)
+    if (q.includes('টি-শার্ট') || q.includes('tshirt') || q.includes('t-shirt') || q.includes('shirt') || q.includes('সাইজ') || q.includes('size')) {
+      const sizes = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
+      runnerDatabase.forEach(r => {
+        let t = (r.tshirt || '').toUpperCase().trim();
+        if (t === 'XXXL') t = '3XL';
+        if (sizes.hasOwnProperty(t)) sizes[t]++;
+      });
+
+      // Specific size queries
+      if (q.includes('3xl') || q.includes('xxxl')) {
+        return `👕 মোট <strong>3XL</strong> সাইজের টি-শার্টের চাহিদা: <span class="ai-stat-highlight">${sizes['3XL']} টি</span>।`;
+      }
+      if (q.includes('xxl')) {
+        return `👕 মোট <strong>XXL</strong> সাইজের টি-শার্টের চাহিদা: <span class="ai-stat-highlight">${sizes.XXL} টি</span>।`;
+      }
+      if (q.includes('xl')) {
+        return `👕 মোট <strong>XL</strong> সাইজের টি-শার্টের চাহিদা: <span class="ai-stat-highlight">${sizes.XL} টি</span>।`;
+      }
+      if (q.includes('m') || q.includes('মিডিয়াম')) {
+        return `👕 মোট <strong>M</strong> সাইজের টি-শার্টের চাহিদা: <span class="ai-stat-highlight">${sizes.M} টি</span>।`;
+      }
+      if (q.includes('s') || q.includes('স্মল')) {
+        return `👕 মোট <strong>S</strong> সাইজের টি-শার্টের চাহিদা: <span class="ai-stat-highlight">${sizes.S} টি</span>।`;
+      }
+
+      return `
+        👕 <strong>টি-শার্ট সাইজ অনুযায়ী মোট চাহিদা সামারি:</strong><br>
+        <table class="ai-data-table">
+          <tr><th>Size</th><th>Count</th><th>Percentage</th></tr>
+          <tr><td>S</td><td><strong>${sizes.S}</strong> টি</td><td>${totalRunners ? Math.round((sizes.S/totalRunners)*100) : 0}%</td></tr>
+          <tr><td>M</td><td><strong>${sizes.M}</strong> টি</td><td>${totalRunners ? Math.round((sizes.M/totalRunners)*100) : 0}%</td></tr>
+          <tr><td>L</td><td><strong>${sizes.L}</strong> টি</td><td>${totalRunners ? Math.round((sizes.L/totalRunners)*100) : 0}%</td></tr>
+          <tr><td>XL</td><td><strong>${sizes.XL}</strong> টি</td><td>${totalRunners ? Math.round((sizes.XL/totalRunners)*100) : 0}%</td></tr>
+          <tr><td>XXL</td><td><strong>${sizes.XXL}</strong> টি</td><td>${totalRunners ? Math.round((sizes.XXL/totalRunners)*100) : 0}%</td></tr>
+          <tr><td>3XL</td><td><strong>${sizes['3XL']}</strong> টি</td><td>${totalRunners ? Math.round((sizes['3XL']/totalRunners)*100) : 0}%</td></tr>
+        </table>
+        সর্বমোট অর্ডার করতে হবে: <span class="ai-stat-highlight">${totalRunners} টি</span>
+      `;
+    }
+
+    // 2. Revenue / Finance Queries (টাকা, রেভিনিউ, revenue, কালেকশন, fund, আয়, ফি)
+    if (q.includes('রেভিনিউ') || q.includes('revenue') || q.includes('টাকা') || q.includes('কালেকশন') || q.includes('আয়') || q.includes('fee') || q.includes('ফি') || q.includes('fund') || q.includes('price')) {
+      const verifiedRevenue = verifiedRunners.reduce((sum, r) => {
+        let fee = 0;
+        const type = r.type || 'JU Student (Batch 48 - 55)';
+        if (type.includes('Student') || type === 'Student') {
+          fee = (r.category && r.category.includes('10K')) ? 1000 : 800;
+        } else if (type.includes('Alumni') || type === 'Alumni') {
+          fee = 1200;
+        } else {
+          fee = 1300;
+        }
+        return sum + fee;
+      }, 0);
+
+      const pendingRevenue = pendingRunners.reduce((sum, r) => {
+        let fee = 0;
+        const type = r.type || 'JU Student (Batch 48 - 55)';
+        if (type.includes('Student') || type === 'Student') {
+          fee = (r.category && r.category.includes('10K')) ? 1000 : 800;
+        } else if (type.includes('Alumni') || type === 'Alumni') {
+          fee = 1200;
+        } else {
+          fee = 1300;
+        }
+        return sum + fee;
+      }, 0);
+
+      return `
+        💰 <strong>আর্থিক ও রেভিনিউ বিবরণী:</strong><br><br>
+        • ✅ ভেরিফাইড মোট জমা: <span class="ai-stat-highlight">৳${verifiedRevenue.toLocaleString()} BDT</span> (${verifiedRunners.length} জন)<br>
+        • ⏳ পেন্ডিং কালেকশন: <strong>৳${pendingRevenue.toLocaleString()} BDT</strong> (${pendingRunners.length} জন)<br>
+        • 📈 সম্ভাব্য সর্বমোট রেভিনিউ: <span class="ai-stat-highlight">৳${(verifiedRevenue + pendingRevenue).toLocaleString()} BDT</span>
+      `;
+    }
+
+    // 3. Kit Collection Point Queries (কিট, kit, ঢাকা, dhaka, du, জাহাঙ্গীরনগর, ju, পয়েন্ট, point)
+    if (q.includes('কিট') || q.includes('kit') || q.includes('কালেকশন পয়েন্ট') || q.includes('point') || q.includes('du') || q.includes('ঢাকা বিশ্ববিদ্যালয়') || q.includes('পয়েন্ট')) {
+      let countDU = 0;
+      let countJU = 0;
+      runnerDatabase.forEach(r => {
+        const kp = (r.kitpoint || '').toLowerCase();
+        if (kp.includes('dhaka')) countDU++;
+        else countJU++;
+      });
+
+      return `
+        📍 <strong>কিট কালেকশন পয়েন্ট অনুযায়ী বিন্যাস:</strong><br><br>
+        • 🏛️ <strong>Dhaka University (DU):</strong> <span class="ai-stat-highlight">${countDU} টি কিট</span> (${totalRunners ? Math.round((countDU/totalRunners)*100) : 0}%)<br>
+        • 🌳 <strong>Jahangirnagar University (JU):</strong> <span class="ai-stat-highlight">${countJU} টি কিট</span> (${totalRunners ? Math.round((countJU/totalRunners)*100) : 0}%)<br><br>
+        <em>পরামর্শ: ঢাকা বিশ্ববিদ্যালয় বুথের জন্য ${countDU} টি কিট আলাদা প্যাকেট প্রস্তুত রাখুন।</em>
+      `;
+    }
+
+    // 4. Bus Route Queries (বাস, bus, রুট, route, উত্তরা, uttara, গুলশান, gulshan, বঙ্গবাজার, bongobazar, self)
+    if (q.includes('বাস') || q.includes('bus') || q.includes('রুট') || q.includes('route') || q.includes('উত্তরা') || q.includes('uttara') || q.includes('গুলশান') || q.includes('gulshan') || q.includes('বঙ্গবাজার') || q.includes('bongobazar') || q.includes('পরিবহন')) {
+      const routes = { Uttara: 0, Gulshan: 0, Bongobazar: 0, 'Self-Arranged': 0 };
+      runnerDatabase.forEach(r => {
+        const p = r.pickup || 'Self-Arranged';
+        if (routes.hasOwnProperty(p)) routes[p]++;
+        else if (p.includes('Uttara')) routes.Uttara++;
+        else if (p.includes('Gulshan')) routes.Gulshan++;
+        else if (p.includes('Bongobazar')) routes.Bongobazar++;
+        else routes['Self-Arranged']++;
+      });
+
+      const totalBusNeed = routes.Uttara + routes.Gulshan + routes.Bongobazar;
+
+      return `
+        🚌 <strong>বাস রুট ও পরিবহন সামারি:</strong><br>
+        <table class="ai-data-table">
+          <tr><th>Route</th><th>Passengers</th><th>Est. Buses (50 cap)</th></tr>
+          <tr><td>Uttara Route</td><td><strong>${routes.Uttara}</strong> জন</td><td>${Math.ceil(routes.Uttara / 50)} টি বাস</td></tr>
+          <tr><td>Gulshan Route</td><td><strong>${routes.Gulshan}</strong> জন</td><td>${Math.ceil(routes.Gulshan / 50)} টি বাস</td></tr>
+          <tr><td>Bongobazar Route</td><td><strong>${routes.Bongobazar}</strong> জন</td><td>${Math.ceil(routes.Bongobazar / 50)} টি বাস</td></tr>
+          <tr><td>Self-Arranged</td><td><strong>${routes['Self-Arranged']}</strong> জন</td><td>-</td></tr>
+        </table>
+        মোট বাস যাত্রী: <span class="ai-stat-highlight">${totalBusNeed} জন</span> (আনুমানিক ${Math.ceil(totalBusNeed / 50)} টি বাসের প্রয়োজন)।
+      `;
+    }
+
+    // 5. Verification Status Queries (পেন্ডিং, pending, ভেরিফাইড, verified, স্ট্যাটাস, status, বাকি)
+    if (q.includes('পেন্ডিং') || q.includes('pending') || q.includes('ভেরিফাইড') || q.includes('verified') || q.includes('স্ট্যাটাস') || q.includes('status')) {
+      let pendingSnippet = '';
+      if (pendingRunners.length > 0) {
+        pendingSnippet = '<br><br><strong>সর্বশেষ ৩টি পেন্ডিং রেজিস্ট্রেশন:</strong><br>' + 
+          pendingRunners.slice(0, 3).map(r => `• ${r.name} (${r.phone}) - Trx: <code>${r.txnid || 'N/A'}</code>`).join('<br>');
+      }
+
+      return `
+        📊 <strong>রেজিস্ট্রেশন স্ট্যাটাস ওভারভিউ:</strong><br><br>
+        • ✅ <strong>ভেরিফাইড (Verified):</strong> <span class="ai-stat-highlight">${verifiedRunners.length} জন</span><br>
+        • ⏳ <strong>পেন্ডিং (Pending):</strong> <span class="ai-stat-highlight" style="color:#ffaa00; background:rgba(255,170,0,0.15);">${pendingRunners.length} জন</span><br>
+        • 👥 <strong>সর্বমোট এন্ট্রি:</strong> <strong>${totalRunners} জন</strong>
+        ${pendingSnippet}
+      `;
+    }
+
+    // 6. Category Queries (১০ কিমি, 10k, ৫ কিমি, 5k, ম্যারাথন, ক্যাটাগরি, category)
+    if (q.includes('10k') || q.includes('১০ কিমি') || q.includes('১০k') || q.includes('5k') || q.includes('৫ কিমি') || q.includes('৫k') || q.includes('ক্যাটাগরি') || q.includes('category') || q.includes('ম্যারাথন')) {
+      let count10k = 0;
+      let count5k = 0;
+      runnerDatabase.forEach(r => {
+        if ((r.category || '').includes('10K')) count10k++;
+        else if ((r.category || '').includes('5K')) count5k++;
+      });
+
+      return `
+        🏃‍♂️ <strong>রেস ক্যাটাগরি বিশ্লেষণ:</strong><br><br>
+        • 🥇 <strong>10K Mini Marathon:</strong> <span class="ai-stat-highlight">${count10k} জন</span> (${totalRunners ? Math.round((count10k/totalRunners)*100) : 0}%)<br>
+        • 🥈 <strong>5K Fun Run:</strong> <span class="ai-stat-highlight">${count5k} জন</span> (${totalRunners ? Math.round((count5k/totalRunners)*100) : 0}%)<br><br>
+        <em>১০ কিমি রানারদের জন্য চিপ টাইমিং বিব এবং ৫ কিমির জন্য সাধারণ টাইমিং নিশ্চিত করুন।</em>
+      `;
+    }
+
+    // 7. Participant Type Queries (ছাত্র, student, স্টুডেন্ট, alumni, অ্যালামনাই, external, এক্সটারনাল, ব্যাচ, batch)
+    if (q.includes('student') || q.includes('ছাত্র') || q.includes('শিক্ষার্থী') || q.includes('alumni') || q.includes('অ্যালামনাই') || q.includes('external') || q.includes('এক্সটারনাল') || q.includes('বহিরাগত') || q.includes('batch') || q.includes('ব্যাচ')) {
+      let students = 0;
+      let alumni = 0;
+      let external = 0;
+
+      runnerDatabase.forEach(r => {
+        const t = r.type || '';
+        if (t.includes('Student') || t.includes('JU Student')) students++;
+        else if (t.includes('Alumni')) alumni++;
+        else external++;
+      });
+
+      return `
+        🎓 <strong>পার্টিসিপ্যান্ট টাইপ বিশ্লেষণ:</strong><br><br>
+        • 🧑‍🎓 <strong>JU Students (Batch 48-55):</strong> <span class="ai-stat-highlight">${students} জন</span><br>
+        • 👨‍🎓 <strong>JU Alumni:</strong> <span class="ai-stat-highlight">${alumni} জন</span><br>
+        • 🏃 <strong>External Participants:</strong> <span class="ai-stat-highlight">${external} জন</span>
+      `;
+    }
+
+    // 8. Blood Group Queries (রক্ত, blood, ব্লাড)
+    if (q.includes('রক্ত') || q.includes('blood') || q.includes('ব্লাড')) {
+      const bloodGroups = {};
+      runnerDatabase.forEach(r => {
+        const bg = (r.blood || 'N/A').toUpperCase().trim();
+        bloodGroups[bg] = (bloodGroups[bg] || 0) + 1;
+      });
+
+      const rows = Object.entries(bloodGroups)
+        .map(([bg, count]) => `<tr><td>${bg}</td><td><strong>${count}</strong> জন</td></tr>`)
+        .join('');
+
+      return `
+        🩸 <strong>রক্তের গ্রুপ (Blood Groups) সামারি:</strong><br>
+        <table class="ai-data-table">
+          <tr><th>Blood Group</th><th>Count</th></tr>
+          ${rows}
+        </table>
+      `;
+    }
+
+    // 9. Specific Runner Search (নাম, ফোন বা বিব সার্চ)
+    const cleanQ = q.replace(/[^0-9a-zA-Z]/g, '');
+    const matchedRunners = runnerDatabase.filter(r => {
+      const rName = (r.name || '').toLowerCase();
+      const rPhone = (r.phone || '').replace(/[^0-9]/g, '');
+      const rBib = (r.bib || '').toLowerCase();
+      const rTxn = (r.txnid || '').toLowerCase();
+
+      return (cleanQ && rPhone.includes(cleanQ)) ||
+             (cleanQ && rBib === cleanQ) ||
+             (cleanQ && rTxn.includes(cleanQ)) ||
+             (rName.includes(q));
+    });
+
+    if (matchedRunners.length > 0 && matchedRunners.length <= 5) {
+      const cards = matchedRunners.map(r => `
+        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:10px; border-radius:8px; margin-top:8px;">
+          <strong>${r.name}</strong> (Bib: <span class="text-lime">#${r.bib}</span>)<br>
+          <span style="font-size:0.8rem; color:var(--color-text-muted);">
+            📞 ${r.phone} • ${r.category} • সাইজ: ${r.tshirt}<br>
+            📍 কিট: ${r.kitpoint || 'JU'} • বাস: ${r.pickup || 'Self'}<br>
+            💸 TrxID: <code>${r.txnid || 'N/A'}</code> • স্ট্যাটাস: <strong>${r.status}</strong>
+          </span>
+        </div>
+      `).join('');
+
+      return `🔍 আপনার সার্চে <strong>${matchedRunners.length} টি রেকর্ড</strong> পাওয়া গেছে:${cards}`;
+    }
+
+    // 10. General / Default Executive Summary Response
+    return `
+      📋 <strong>JUCSU RUN 2026 সামগ্রিক ওভারভিউ:</strong><br><br>
+      • 🏃 মোট রেজিস্ট্রেশন: <span class="ai-stat-highlight">${totalRunners} জন</span><br>
+      • ✅ ভেরিফাইড পেমেন্ট: <strong>${verifiedRunners.length} জন</strong><br>
+      • ⏳ পেন্ডিং পেমেন্ট: <strong>${pendingRunners.length} জন</strong><br>
+      • 💰 মোট ভেরিফাইড রেভিনিউ: <span class="ai-stat-highlight">৳${verifiedRunners.reduce((s, r) => s + ((r.category && r.category.includes('10K')) ? 1000 : 800), 0).toLocaleString()} BDT</span><br><br>
+      <em>আপনি যেকোনো বিষয় (যেমন: "টি-শার্ট হিসাব", "বাস রুট", "কিট পয়েন্ট", বা রানারের নাম) লিখে সরাসরি জানতে পারেন!</em>
+    `;
+  }
 }

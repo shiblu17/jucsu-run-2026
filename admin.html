@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="admin.css?v=1.4">
+  <link rel="stylesheet" href="admin.css?v=1.5">
 </head>
 <body>
 
@@ -343,9 +343,58 @@
 
   </main>
 
+  <!-- Floating AI Copilot Trigger -->
+  <button id="aiCopilotBtn" class="ai-copilot-trigger" aria-label="Open AI Copilot">
+    <span class="ai-pulse-ring"></span>
+    <span class="ai-sparkle">✨</span>
+    <span class="ai-label">AI Copilot</span>
+  </button>
+
+  <!-- AI Copilot Chat Drawer -->
+  <div id="aiChatDrawer" class="ai-chat-drawer hidden">
+    <div class="ai-chat-header">
+      <div class="ai-chat-title">
+        <span class="ai-avatar">🤖</span>
+        <div>
+          <h4>JUCSU Data Copilot</h4>
+          <span class="ai-status-indicator"><span class="status-dot"></span> Live Intelligence</span>
+        </div>
+      </div>
+      <button id="closeAiChatBtn" class="ai-close-btn" title="Close">✕</button>
+    </div>
+
+    <!-- Quick Suggestions -->
+    <div class="ai-quick-prompts" id="aiQuickPrompts">
+      <button class="quick-prompt-btn" data-query="টি-শার্ট সাইজ অনুযায়ী কয়টা করে লাগবে?">👕 টি-শার্ট হিসাব</button>
+      <button class="quick-prompt-btn" data-query="মোট ভেরিফাইড রেভিনিউ কত টাকা?">💰 রেভিনিউ</button>
+      <button class="quick-prompt-btn" data-query="বাস রুট অনুযায়ী যাত্রী সংখ্যা কত?">🚌 বাস রুট</button>
+      <button class="quick-prompt-btn" data-query="কিট কালেকশন পয়েন্টের সামারি দাও">📍 কিট পয়েন্ট</button>
+      <button class="quick-prompt-btn" data-query="পেন্ডিং রেজিস্ট্রেশন কতগুলো আছে?">⏳ পেন্ডিং তালিকা</button>
+      <button class="quick-prompt-btn" data-query="১০ কিমি ও ৫ কিমির অনুপাত কত?">🏃‍♂️ ১০K বনাম ৫K</button>
+    </div>
+
+    <!-- Message Stream -->
+    <div class="ai-chat-messages" id="aiChatMessages">
+      <div class="ai-msg ai-msg-bot">
+        <div class="msg-bubble">
+          👋 স্বাগতম! আমি আপনার <strong>JUCSU RUN 2026 ডেটা অ্যাসিস্ট্যান্ট</strong>।<br><br>
+          রেজিস্ট্রেশন, টি-শার্ট সাইজ, বাস রুট, কিট পয়েন্ট বা রেভিনিউ সম্পর্কে যেকোনো প্রশ্ন করতে পারেন। নিচের কুইক বাটনে ক্লিক করুন অথবা নিচে লিখে মেসেজ পাঠান।
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Box -->
+    <form id="aiChatForm" class="ai-chat-input-area" onsubmit="return false;">
+      <input type="text" id="aiQueryInput" placeholder="আপনার প্রশ্নটি লিখুন (বাংলা/English)..." autocomplete="off">
+      <button type="submit" id="aiSendBtn" class="btn btn-lime ai-send-btn" title="Send">
+        <span>➤</span>
+      </button>
+    </form>
+  </div>
+
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=2.1"></script>
+  <script src="admin.js?v=2.2"></script>
 </body>
 </html>

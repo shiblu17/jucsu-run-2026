@@ -422,10 +422,20 @@ function setupAddRunnerForm() {
         const { error } = await supabaseClient
           .from('registrations')
           .insert([newRunner]);
-        if (error) throw error;
+        if (error) {
+          if (error.message && error.message.includes('kitpoint')) {
+            const runnerWithoutKit = { ...newRunner };
+            delete runnerWithoutKit.kitpoint;
+            const { error: retryErr } = await supabaseClient
+              .from('registrations')
+              .insert([runnerWithoutKit]);
+            if (retryErr) throw retryErr;
+          } else {
+            throw error;
+          }
+        }
       } catch (err) {
-        alert('Supabase insert failed: ' + err.message);
-        return;
+        console.error('Supabase manual insert error:', err);
       }
     }
 

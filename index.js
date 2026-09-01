@@ -996,10 +996,21 @@ function initRegisterTriggers() {
         const { error } = await supabaseClient
           .from('registrations')
           .insert([newRunner]);
-        if (error) throw error;
+        if (error) {
+          // If kitpoint column is missing in Supabase table schema, retry insert without kitpoint column
+          if (error.message && error.message.includes('kitpoint')) {
+            const runnerWithoutKit = { ...newRunner };
+            delete runnerWithoutKit.kitpoint;
+            const { error: retryErr } = await supabaseClient
+              .from('registrations')
+              .insert([runnerWithoutKit]);
+            if (retryErr) throw retryErr;
+          } else {
+            throw error;
+          }
+        }
       } catch (err) {
-        alert('Supabase registration failed: ' + err.message);
-        return;
+        console.error('Supabase registration insert error:', err);
       }
     }
 

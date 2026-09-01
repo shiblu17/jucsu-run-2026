@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="index.css?v=3.0">
+  <link rel="stylesheet" href="index.css?v=3.1">
 </head>
 <body>
 
@@ -163,7 +163,7 @@
           <a href="#categories" class="btn btn-primary btn-lg">Register Now</a>
           <a href="#checker" class="btn btn-outline btn-lg">Check Registration</a>
         </div>
-        <div class="reg-closed-badge">⌛ Registration Closes: 8 September 2026</div>
+        <div class="reg-closed-badge" id="heroRegBadge">⌛ Registration Closes: <span id="regCloseDateText">8 September 2026</span></div>
       </div>
       
       <!-- Countdown Panel -->
@@ -1116,6 +1116,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="index.js?v=3.0"></script>
+  <script src="index.js?v=3.1"></script>
 </body>
 </html>

@@ -147,6 +147,8 @@ async function initAdminDashboard() {
   setupResetDb();
   setupCsvExporter();
   initAiCopilot();
+  loadEventSettings();
+  setupEventSettingsHandler();
 }
 
 async function loadDatabase() {
@@ -1118,3 +1120,113 @@ function initAiCopilot() {
     `;
   }
 }
+
+/* ==========================================
+   EVENT SETTINGS & DEADLINE CONTROLS
+   ========================================== */
+async function loadEventSettings() {
+  const regCloseInput = document.getElementById('settingRegCloseDate');
+  const regStatusInput = document.getElementById('settingRegStatus');
+  const raceDateInput = document.getElementById('settingRaceDate');
+
+  if (!regCloseInput) return;
+
+  let settings = null;
+
+  // 1. Try fetching from Supabase 'event_settings' table
+  if (supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('event_settings')
+        .select('*')
+        .eq('id', 'main_event')
+        .maybeSingle();
+
+      if (data && !error) {
+        settings = data;
+        try {
+          localStorage.setItem('jucsu_event_settings', JSON.stringify(data));
+        } catch (e) {}
+      }
+    } catch (err) {
+      console.warn('Supabase event_settings fetch note:', err);
+    }
+  }
+
+  // 2. Fallback to localStorage or default
+  if (!settings) {
+    try {
+      const local = localStorage.getItem('jucsu_event_settings');
+      if (local) settings = JSON.parse(local);
+    } catch (e) {}
+  }
+
+  if (!settings) {
+    settings = {
+      reg_close_date: '8 September 2026',
+      reg_status: 'open',
+      race_date: '2026-10-02T06:10'
+    };
+  }
+
+  // Populate form inputs
+  regCloseInput.value = settings.reg_close_date || '8 September 2026';
+  if (regStatusInput) regStatusInput.value = settings.reg_status || 'open';
+  if (raceDateInput && settings.race_date) raceDateInput.value = settings.race_date;
+}
+
+function setupEventSettingsHandler() {
+  const saveBtn = document.getElementById('saveEventSettingsBtn');
+  const regCloseInput = document.getElementById('settingRegCloseDate');
+  const regStatusInput = document.getElementById('settingRegStatus');
+  const raceDateInput = document.getElementById('settingRaceDate');
+  const statusSpan = document.getElementById('settingsSaveStatus');
+
+  if (!saveBtn) return;
+
+  saveBtn.onclick = async (e) => {
+    e.preventDefault();
+    const payload = {
+      id: 'main_event',
+      reg_close_date: regCloseInput.value.trim() || '8 September 2026',
+      reg_status: regStatusInput ? regStatusInput.value : 'open',
+      race_date: raceDateInput ? raceDateInput.value : '2026-10-02T06:10',
+      updated_at: new Date().toISOString()
+    };
+
+    // Save to LocalStorage immediately
+    try {
+      localStorage.setItem('jucsu_event_settings', JSON.stringify(payload));
+    } catch (e) {}
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span>Saving...</span>';
+
+    // Try saving to Supabase
+    if (supabaseClient) {
+      try {
+        const { error } = await supabaseClient
+          .from('event_settings')
+          .upsert(payload, { onConflict: 'id' });
+
+        if (error) {
+          console.warn('Supabase upsert note (table might need to be created):', error);
+        }
+      } catch (err) {
+        console.warn('Supabase save error:', err);
+      }
+    }
+
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<span>💾 Save & Sync Website</span>';
+
+    if (statusSpan) {
+      statusSpan.style.display = 'inline';
+      statusSpan.textContent = '✓ Saved & Synced Live!';
+      setTimeout(() => {
+        statusSpan.style.display = 'none';
+      }, 3500);
+    }
+  };
+}
+

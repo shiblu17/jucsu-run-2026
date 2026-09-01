@@ -42,6 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize Runner Badge Generator
   initBadgeGenerator();
+
+  // Dynamic Event Settings & Deadlines (Admin Controlled)
+  initDynamicEventSettings();
 });
 
 /* ==========================================
@@ -1244,5 +1247,76 @@ function initBadgeGenerator() {
       link.href = badgeCanvas.toDataURL('image/png');
       link.click();
     });
+  }
+}
+
+/* ==========================================
+   DYNAMIC EVENT SETTINGS & DEADLINE LOADER
+   ========================================== */
+async function initDynamicEventSettings() {
+  let settings = null;
+
+  // 1. Try fetching from Supabase 'event_settings' table
+  if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('event_settings')
+        .select('*')
+        .eq('id', 'main_event')
+        .maybeSingle();
+
+      if (data && !error) {
+        settings = data;
+        try {
+          localStorage.setItem('jucsu_event_settings', JSON.stringify(data));
+        } catch (e) {}
+      }
+    } catch (err) {
+      console.warn('Supabase settings fetch fallback:', err);
+    }
+  }
+
+  // 2. Fallback to localStorage
+  if (!settings) {
+    try {
+      const local = localStorage.getItem('jucsu_event_settings');
+      if (local) settings = JSON.parse(local);
+    } catch (e) {}
+  }
+
+  if (!settings) return;
+
+  // Update Hero Badge & Deadline text
+  const regCloseEl = document.getElementById('regCloseDateText');
+  const heroBadge = document.getElementById('heroRegBadge');
+
+  if (regCloseEl && settings.reg_close_date) {
+    regCloseEl.textContent = settings.reg_close_date;
+  }
+
+  if (heroBadge && settings.reg_status) {
+    if (settings.reg_status === 'closed') {
+      heroBadge.innerHTML = `🔴 Registration Closed!`;
+      heroBadge.style.background = 'rgba(235, 50, 65, 0.15)';
+      heroBadge.style.borderColor = 'rgba(235, 50, 65, 0.4)';
+      heroBadge.style.color = '#ffccd0';
+    } else if (settings.reg_status === 'extended') {
+      heroBadge.innerHTML = `🔥 Extended till: ${settings.reg_close_date || '8 September 2026'}`;
+      heroBadge.style.background = 'rgba(255, 150, 0, 0.15)';
+      heroBadge.style.borderColor = 'rgba(255, 150, 0, 0.4)';
+      heroBadge.style.color = '#ffdd99';
+    } else {
+      heroBadge.innerHTML = `⌛ Registration Closes: <span id="regCloseDateText">${settings.reg_close_date || '8 September 2026'}</span>`;
+      heroBadge.style.background = 'rgba(193, 216, 47, 0.1)';
+      heroBadge.style.borderColor = 'rgba(193, 216, 47, 0.2)';
+      heroBadge.style.color = '#fff';
+    }
+  }
+
+  // Update Countdown timer target
+  const countdownEl = document.getElementById('countdown');
+  if (countdownEl && settings.race_date) {
+    countdownEl.setAttribute('data-date', settings.race_date);
+    initCountdown(); // Recalculate with updated target date
   }
 }

@@ -6,5 +6,7 @@
   "scripts": {
     "start": "npx -y http-server -p 3000"
   },
-  "dependencies": {}
+  "dependencies": {
+    "sharp": "^0.35.4"
+  }
 }

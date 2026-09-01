@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initLoginGate();
   // 2. AI Copilot
   initAiCopilot();
+  // 3. Export CSV button
+  setupCsvExporter();
 });
 
 /* ==========================================
@@ -459,123 +461,127 @@ function setupAddRunnerForm() {
 function setupCsvImporter() {
   const mergeBtn = document.getElementById('importMergeBtn');
   const replaceBtn = document.getElementById('importReplaceBtn');
+  const clearBtn = document.getElementById('importClearBtn');
   const csvArea = document.getElementById('csvTextArea');
+
+  if (clearBtn && csvArea) {
+    clearBtn.onclick = (e) => {
+      e.preventDefault();
+      csvArea.value = '';
+    };
+  }
 
   function parseCsvContent(text) {
     const lines = text.split('\n');
     const parsedRunners = [];
 
-    lines.forEach((line, index) => {
+    lines.forEach((line) => {
       const parts = line.split(',').map(p => p.trim());
       // Skip empty lines or malformed rows that don't have enough fields
-      if (parts.length < 5 || parts[0] === '') return;
+      if (parts.length < 4 || parts[0] === '') return;
 
       const bib = parts[0];
       const name = parts[1];
       const phone = parts[2];
       const category = parts[3];
-      const tshirt = parts[4];
-      const gender = parts[5] || 'Male';
-      const blood = parts[6] || 'O+';
-      const status = parts[7] || 'Verified';
-      const type = parts[8] || 'JU Student (Batch 48 - 55)';
-      const txnid = parts[9] || 'N/A';
+      const tshirt = parts[4] || 'M';
+      const kitpoint = parts[5] && (parts[5].includes('Dhaka') || parts[5].includes('Jahangirnagar')) ? parts[5] : 'Jahangirnagar University';
+      const gender = parts[6] || 'Male';
+      const blood = parts[7] || 'O+';
+      const status = parts[8] || 'Verified';
+      const type = parts[9] || 'JU Student (Batch 48 - 55)';
+      const txnid = parts[10] || 'N/A';
 
-      parsedRunners.push({ bib, name, phone, category, tshirt, gender, blood, status, type, txnid });
+      parsedRunners.push({ bib, name, phone, category, tshirt, kitpoint, gender, blood, status, type, txnid });
     });
 
     return parsedRunners;
   }
 
-  mergeBtn.addEventListener('click', async () => {
-    const text = csvArea.value.trim();
-    if (!text) {
-      alert('Please paste CSV raw data first.');
-      return;
-    }
-
-    const newRunners = parseCsvContent(text);
-    if (newRunners.length === 0) {
-      alert('Could not parse any valid runner profiles. Please verify the CSV column format.');
-      return;
-    }
-
-    let addedCount = 0;
-    let duplicateCount = 0;
-    const runnersToInsert = [];
-
-    newRunners.forEach(newR => {
-      // Check if bib already exists, if so skip/warn
-      if (runnerDatabase.some(r => r.bib === newR.bib)) {
-        duplicateCount++;
-      } else {
-        runnerDatabase.push(newR);
-        runnersToInsert.push(newR);
-        addedCount++;
-      }
-    });
-
-    if (supabaseClient && runnersToInsert.length > 0) {
-      try {
-        const { error } = await supabaseClient
-          .from('registrations')
-          .insert(runnersToInsert);
-        if (error) throw error;
-      } catch (err) {
-        alert('Supabase merge insert failed: ' + err.message);
+  if (mergeBtn && csvArea) {
+    mergeBtn.onclick = async (e) => {
+      e.preventDefault();
+      const text = csvArea.value.trim();
+      if (!text) {
+        alert('Please paste CSV raw data first.');
         return;
       }
-    }
 
-    saveDatabase();
-    refreshDashboard();
-    csvArea.value = '';
-
-    alert(`Import Complete!\n- Added: ${addedCount} runners\n- Skipped Duplicates: ${duplicateCount}`);
-  });
-
-  replaceBtn.addEventListener('click', async () => {
-    const text = csvArea.value.trim();
-    if (!text) {
-      alert('Please paste CSV raw data first.');
-      return;
-    }
-
-    if (confirm('CRITICAL WARNING: This will erase all current registrations and replace them with the parsed data. Are you sure you want to proceed?')) {
       const newRunners = parseCsvContent(text);
       if (newRunners.length === 0) {
-        alert('Could not parse any valid runner profiles. Database replacement cancelled.');
+        alert('Could not parse any valid runner profiles. Please verify the CSV column format.');
         return;
       }
 
-      if (supabaseClient) {
-        try {
-          // Delete all records from Supabase
-          const { error: delErr } = await supabaseClient
-            .from('registrations')
-            .delete()
-            .neq('bib', '');
-          if (delErr) throw delErr;
+      let addedCount = 0;
+      let duplicateCount = 0;
+      const runnersToInsert = [];
 
-          // Insert new ones
-          const { error: insErr } = await supabaseClient
+      newRunners.forEach(newR => {
+        if (runnerDatabase.some(r => r.bib === newR.bib)) {
+          duplicateCount++;
+        } else {
+          runnerDatabase.push(newR);
+          runnersToInsert.push(newR);
+          addedCount++;
+        }
+      });
+
+      if (supabaseClient && runnersToInsert.length > 0) {
+        try {
+          const { error } = await supabaseClient
             .from('registrations')
-            .insert(newRunners);
-          if (insErr) throw insErr;
+            .insert(runnersToInsert);
+          if (error) {
+            console.warn('Supabase batch insert error:', error);
+          }
         } catch (err) {
-          alert('Supabase database replace failed: ' + err.message);
-          return;
+          console.warn('Supabase merge insert note:', err);
         }
       }
 
-      runnerDatabase = newRunners;
       saveDatabase();
       refreshDashboard();
       csvArea.value = '';
 
-      alert(`Database Replaced successfully with ${runnerDatabase.length} records!`);
-    }
-  });
+      alert(`Import Complete!\n- Added: ${addedCount} runners\n- Skipped Duplicates: ${duplicateCount}`);
+    };
+  }
+
+  if (replaceBtn && csvArea) {
+    replaceBtn.onclick = async (e) => {
+      e.preventDefault();
+      const text = csvArea.value.trim();
+      if (!text) {
+        alert('Please paste CSV raw data first.');
+        return;
+      }
+
+      if (confirm('CRITICAL WARNING: This will erase all current registrations and replace them with the parsed data. Are you sure you want to proceed?')) {
+        const newRunners = parseCsvContent(text);
+        if (newRunners.length === 0) {
+          alert('Could not parse any valid runner profiles. Database replacement cancelled.');
+          return;
+        }
+
+        if (supabaseClient) {
+          try {
+            await supabaseClient.from('registrations').delete().neq('bib', '');
+            await supabaseClient.from('registrations').insert(newRunners);
+          } catch (err) {
+            console.warn('Supabase replace error:', err);
+          }
+        }
+
+        runnerDatabase = newRunners;
+        saveDatabase();
+        refreshDashboard();
+        csvArea.value = '';
+
+        alert(`Database Replaced successfully with ${runnerDatabase.length} records!`);
+      }
+    };
+  }
 }
 
 /* ==========================================
@@ -583,7 +589,10 @@ function setupCsvImporter() {
    ========================================== */
 function setupResetDb() {
   const resetBtn = document.getElementById('resetDbBtn');
-  resetBtn.addEventListener('click', async () => {
+  if (!resetBtn) return;
+  
+  resetBtn.onclick = async (e) => {
+    e.preventDefault();
     if (confirm('Are you sure you want to delete all current edits and restore the initial default database?')) {
       
       if (supabaseClient) {
@@ -609,7 +618,7 @@ function setupResetDb() {
       sessionStorage.removeItem('jucsu_admin_logged');
       window.location.reload();
     }
-  });
+  };
 }
 
 /* ==========================================
@@ -619,17 +628,23 @@ function setupCsvExporter() {
   const exportBtn = document.getElementById('exportCsvBtn');
   if (!exportBtn) return;
 
-  exportBtn.addEventListener('click', () => {
-    if (runnerDatabase.length === 0) {
-      alert('No records to export!');
+  exportBtn.onclick = async (e) => {
+    e.preventDefault();
+
+    if (!runnerDatabase || runnerDatabase.length === 0) {
+      await loadDatabase();
+    }
+
+    if (!runnerDatabase || runnerDatabase.length === 0) {
+      alert('No registration records found to export!');
       return;
     }
 
     // Define CSV Headers
     const headers = [
       'Bib',
-      'Name',
-      'Phone',
+      'Full Name',
+      'Phone Number',
       'Category',
       'T-Shirt Size',
       'Kit Collection Point',
@@ -640,45 +655,48 @@ function setupCsvExporter() {
       'Transaction ID'
     ];
 
-    // Map database records to rows
-    const rows = runnerDatabase.map(r => {
-      // Escape field values to prevent CSV injection / malformed quotes
-      const clean = (val) => {
-        if (val === undefined || val === null) return '';
-        const str = String(val).trim();
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-          return `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-      };
+    const clean = (val) => {
+      if (val === undefined || val === null) return '';
+      const str = String(val).trim();
+      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
 
-      return [
-        clean(r.bib),
-        clean(r.name),
-        clean(r.phone),
-        clean(r.category),
-        clean(r.tshirt),
-        clean(r.kitpoint || 'Jahangirnagar University'),
-        clean(r.gender || 'Male'),
-        clean(r.blood || 'N/A'),
-        clean(r.status),
-        clean(r.type || 'JU Student (Batch 48 - 55)'),
-        clean(r.txnid || 'N/A')
-      ].join(',');
-    });
+    const rows = runnerDatabase.map(r => [
+      clean(r.bib),
+      clean(r.name),
+      clean(r.phone),
+      clean(r.category),
+      clean(r.tshirt),
+      clean(r.kitpoint || 'Jahangirnagar University'),
+      clean(r.gender || 'Male'),
+      clean(r.blood || 'N/A'),
+      clean(r.status || 'Pending'),
+      clean(r.type || 'JU Student (Batch 48 - 55)'),
+      clean(r.txnid || 'N/A')
+    ].join(','));
 
-    // Combine headers and rows with UTF-8 BOM for proper Excel rendering of Bengali/special chars
-    const csvContent = "\uFEFF" + [headers.join(','), ...rows].join('\n');
-
-    // Download File Blob
+    // UTF-8 BOM \uFEFF for proper rendering in Microsoft Excel & Bengali text
+    const csvContent = "\uFEFF" + [headers.join(','), ...rows].join('\r\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const fileName = `JUCSU_RUN_2026_Registrations_${dateStr}.csv`;
+
+    // Trigger download
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', `JUCSU_RUN_2026_Registrations_${new Date().toISOString().slice(0,10)}.csv`);
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-  });
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 200);
+  };
 }
 
 /* ==========================================

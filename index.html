@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="index.css?v=2.9">
+  <link rel="stylesheet" href="index.css?v=3.0">
 </head>
 <body>
 
@@ -93,13 +93,21 @@
         <a href="#categories" class="nav-link">Categories</a>
         <a href="#swag" class="nav-link">Runner Swag</a>
         <a href="#route" class="nav-link">Routes</a>
-        <a href="#checker" class="nav-link">Check Registration</a>
         <a href="#badges" class="nav-link">Runner Card</a>
         <a href="#faq" class="nav-link">FAQs</a>
       </nav>
       <div class="header-actions">
-        <a href="#checker" class="btn btn-outline btn-sm">Check Status</a>
-        <a href="admin.html" class="btn btn-secondary btn-sm admin-btn">Admin Portal</a>
+        <a href="#checker" class="btn btn-glass-nav btn-sm" title="Check Registration / Bib Status">
+          <span style="font-size: 0.85rem;">🔍</span>
+          <span>Bib Status</span>
+        </a>
+        <button type="button" class="btn btn-register-nav btn-sm register-trigger" title="Register for JUCSU RUN 2026">
+          <span>Register Now</span>
+          <span class="nav-btn-arrow">→</span>
+        </button>
+        <a href="admin.html" class="admin-icon-btn" title="Organizer Admin Portal" aria-label="Admin Portal">
+          <span>⚙️</span>
+        </a>
       </div>
       <button class="mobile-menu-toggle" id="menuToggle" aria-label="Toggle menu">
         <span></span>
@@ -111,17 +119,28 @@
 
   <!-- Mobile Dropdown Navigation -->
   <div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-menu-actions">
+      <button type="button" class="btn btn-register-nav btn-full register-trigger" style="padding: 14px; font-size: 1rem; margin-bottom: 10px;">
+        <span>Register Now for Race</span>
+        <span>→</span>
+      </button>
+      <a href="#checker" class="btn btn-glass-nav btn-full mobile-nav-link" style="padding: 12px; font-size: 0.95rem; justify-content: center;">
+        <span>🔍 Check Bib / Registration</span>
+      </a>
+    </div>
     <nav class="mobile-nav-links">
-      <a href="#about" class="mobile-nav-link">About</a>
-      <a href="#categories" class="mobile-nav-link">Categories</a>
-      <a href="#swag" class="mobile-nav-link">Runner Swag</a>
-      <a href="#route" class="mobile-nav-link">Routes</a>
-      <a href="#checker" class="mobile-nav-link">Check Registration</a>
-      <a href="#badges" class="mobile-nav-link">Runner Card</a>
-      <a href="#faq" class="mobile-nav-link">FAQs</a>
-      <hr class="mobile-divider">
-      <a href="admin.html" class="mobile-nav-link admin-link-mob">Admin Portal</a>
+      <a href="#about" class="mobile-nav-link"><span>🏃</span> About Race</a>
+      <a href="#categories" class="mobile-nav-link"><span>🏆</span> Race Categories</a>
+      <a href="#swag" class="mobile-nav-link"><span>👕</span> Runner Swag</a>
+      <a href="#route" class="mobile-nav-link"><span>🗺️</span> Race Routes</a>
+      <a href="#badges" class="mobile-nav-link"><span>🖼️</span> Social Runner Card</a>
+      <a href="#faq" class="mobile-nav-link"><span>❓</span> FAQs</a>
     </nav>
+    <div class="mobile-menu-footer">
+      <a href="admin.html" class="mobile-admin-link">
+        <span>🔒 Organizer Admin Portal</span>
+      </a>
+    </div>
   </div>
 
   <!-- Hero Section -->
@@ -1124,6 +1143,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="index.js?v=2.9"></script>
+  <script src="index.js?v=3.0"></script>
 </body>
 </html>

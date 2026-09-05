@@ -10,18 +10,26 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="index.css?v=3.7">
+  <link rel="stylesheet" href="index.css?v=3.8">
 </head>
 <body>
 
-  <!-- Live Announcement Ticker -->
-  <div class="announcement-ticker">
-    <div class="ticker-wrap">
-      <div class="ticker-content">
-        📢 Important Note: If you register under the "Campus Running Batch (JU Student)" category, you must present your valid Student ID Card during Kit Collection. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 📢 For kit collection point and bus route plan, check the Logistics section below. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 📢 Important Note: If you register under the "Campus Running Batch (JU Student)" category, you must present your valid Student ID Card during Kit Collection. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <!-- Live Announcement & Emergency Notice Bar -->
+  <aside id="topNoticeBanner" class="top-notice-banner notice-urgent" style="display: none;">
+    <div class="container notice-container">
+      <div class="notice-badge-wrap">
+        <span class="notice-pulse-dot"></span>
+        <span id="noticeBadge" class="notice-badge">🚨 জরুরি নোটিশ</span>
+      </div>
+      <div class="notice-message-wrap">
+        <span id="noticeText" class="notice-text">🔥 রেজিস্ট্রেশন ডেডলাইন শেষ হচ্ছে আর মাত্র ২৪ ঘণ্টা পর (৮ই সেপ্টেম্বর রাত ১১:৫৯ মিনিট)!</span>
+      </div>
+      <div class="notice-actions-wrap">
+        <a id="noticeActionBtn" href="#register" class="notice-action-btn">রেজিস্ট্রেশন করুন →</a>
+        <button id="closeNoticeBtn" class="notice-close-btn" title="Dismiss Notice" aria-label="Close Notice">✕</button>
       </div>
     </div>
-  </div>
+  </aside>
 
   <!-- Floating Navigation -->
   <header class="main-header">
@@ -1390,6 +1398,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="index.js?v=3.9"></script>
+  <script src="index.js?v=4.0"></script>
 </body>
 </html>

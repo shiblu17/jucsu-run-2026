@@ -151,6 +151,8 @@ async function initAdminDashboard() {
   initAiCopilot();
   loadEventSettings();
   setupEventSettingsHandler();
+  loadNoticeSettings();
+  setupNoticeSettingsHandler();
   loadLogisticsSettings();
   setupLogisticsSettingsHandler();
   initKitDistributionDesk();
@@ -1335,6 +1337,143 @@ function setupEventSettingsHandler() {
       } else {
         statusSpan.style.color = '#ffaa00';
         statusSpan.textContent = `⚠️ Saved locally on this device only! (Supabase 'event_settings' table missing)`;
+      }
+      setTimeout(() => {
+        statusSpan.style.display = 'none';
+      }, 5000);
+    }
+  };
+}
+
+/* ==========================================
+   LIVE ANNOUNCEMENT & EMERGENCY NOTICE HANDLER
+   ========================================== */
+async function loadNoticeSettings() {
+  const statusInput = document.getElementById('settingNoticeStatus');
+  const typeInput = document.getElementById('settingNoticeType');
+  const badgeInput = document.getElementById('settingNoticeBadge');
+  const textInput = document.getElementById('settingNoticeText');
+  const linkTextInput = document.getElementById('settingNoticeLinkText');
+  const linkUrlInput = document.getElementById('settingNoticeLinkUrl');
+
+  if (!statusInput || !textInput) return;
+
+  let notice = null;
+
+  // 1. Try fetching from Supabase 'event_settings' table
+  if (supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('event_settings')
+        .select('*')
+        .eq('id', 'announcement_setting')
+        .maybeSingle();
+
+      if (data && !error && data.data) {
+        notice = data.data;
+        try {
+          localStorage.setItem('jucsu_announcement_setting', JSON.stringify(data.data));
+        } catch (e) {}
+      }
+    } catch (err) {
+      console.warn('Supabase notice fetch note:', err);
+    }
+  }
+
+  // 2. Fallback to localStorage or default
+  if (!notice) {
+    try {
+      const local = localStorage.getItem('jucsu_announcement_setting');
+      if (local) notice = JSON.parse(local);
+    } catch (e) {}
+  }
+
+  if (!notice) {
+    notice = {
+      status: 'active',
+      type: 'urgent',
+      badge: '🚨 জরুরি নোটিশ',
+      text: '🔥 রেজিস্ট্রেশন ডেডলাইন শেষ হচ্ছে আর মাত্র ২৪ ঘণ্টা পর (৮ই সেপ্টেম্বর রাত ১১:৫৯ মিনিট)! ক্যাম্পাসের অন্যতম স্মরণীয় ম্যারাথনে অংশ নিতে এখনই আপনার রেজিস্ট্রেশন সম্পন্ন করুন।',
+      link_text: 'রেজিস্ট্রেশন করুন →',
+      link_url: '#register'
+    };
+  }
+
+  // Populate form inputs
+  if (statusInput) statusInput.value = notice.status || 'active';
+  if (typeInput) typeInput.value = notice.type || 'urgent';
+  if (badgeInput) badgeInput.value = notice.badge || '🚨 জরুরি নোটিশ';
+  if (textInput) textInput.value = notice.text || '';
+  if (linkTextInput) linkTextInput.value = notice.link_text || '';
+  if (linkUrlInput) linkUrlInput.value = notice.link_url || '';
+}
+
+function setupNoticeSettingsHandler() {
+  const saveBtn = document.getElementById('saveNoticeSettingsBtn');
+  const statusInput = document.getElementById('settingNoticeStatus');
+  const typeInput = document.getElementById('settingNoticeType');
+  const badgeInput = document.getElementById('settingNoticeBadge');
+  const textInput = document.getElementById('settingNoticeText');
+  const linkTextInput = document.getElementById('settingNoticeLinkText');
+  const linkUrlInput = document.getElementById('settingNoticeLinkUrl');
+  const statusSpan = document.getElementById('noticeSaveStatus');
+
+  if (!saveBtn) return;
+
+  saveBtn.onclick = async (e) => {
+    e.preventDefault();
+    const payload = {
+      status: statusInput ? statusInput.value : 'active',
+      type: typeInput ? typeInput.value : 'urgent',
+      badge: badgeInput ? badgeInput.value.trim() : '🚨 জরুরি নোটিশ',
+      text: textInput ? textInput.value.trim() : '',
+      link_text: linkTextInput ? linkTextInput.value.trim() : '',
+      link_url: linkUrlInput ? linkUrlInput.value.trim() : '',
+      updated_at: new Date().toISOString()
+    };
+
+    // Save to LocalStorage immediately
+    try {
+      localStorage.setItem('jucsu_announcement_setting', JSON.stringify(payload));
+    } catch (e) {}
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span>Saving...</span>';
+
+    let isCloudSynced = false;
+
+    // Try saving to Supabase
+    if (supabaseClient) {
+      try {
+        const { error } = await supabaseClient
+          .from('event_settings')
+          .upsert({
+            id: 'announcement_setting',
+            data: payload,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'id' });
+
+        if (!error) {
+          isCloudSynced = true;
+        } else {
+          console.warn('Supabase announcement upsert error:', error);
+        }
+      } catch (err) {
+        console.warn('Supabase save error:', err);
+      }
+    }
+
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<span>📢 Save & Publish Notice</span>';
+
+    if (statusSpan) {
+      statusSpan.style.display = 'inline';
+      if (isCloudSynced) {
+        statusSpan.style.color = '#00e5ff';
+        statusSpan.textContent = '✓ Notice Saved & Synced Live (All Devices)!';
+      } else {
+        statusSpan.style.color = '#ffaa00';
+        statusSpan.textContent = `⚠️ Saved locally on this device only!`;
       }
       setTimeout(() => {
         statusSpan.style.display = 'none';

@@ -180,6 +180,82 @@
           </form>
         </div>
 
+        <!-- Live Announcement & Emergency Notice Bar Manager -->
+        <div class="panel glass-panel border-cyan" style="border: 1px solid rgba(0, 229, 255, 0.35); margin-bottom: 25px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+            <h3 class="panel-title" style="margin: 0; color: #fff; display: flex; align-items: center; gap: 8px;">
+              <span>📢</span>
+              <span>Live Announcement & Emergency Notice Bar</span>
+            </h3>
+            <span style="background: rgba(0, 229, 255, 0.15); color: #00e5ff; font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; border: 1px solid rgba(0, 229, 255, 0.3);">Top Banner Live</span>
+          </div>
+          <p class="panel-desc" style="margin-bottom: 15px;">
+            Display urgent notices, registration countdown alerts, or critical announcements at the top banner of the website across all devices.
+          </p>
+
+          <form id="announcementSettingsForm" onsubmit="return false;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+              <div class="form-group" style="margin: 0;">
+                <label for="settingNoticeStatus" class="form-label" style="font-size: 0.85rem; font-weight: 600; color: #00e5ff;">
+                  📢 Notice Visibility (নোটিশ স্ট্যাটাস)
+                </label>
+                <select id="settingNoticeStatus" class="form-select" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  <option value="active" selected>🟢 Visible (ওয়েবসাইটে দৃশ্যমান)</option>
+                  <option value="disabled">⚪ Disabled (বন্ধ / লুকানো)</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin: 0;">
+                <label for="settingNoticeType" class="form-label" style="font-size: 0.85rem; font-weight: 600;">
+                  🎨 Notice Theme & Alert Level
+                </label>
+                <select id="settingNoticeType" class="form-select" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  <option value="urgent" selected>🚨 Urgent Alert (Red/Orange Pulse)</option>
+                  <option value="info">📢 Information / Update (Cyan/Lime)</option>
+                  <option value="success">🏆 Special / Milestone (Gold)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="settingNoticeBadge" class="form-label" style="font-size: 0.85rem; font-weight: 600;">
+                🏷️ Notice Badge / Headline (ব্যাজ টেক্সট)
+              </label>
+              <input type="text" id="settingNoticeBadge" class="form-input" placeholder="e.g. 🚨 জরুরি নোটিশ" value="🚨 জরুরি নোটিশ" style="background: rgba(0,0,0,0.3); color: #fff; font-weight: 600;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="settingNoticeText" class="form-label" style="font-size: 0.85rem; font-weight: 600;">
+                📝 Notice Content / Message (নোটিশের বিস্তারিত বার্তা)
+              </label>
+              <textarea id="settingNoticeText" class="form-input" rows="3" placeholder="e.g. 🔥 রেজিস্ট্রেশন ডেডলাইন শেষ হচ্ছে আর মাত্র ২৪ ঘণ্টা পর (৮ই সেপ্টেম্বর রাত ১১:৫৯ মিনিট)! দেরি না করে এখনই রেজিস্ট্রেশন সম্পন্ন করুন।" style="background: rgba(0,0,0,0.3); color: #fff; line-height: 1.4; resize: vertical;">🔥 রেজিস্ট্রেশন ডেডলাইন শেষ হচ্ছে আর মাত্র ২৪ ঘণ্টা পর (৮ই সেপ্টেম্বর রাত ১১:৫৯ মিনিট)! ক্যাম্পাসের অন্যতম স্মরণীয় ম্যারাথনে অংশ নিতে এখনই আপনার রেজিস্ট্রেশন সম্পন্ন করুন।</textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+              <div class="form-group" style="margin: 0;">
+                <label for="settingNoticeLinkText" class="form-label" style="font-size: 0.82rem; font-weight: 600;">
+                  🔗 Action Button Text (বাটন টেক্সট - ঐচ্ছিক)
+                </label>
+                <input type="text" id="settingNoticeLinkText" class="form-input" placeholder="e.g. রেজিস্ট্রেশন করুন →" value="রেজিস্ট্রেশন করুন →" style="background: rgba(0,0,0,0.3); color: #fff;">
+              </div>
+
+              <div class="form-group" style="margin: 0;">
+                <label for="settingNoticeLinkUrl" class="form-label" style="font-size: 0.82rem; font-weight: 600;">
+                  🌐 Action Button Link (বাটন লিঙ্ক - ঐচ্ছিক)
+                </label>
+                <input type="text" id="settingNoticeLinkUrl" class="form-input" placeholder="e.g. #register" value="#register" style="background: rgba(0,0,0,0.3); color: #fff;">
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center; justify-content: space-between; padding-top: 6px;">
+              <span id="noticeSaveStatus" style="font-size: 0.8rem; color: #00e5ff; font-weight: 600; display: none;">✓ Notice Saved & Synced!</span>
+              <button id="saveNoticeSettingsBtn" class="btn btn-outline btn-sm" style="padding: 9px 20px; font-weight: 700; margin-left: auto; border-color: #00e5ff; color: #00e5ff;">
+                <span>📢 Save & Publish Notice</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
         <!-- Kit Collection & Bus Routes Management Panel -->
         <div class="panel glass-panel" style="margin-bottom: 25px; border: 1px solid rgba(193, 216, 47, 0.3);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
@@ -1040,6 +1116,6 @@ with check (true);</pre>
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=3.4"></script>
+  <script src="admin.js?v=3.5"></script>
 </body>
 </html>

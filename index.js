@@ -43,6 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize Runner Badge Generator
   initBadgeGenerator();
 
+  // Live Top Notice & Emergency Announcement Banner
+  initLiveNoticeBanner();
+
   // Dynamic Event Settings & Deadlines (Admin Controlled)
   initDynamicEventSettings();
 
@@ -1492,6 +1495,106 @@ function initBadgeGenerator() {
       link.href = badgeCanvas.toDataURL('image/png');
       link.click();
     });
+  }
+}
+
+/* ==========================================
+   LIVE TOP NOTICE & EMERGENCY ANNOUNCEMENT BANNER
+   ========================================== */
+async function initLiveNoticeBanner() {
+  const banner = document.getElementById('topNoticeBanner');
+  const badgeEl = document.getElementById('noticeBadge');
+  const textEl = document.getElementById('noticeText');
+  const actionBtn = document.getElementById('noticeActionBtn');
+  const closeBtn = document.getElementById('closeNoticeBtn');
+
+  if (!banner || !badgeEl || !textEl) return;
+
+  let notice = null;
+
+  // 1. Try fetching from Supabase 'event_settings' table
+  if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('event_settings')
+        .select('*')
+        .eq('id', 'announcement_setting')
+        .maybeSingle();
+
+      if (data && !error && data.data) {
+        notice = data.data;
+        try {
+          localStorage.setItem('jucsu_announcement_setting', JSON.stringify(data.data));
+        } catch (e) {}
+      }
+    } catch (err) {
+      console.warn('Supabase notice fetch fallback:', err);
+    }
+  }
+
+  // 2. Fallback to localStorage
+  if (!notice) {
+    try {
+      const local = localStorage.getItem('jucsu_announcement_setting');
+      if (local) notice = JSON.parse(local);
+    } catch (e) {}
+  }
+
+  // Default fallback if no settings found
+  if (!notice) {
+    notice = {
+      status: 'active',
+      type: 'urgent',
+      badge: '🚨 জরুরি নোটিশ',
+      text: '🔥 রেজিস্ট্রেশন ডেডলাইন শেষ হচ্ছে আর মাত্র ২৪ ঘণ্টা পর (৮ই সেপ্টেম্বর রাত ১১:৫৯ মিনিট)! ক্যাম্পাসের অন্যতম স্মরণীয় ম্যারাথনে অংশ নিতে এখনই আপনার রেজিস্ট্রেশন সম্পন্ন করুন।',
+      link_text: 'রেজিস্ট্রেশন করুন →',
+      link_url: '#register'
+    };
+  }
+
+  // If disabled, hide banner
+  if (notice.status !== 'active') {
+    banner.style.display = 'none';
+    return;
+  }
+
+  // Check if previously dismissed in this session
+  const noticeSignature = (notice.badge + '_' + notice.text).replace(/\s+/g, '');
+  const dismissedSignature = sessionStorage.getItem('jucsu_notice_dismissed');
+  if (dismissedSignature === noticeSignature) {
+    banner.style.display = 'none';
+    return;
+  }
+
+  // Render Theme & Content
+  banner.className = `top-notice-banner notice-${notice.type || 'urgent'}`;
+  badgeEl.textContent = notice.badge || '📢 নোটিশ';
+  textEl.textContent = notice.text || '';
+
+  if (actionBtn) {
+    if (notice.link_text && notice.link_url) {
+      actionBtn.textContent = notice.link_text;
+      actionBtn.href = notice.link_url;
+      actionBtn.style.display = 'inline-flex';
+    } else {
+      actionBtn.style.display = 'none';
+    }
+  }
+
+  banner.style.display = 'block';
+
+  // Close / Dismiss button handler
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      banner.style.opacity = '0';
+      banner.style.transform = 'translateY(-10px)';
+      setTimeout(() => {
+        banner.style.display = 'none';
+      }, 300);
+      try {
+        sessionStorage.setItem('jucsu_notice_dismissed', noticeSignature);
+      } catch (e) {}
+    };
   }
 }
 

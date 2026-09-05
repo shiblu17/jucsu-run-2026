@@ -1236,6 +1236,9 @@ function setupEventSettingsHandler() {
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<span>Saving...</span>';
 
+    let isCloudSynced = false;
+    let cloudErrorMsg = '';
+
     // Try saving to Supabase
     if (supabaseClient) {
       try {
@@ -1244,10 +1247,14 @@ function setupEventSettingsHandler() {
           .upsert(payload, { onConflict: 'id' });
 
         if (error) {
-          console.warn('Supabase upsert note (table might need to be created):', error);
+          console.warn('Supabase event_settings upsert error:', error);
+          cloudErrorMsg = error.message || 'Table not found';
+        } else {
+          isCloudSynced = true;
         }
       } catch (err) {
         console.warn('Supabase save error:', err);
+        cloudErrorMsg = err.message || 'Connection failed';
       }
     }
 
@@ -1256,10 +1263,16 @@ function setupEventSettingsHandler() {
 
     if (statusSpan) {
       statusSpan.style.display = 'inline';
-      statusSpan.textContent = '✓ Saved & Synced Live!';
+      if (isCloudSynced) {
+        statusSpan.style.color = '#00ff88';
+        statusSpan.textContent = '✓ Saved & Synced Live to Cloud (All Devices)!';
+      } else {
+        statusSpan.style.color = '#ffaa00';
+        statusSpan.textContent = `⚠️ Saved locally on this device only! (Supabase 'event_settings' table missing)`;
+      }
       setTimeout(() => {
         statusSpan.style.display = 'none';
-      }, 3500);
+      }, 5000);
     }
   };
 }
@@ -1326,11 +1339,35 @@ const DEFAULT_LOGISTICS_SETTINGS = {
 
 async function loadLogisticsSettings() {
   let settings = null;
-  const local = localStorage.getItem('jucsu_logistics_settings');
-  if (local) {
+
+  // 1. Try fetching from Supabase event_settings first
+  if (supabaseClient) {
     try {
-      settings = JSON.parse(local);
-    } catch (e) {}
+      const { data, error } = await supabaseClient
+        .from('event_settings')
+        .select('*')
+        .eq('id', 'logistics_settings')
+        .maybeSingle();
+
+      if (data && !error && data.data) {
+        settings = data.data;
+        try {
+          localStorage.setItem('jucsu_logistics_settings', JSON.stringify(settings));
+        } catch (e) {}
+      }
+    } catch (err) {
+      console.warn('Supabase logistics fetch note:', err);
+    }
+  }
+
+  // 2. Fallback to localStorage
+  if (!settings) {
+    const local = localStorage.getItem('jucsu_logistics_settings');
+    if (local) {
+      try {
+        settings = JSON.parse(local);
+      } catch (e) {}
+    }
   }
 
   if (!settings) {
@@ -1542,13 +1579,26 @@ function setupLogisticsSettingsHandler() {
       saveBtn.disabled = true;
       saveBtn.innerHTML = '<span>Saving...</span>';
 
+      let isCloudSynced = false;
+      let cloudErrorMsg = '';
+
       // Also try sync to Supabase event_settings if available
       if (supabaseClient) {
         try {
-          await supabaseClient
+          const { error } = await supabaseClient
             .from('event_settings')
             .upsert({ id: 'logistics_settings', data: payload, updated_at: new Date().toISOString() }, { onConflict: 'id' });
-        } catch (e) {}
+
+          if (error) {
+            console.warn('Supabase logistics upsert error:', error);
+            cloudErrorMsg = error.message || 'Table not found';
+          } else {
+            isCloudSynced = true;
+          }
+        } catch (e) {
+          console.warn('Supabase logistics save exception:', e);
+          cloudErrorMsg = e.message || 'Connection failed';
+        }
       }
 
       saveBtn.disabled = false;
@@ -1556,10 +1606,16 @@ function setupLogisticsSettingsHandler() {
 
       if (statusSpan) {
         statusSpan.style.display = 'inline';
-        statusSpan.textContent = '✓ Saved & Synced Live!';
+        if (isCloudSynced) {
+          statusSpan.style.color = '#00ff88';
+          statusSpan.textContent = '✓ Saved & Synced Live to Cloud (All Devices)!';
+        } else {
+          statusSpan.style.color = '#ffaa00';
+          statusSpan.textContent = `⚠️ Saved locally on this device only! (Supabase 'event_settings' table missing)`;
+        }
         setTimeout(() => {
           statusSpan.style.display = 'none';
-        }, 3500);
+        }, 5000);
       }
     };
   }

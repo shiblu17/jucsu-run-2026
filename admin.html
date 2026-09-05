@@ -414,6 +414,44 @@ JU Campus (Shaheed Minar) | Expected Arrival: 05:35 AM</textarea>
           </form>
         </div>
 
+        <!-- Supabase Cloud Sync Database Helper Notice -->
+        <div class="panel glass-panel" style="margin-bottom: 25px; border: 1px dashed rgba(0, 255, 136, 0.35); background: rgba(0,0,0,0.28); padding: 16px; border-radius: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="const el = document.getElementById('supabaseSqlBox'); el.style.display = el.style.display === 'none' ? 'block' : 'none';">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 1.1rem;">⚡</span>
+              <strong style="font-size: 0.88rem; color: #00ff88;">Supabase Live Cloud Sync Setup (মোবাইল ও সকল ডিভাইসে সিঙ্ক নির্দেশিকা)</strong>
+            </div>
+            <span style="font-size: 0.75rem; color: var(--color-accent); text-decoration: underline;">SQL কোড দেখুন / হাইড করুন ▾</span>
+          </div>
+          <div id="supabaseSqlBox" style="margin-top: 12px; display: none;">
+            <p style="font-size: 0.8rem; color: #cbd5e0; margin-bottom: 8px; line-height: 1.5;">
+              মোবাইল ফোন ও সকল ভিজিটরের ডিভাইসে একসাথে সেটিংস (অন/অফ/তারিখ) লাইভ আপডেট করতে আপনার <strong>Supabase Dashboard -> SQL Editor</strong>-এ গিয়ে নিচের কোডটি রান করুন:
+            </p>
+            <pre style="background: rgba(0,0,0,0.6); padding: 12px; border-radius: 6px; font-size: 0.78rem; color: #00ff88; overflow-x: auto; border: 1px solid rgba(255,255,255,0.08); font-family: monospace; line-height: 1.4;">create table if not exists public.event_settings (
+  id text primary key,
+  data jsonb,
+  reg_close_date text,
+  reg_status text,
+  status_10k text,
+  status_5k text,
+  race_date text,
+  updated_at timestamp with time zone default now()
+);
+
+alter table public.event_settings enable row level security;
+
+create policy "Allow all access to event_settings"
+on public.event_settings
+for all
+using (true)
+with check (true);</pre>
+            <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
+              <button type="button" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 4px 10px;" onclick="navigator.clipboard.writeText(`create table if not exists public.event_settings (\n  id text primary key,\n  data jsonb,\n  reg_close_date text,\n  reg_status text,\n  status_10k text,\n  status_5k text,\n  race_date text,\n  updated_at timestamp with time zone default now()\n);\n\nalter table public.event_settings enable row level security;\n\ncreate policy \&quot;Allow all access to event_settings\&quot;\non public.event_settings\nfor all\nusing (true)\nwith check (true);`); alert('SQL Code copied to clipboard!');">📋 Copy SQL Code</button>
+              <a href="https://supabase.com/dashboard/project/xvsmesiaxvlqzvaalarj/sql/new" target="_blank" rel="noopener" class="btn btn-lime btn-sm" style="font-size: 0.75rem; padding: 4px 10px; text-decoration: none;">🚀 Open Supabase SQL Editor ↗</a>
+            </div>
+          </div>
+        </div>
+
         <!-- On-Spot Kit Distribution & Verification Desk Panel -->
         <div class="panel glass-panel border-lime" style="border: 1px solid rgba(0, 255, 136, 0.35); margin-bottom: 25px; background: linear-gradient(180deg, rgba(0,255,136,0.03) 0%, rgba(0,0,0,0.2) 100%);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -880,6 +918,6 @@ JU Campus (Shaheed Minar) | Expected Arrival: 05:35 AM</textarea>
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=3.0"></script>
+  <script src="admin.js?v=3.1"></script>
 </body>
 </html>

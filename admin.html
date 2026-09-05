@@ -75,11 +75,20 @@
           <p>Pending Review</p>
         </div>
       </div>
-      <div class="admin-stat-card glass-panel border-lime">
+      <div class="admin-stat-card glass-panel border-lime" id="revenueStatCard" style="position: relative; cursor: pointer;" title="Click to Reveal / Hide Revenue">
         <span class="card-icon text-lime">৳</span>
-        <div class="card-info">
-          <h4 id="statRevenue">৳0 BDT</h4>
-          <p>Revenue Checked</p>
+        <div class="card-info" style="flex-grow: 1;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+            <h4 id="statRevenue" style="letter-spacing: 0.04em;">৳ ••••••••</h4>
+            <button type="button" id="toggleRevenueBtn" class="btn btn-outline btn-sm" style="padding: 2px 7px; font-size: 0.72rem; border-color: rgba(0,255,136,0.3); color: #00ff88; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;" title="Click to Reveal / Hide">
+              <span id="revenueLockIcon">🔒</span>
+              <span id="revenueLockText">Unlock</span>
+            </button>
+          </div>
+          <p style="display: flex; align-items: center; justify-content: space-between; margin: 0; font-size: 0.8rem;">
+            <span>Revenue Checked</span>
+            <span id="revenueStatusBadge" style="font-size: 0.65rem; color: #a0aec0; text-transform: uppercase; font-weight: 700;">Protected</span>
+          </p>
         </div>
       </div>
     </section>
@@ -915,9 +924,31 @@ with check (true);</pre>
     </div>
   </div>
 
+  <!-- Revenue Unlock Passcode Modal -->
+  <div id="revenueUnlockModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10000; backdrop-filter: blur(8px); align-items: center; justify-content: center;">
+    <div class="glass-panel" style="max-width: 380px; width: 90%; background: #04160d; border: 1px solid rgba(0, 255, 136, 0.4); padding: 25px; border-radius: 16px; margin: 80px auto; color: #fff; box-shadow: 0 20px 50px rgba(0,0,0,0.9); text-align: center;">
+      <div style="font-size: 2.2rem; margin-bottom: 8px;">🔐</div>
+      <h3 style="color: #fff; font-size: 1.25rem; margin-bottom: 6px; font-family: var(--font-headings);">Revenue Access Protection</h3>
+      <p style="color: var(--color-text-muted); font-size: 0.82rem; margin-bottom: 18px;">Enter admin passcode to reveal total checked revenue amount.</p>
+      
+      <form id="revenueUnlockForm" onsubmit="return false;">
+        <div class="form-group" style="margin-bottom: 14px; text-align: left;">
+          <label for="revenuePasscodeInput" class="form-label" style="font-size: 0.8rem; font-weight: 600; color: var(--color-accent);">Enter Passcode</label>
+          <input type="password" id="revenuePasscodeInput" class="form-input" placeholder="Passcode (e.g. jucsu2026)" style="background: rgba(0,0,0,0.5); color: #fff; text-align: center; font-size: 1.05rem; letter-spacing: 0.1em;" autocomplete="off">
+          <div id="revenueUnlockError" style="color: #ff5555; font-size: 0.78rem; margin-top: 6px; display: none;">❌ Incorrect passcode. Please try again.</div>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 18px;">
+          <button type="button" id="cancelRevenueUnlockBtn" class="btn btn-outline btn-sm" style="padding: 8px 18px;">Cancel</button>
+          <button type="submit" id="submitRevenueUnlockBtn" class="btn btn-lime btn-sm" style="padding: 8px 20px; font-weight: 700;">🔓 Reveal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=3.1"></script>
+  <script src="admin.js?v=3.2"></script>
 </body>
 </html>

@@ -156,6 +156,7 @@ async function initAdminDashboard() {
   initKitDistributionDesk();
   initVendorPrintSheet();
   initBroadcastTool();
+  initRevenueProtection();
 }
 
 async function loadDatabase() {
@@ -210,18 +211,20 @@ function refreshDashboard() {
 /* ==========================================
    STATISTICS & ANALYTICS RENDERING
    ========================================== */
+let isRevenueUnlocked = sessionStorage.getItem('jucsu_revenue_unlocked') === 'true';
+let calculatedRevenue = 0;
+
 function renderStatistics() {
   const statTotal = document.getElementById('statTotal');
   const statVerified = document.getElementById('statVerified');
   const statPending = document.getElementById('statPending');
-  const statRevenue = document.getElementById('statRevenue');
 
   const total = runnerDatabase.length;
   const verified = runnerDatabase.filter(r => r.status === 'Verified').length;
   const pending = runnerDatabase.filter(r => r.status === 'Pending').length;
 
   // Calculate fees collected (only verified payments count towards checked revenue)
-  const revenue = runnerDatabase
+  calculatedRevenue = runnerDatabase
     .filter(r => r.status === 'Verified')
     .reduce((sum, r) => {
       let fee = 0;
@@ -237,10 +240,11 @@ function renderStatistics() {
       return sum + fee;
     }, 0);
 
-  statTotal.textContent = total;
-  statVerified.textContent = verified;
-  statPending.textContent = pending;
-  statRevenue.textContent = `৳${revenue.toLocaleString()} BDT`;
+  if (statTotal) statTotal.textContent = total;
+  if (statVerified) statVerified.textContent = verified;
+  if (statPending) statPending.textContent = pending;
+
+  updateRevenueDisplay();
 }
 
 function renderAnalyticsCharts() {
@@ -2236,5 +2240,116 @@ function initBroadcastTool() {
 
   // Initial populate
   updateBroadcastTool();
+}
+
+/* ==========================================
+   REVENUE CARD PRIVACY & PASSWORD PROTECTION
+   ========================================== */
+function updateRevenueDisplay() {
+  const statRevenue = document.getElementById('statRevenue');
+  const revenueLockIcon = document.getElementById('revenueLockIcon');
+  const revenueLockText = document.getElementById('revenueLockText');
+  const revenueStatusBadge = document.getElementById('revenueStatusBadge');
+
+  if (!statRevenue) return;
+
+  if (isRevenueUnlocked) {
+    statRevenue.textContent = `৳${calculatedRevenue.toLocaleString()} BDT`;
+    statRevenue.style.color = '#fff';
+    if (revenueLockIcon) revenueLockIcon.textContent = '👁️';
+    if (revenueLockText) revenueLockText.textContent = 'Hide';
+    if (revenueStatusBadge) {
+      revenueStatusBadge.textContent = 'Unlocked';
+      revenueStatusBadge.style.color = '#00ff88';
+    }
+  } else {
+    statRevenue.textContent = '৳ •••••••• BDT';
+    statRevenue.style.color = '#a0aec0';
+    if (revenueLockIcon) revenueLockIcon.textContent = '🔒';
+    if (revenueLockText) revenueLockText.textContent = 'Unlock';
+    if (revenueStatusBadge) {
+      revenueStatusBadge.textContent = 'Protected';
+      revenueStatusBadge.style.color = '#a0aec0';
+    }
+  }
+}
+
+function initRevenueProtection() {
+  const toggleBtn = document.getElementById('toggleRevenueBtn');
+  const modal = document.getElementById('revenueUnlockModal');
+  const form = document.getElementById('revenueUnlockForm');
+  const input = document.getElementById('revenuePasscodeInput');
+  const errorMsg = document.getElementById('revenueUnlockError');
+  const cancelBtn = document.getElementById('cancelRevenueUnlockBtn');
+  const card = document.getElementById('revenueStatCard');
+
+  if (!modal || !form || !input) return;
+
+  function openUnlockModal() {
+    if (isRevenueUnlocked) {
+      // Re-lock
+      isRevenueUnlocked = false;
+      sessionStorage.removeItem('jucsu_revenue_unlocked');
+      updateRevenueDisplay();
+      return;
+    }
+    input.value = '';
+    if (errorMsg) errorMsg.style.display = 'none';
+    modal.style.display = 'flex';
+    setTimeout(() => input.focus(), 100);
+  }
+
+  function closeModal() {
+    modal.style.display = 'none';
+    input.value = '';
+    if (errorMsg) errorMsg.style.display = 'none';
+  }
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openUnlockModal();
+    });
+  }
+
+  if (card) {
+    card.addEventListener('click', (e) => {
+      if (!isRevenueUnlocked) {
+        openUnlockModal();
+      }
+    });
+  }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', closeModal);
+  }
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const entered = input.value.trim().toLowerCase();
+    
+    // Accept valid passcodes: 'jucsu2026', 'admin', '2026', or organizer phone suffix
+    const validCodes = ['jucsu2026', 'admin', '2026', '7982', '01317982413'];
+    
+    if (validCodes.includes(entered)) {
+      isRevenueUnlocked = true;
+      sessionStorage.setItem('jucsu_revenue_unlocked', 'true');
+      closeModal();
+      updateRevenueDisplay();
+    } else {
+      if (errorMsg) {
+        errorMsg.style.display = 'block';
+        errorMsg.textContent = '❌ Incorrect passcode. Please try again.';
+      }
+      input.value = '';
+      input.focus();
+    }
+  });
+
+  updateRevenueDisplay();
 }
 

@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="index.css?v=3.1">
+  <link rel="stylesheet" href="index.css?v=3.3">
 </head>
 <body>
 
@@ -302,7 +302,7 @@
       <div class="grid grid-2-col categories-grid">
         
         <!-- Category 1 (Recommended/Popular) -->
-        <div class="category-card glass-panel popular-card">
+        <div class="category-card glass-panel popular-card" id="catCard10K">
           <div class="popular-ribbon">Most Popular</div>
           <div class="category-header">
             <span class="category-badge badge-lime">Challenger</span>
@@ -336,13 +336,13 @@
             <li>✓ Snacks & Hydration pack</li>
             <li>✓ Digital Timing Certificate</li>
           </ul>
-          <div class="category-action">
-            <button class="btn btn-lime btn-full register-trigger" data-category="10K Mini Marathon">Register Now</button>
+          <div class="category-action" id="catAction10K">
+            <button class="btn btn-lime btn-full register-trigger" id="regBtn10K" data-category="10K Mini Marathon">Register Now</button>
           </div>
         </div>
 
         <!-- Category 2 -->
-        <div class="category-card glass-panel">
+        <div class="category-card glass-panel" id="catCard5K">
           <div class="category-header">
             <span class="category-badge">Community</span>
             <h3 class="category-distance">5K</h3>
@@ -375,8 +375,8 @@
             <li>✓ Snacks & Hydration pack</li>
             <li>✓ Digital Timing Certificate</li>
           </ul>
-          <div class="category-action">
-            <button class="btn btn-primary btn-full register-trigger" data-category="5K Run">Register Now</button>
+          <div class="category-action" id="catAction5K">
+            <button class="btn btn-primary btn-full register-trigger" id="regBtn5K" data-category="5K Run">Register Now</button>
           </div>
         </div>
 
@@ -1116,6 +1116,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="index.js?v=3.1"></script>
+  <script src="index.js?v=3.2"></script>
 </body>
 </html>

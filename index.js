@@ -865,26 +865,71 @@ function initRegisterTriggers() {
   const successName = document.getElementById('successName');
   const successFeeAmount = document.getElementById('successFeeAmount');
 
-  // Open modal and pre-select category
-  triggers.forEach(trigger => {
-    trigger.addEventListener('click', () => {
-      const category = trigger.getAttribute('data-category');
-      backdrop.classList.add('open');
-      modal.classList.add('open');
-      
-      // Reset views
-      formContainer.classList.remove('hidden');
-      successContainer.classList.add('hidden');
-      publicRegisterForm.reset();
-      
-      // Pre-select category based on the clicked card
-      const is10K = category.includes('10K');
-      document.getElementById('cat10k').checked = is10K;
-      document.getElementById('cat5k').checked = !is10K;
+  // Open modal and pre-select category with event delegation
+  document.addEventListener('click', (e) => {
+    const trigger = e.target.closest('.register-trigger');
+    if (!trigger || trigger.disabled || trigger.classList.contains('disabled')) return;
 
-      // Update fee display
-      updateFeeDisplay();
-    });
+    const category = trigger.getAttribute('data-category') || '10K Mini Marathon';
+    backdrop.classList.add('open');
+    modal.classList.add('open');
+    
+    // Reset views
+    formContainer.classList.remove('hidden');
+    successContainer.classList.add('hidden');
+    publicRegisterForm.reset();
+    
+    const settings = window.currentEventSettings || {};
+    const is10kClosed = settings.status_10k === 'closed';
+    const is5kClosed = settings.status_5k === 'closed';
+
+    const cat10kRadio = document.getElementById('cat10k');
+    const cat5kRadio = document.getElementById('cat5k');
+    const cat10kWrapper = cat10kRadio ? cat10kRadio.closest('.radio-tile-wrapper') : null;
+    const cat5kWrapper = cat5kRadio ? cat5kRadio.closest('.radio-tile-wrapper') : null;
+
+    if (cat10kRadio) {
+      cat10kRadio.disabled = is10kClosed;
+      if (cat10kWrapper) {
+        cat10kWrapper.style.opacity = is10kClosed ? '0.4' : '1';
+        cat10kWrapper.style.cursor = is10kClosed ? 'not-allowed' : 'pointer';
+        const labelEl = cat10kWrapper.querySelector('.radio-tile-content');
+        if (labelEl) labelEl.textContent = is10kClosed ? '10K (Closed)' : '10K Mini Marathon';
+      }
+    }
+
+    if (cat5kRadio) {
+      cat5kRadio.disabled = is5kClosed;
+      if (cat5kWrapper) {
+        cat5kWrapper.style.opacity = is5kClosed ? '0.4' : '1';
+        cat5kWrapper.style.cursor = is5kClosed ? 'not-allowed' : 'pointer';
+        const labelEl = cat5kWrapper.querySelector('.radio-tile-content');
+        if (labelEl) labelEl.textContent = is5kClosed ? '5K (Closed)' : '5K Run';
+      }
+    }
+
+    // Determine which category to select
+    let select10K = category.includes('10K');
+    if (select10K && is10kClosed && !is5kClosed) select10K = false;
+    if (!select10K && is5kClosed && !is10kClosed) select10K = true;
+
+    if (cat10kRadio) cat10kRadio.checked = select10K && !is10kClosed;
+    if (cat5kRadio) cat5kRadio.checked = !select10K && !is5kClosed;
+
+    // Check if all closed
+    const submitBtn = document.getElementById('publicRegisterSubmit');
+    if (submitBtn) {
+      if (is10kClosed && is5kClosed) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Registration Closed for All Categories';
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Confirm & Generate E-Slip →';
+      }
+    }
+
+    // Update fee display
+    updateFeeDisplay();
   });
 
   // Bind dynamic fee display to participant type options
@@ -919,6 +964,11 @@ function initRegisterTriggers() {
   }
 
   pubTypeRadios.forEach(radio => {
+    radio.addEventListener('change', updateFeeDisplay);
+  });
+
+  const catRadios = document.querySelectorAll('input[name="pubCategory"]');
+  catRadios.forEach(radio => {
     radio.addEventListener('change', updateFeeDisplay);
   });
 
@@ -1318,5 +1368,28 @@ async function initDynamicEventSettings() {
   if (countdownEl && settings.race_date) {
     countdownEl.setAttribute('data-date', settings.race_date);
     initCountdown(); // Recalculate with updated target date
+  }
+
+  // Save settings globally for modal use
+  window.currentEventSettings = settings;
+
+  // Update 10K Category Card
+  const catAction10K = document.getElementById('catAction10K');
+  if (catAction10K) {
+    if (settings.status_10k === 'closed') {
+      catAction10K.innerHTML = `<button class="btn btn-full disabled" disabled style="background: rgba(235,50,65,0.15); border: 1px solid rgba(235,50,65,0.4); color: #ffccd0; cursor: not-allowed; font-weight: 700; width: 100%;">🔴 Registration Closed (10K)</button>`;
+    } else {
+      catAction10K.innerHTML = `<button class="btn btn-lime btn-full register-trigger" id="regBtn10K" data-category="10K Mini Marathon">Register Now</button>`;
+    }
+  }
+
+  // Update 5K Category Card
+  const catAction5K = document.getElementById('catAction5K');
+  if (catAction5K) {
+    if (settings.status_5k === 'closed') {
+      catAction5K.innerHTML = `<button class="btn btn-full disabled" disabled style="background: rgba(235,50,65,0.15); border: 1px solid rgba(235,50,65,0.4); color: #ffccd0; cursor: not-allowed; font-weight: 700; width: 100%;">🔴 Registration Closed (5K)</button>`;
+    } else {
+      catAction5K.innerHTML = `<button class="btn btn-primary btn-full register-trigger" id="regBtn5K" data-category="5K Run">Register Now</button>`;
+    }
   }
 }

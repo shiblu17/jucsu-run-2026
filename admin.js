@@ -1146,6 +1146,8 @@ async function loadEventSettings() {
   const regCloseInput = document.getElementById('settingRegCloseDate');
   const regStatusInput = document.getElementById('settingRegStatus');
   const raceDateInput = document.getElementById('settingRaceDate');
+  const status10KInput = document.getElementById('settingStatus10K');
+  const status5KInput = document.getElementById('settingStatus5K');
 
   if (!regCloseInput) return;
 
@@ -1183,6 +1185,8 @@ async function loadEventSettings() {
     settings = {
       reg_close_date: '8 September 2026',
       reg_status: 'open',
+      status_10k: 'open',
+      status_5k: 'open',
       race_date: '2026-10-02T06:10'
     };
   }
@@ -1190,6 +1194,8 @@ async function loadEventSettings() {
   // Populate form inputs
   regCloseInput.value = settings.reg_close_date || '8 September 2026';
   if (regStatusInput) regStatusInput.value = settings.reg_status || 'open';
+  if (status10KInput) status10KInput.value = settings.status_10k || 'open';
+  if (status5KInput) status5KInput.value = settings.status_5k || 'open';
   if (raceDateInput && settings.race_date) raceDateInput.value = settings.race_date;
 }
 
@@ -1198,6 +1204,8 @@ function setupEventSettingsHandler() {
   const regCloseInput = document.getElementById('settingRegCloseDate');
   const regStatusInput = document.getElementById('settingRegStatus');
   const raceDateInput = document.getElementById('settingRaceDate');
+  const status10KInput = document.getElementById('settingStatus10K');
+  const status5KInput = document.getElementById('settingStatus5K');
   const statusSpan = document.getElementById('settingsSaveStatus');
 
   if (!saveBtn) return;
@@ -1208,6 +1216,8 @@ function setupEventSettingsHandler() {
       id: 'main_event',
       reg_close_date: regCloseInput.value.trim() || '8 September 2026',
       reg_status: regStatusInput ? regStatusInput.value : 'open',
+      status_10k: status10KInput ? status10KInput.value : 'open',
+      status_5k: status5KInput ? status5KInput.value : 'open',
       race_date: raceDateInput ? raceDateInput.value : '2026-10-02T06:10',
       updated_at: new Date().toISOString()
     };

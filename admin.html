@@ -130,6 +130,38 @@
               </div>
             </div>
 
+            <!-- Category Status Controls (5K & 10K On/Off) -->
+            <div style="background: rgba(0,0,0,0.25); padding: 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 14px;">
+              <h4 style="font-size: 0.85rem; color: var(--color-accent); font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
+                <span>🏃</span>
+                <span>Category Status Controls (ক্যাটাগরি অন/অফ)</span>
+              </h4>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <!-- 10K Mini Marathon Control -->
+                <div class="form-group" style="margin: 0;">
+                  <label for="settingStatus10K" class="form-label" style="font-size: 0.82rem; font-weight: 600;">
+                    🥇 10K Mini Marathon
+                  </label>
+                  <select id="settingStatus10K" class="form-select" style="background: rgba(0,0,0,0.35); color: #fff; font-size: 0.85rem;">
+                    <option value="open">🟢 Open (রেজিস্ট্রেশন চালু)</option>
+                    <option value="closed">🔴 Closed (বন্ধ / স্লট ফুল)</option>
+                  </select>
+                </div>
+
+                <!-- 5K Run Control -->
+                <div class="form-group" style="margin: 0;">
+                  <label for="settingStatus5K" class="form-label" style="font-size: 0.82rem; font-weight: 600;">
+                    🥈 5K Run
+                  </label>
+                  <select id="settingStatus5K" class="form-select" style="background: rgba(0,0,0,0.35); color: #fff; font-size: 0.85rem;">
+                    <option value="open">🟢 Open (রেজিস্ট্রেশন চালু)</option>
+                    <option value="closed">🔴 Closed (বন্ধ / স্লট ফুল)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             <div style="display: flex; gap: 10px; align-items: center; justify-content: space-between; padding-top: 6px;">
               <span id="settingsSaveStatus" style="font-size: 0.8rem; color: var(--color-accent); font-weight: 600; display: none;">✓ Saved & Synced!</span>
               <button id="saveEventSettingsBtn" class="btn btn-lime btn-sm" style="padding: 9px 20px; font-weight: 700; margin-left: auto;">
@@ -444,6 +476,6 @@
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=2.6"></script>
+  <script src="admin.js?v=2.7"></script>
 </body>
 </html>

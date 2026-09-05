@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="admin.css?v=1.8">
+  <link rel="stylesheet" href="admin.css?v=1.9">
 </head>
 <body>
 
@@ -167,6 +167,249 @@
               <button id="saveEventSettingsBtn" class="btn btn-lime btn-sm" style="padding: 9px 20px; font-weight: 700; margin-left: auto;">
                 <span>💾 Save & Sync Website</span>
               </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Kit Collection & Bus Routes Management Panel -->
+        <div class="panel glass-panel" style="margin-bottom: 25px; border: 1px solid rgba(193, 216, 47, 0.3);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+            <h3 class="panel-title" style="margin: 0; color: #fff; display: flex; align-items: center; gap: 8px;">
+              <span>📍</span>
+              <span>Kit Collection & 🚌 Bus Routes Manager</span>
+            </h3>
+            <span style="background: rgba(193, 216, 47, 0.15); color: var(--color-accent); font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; border: 1px solid rgba(193,216,47,0.3);">Content & Status Editor</span>
+          </div>
+          <p class="panel-desc" style="margin-bottom: 16px;">
+            Toggle Kit Collection and Bus Route sections ON/OFF (shows "Coming Soon..." when disabled) and customize point details, schedules & contacts.
+          </p>
+
+          <form id="logisticsSettingsForm" onsubmit="return false;">
+            <!-- Master Status Toggles -->
+            <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 16px;">
+              <h4 style="font-size: 0.85rem; color: var(--color-accent); font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
+                <span>⚙️</span>
+                <span>Section Visibility Controls (অন / অফ কন্ট্রোল)</span>
+              </h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <!-- Kit Points Status -->
+                <div class="form-group" style="margin: 0;">
+                  <label for="logKitStatus" class="form-label" style="font-size: 0.82rem; font-weight: 600;">
+                    📍 Kit Collection Points
+                  </label>
+                  <select id="logKitStatus" class="form-select" style="background: rgba(0,0,0,0.4); color: #fff; font-size: 0.85rem;">
+                    <option value="active">🟢 Active (তথ্য দৃশ্যমান)</option>
+                    <option value="disabled">🔴 Disabled ("Coming Soon.." দেখাবে)</option>
+                  </select>
+                </div>
+
+                <!-- Bus Routes Status -->
+                <div class="form-group" style="margin: 0;">
+                  <label for="logBusStatus" class="form-label" style="font-size: 0.82rem; font-weight: 600;">
+                    🚌 Race Day Bus Routes
+                  </label>
+                  <select id="logBusStatus" class="form-select" style="background: rgba(0,0,0,0.4); color: #fff; font-size: 0.85rem;">
+                    <option value="active">🟢 Active (তথ্য দৃশ্যমান)</option>
+                    <option value="disabled">🔴 Disabled ("Coming Soon.." দেখাবে)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sub Navigation Tabs for Form Editing -->
+            <div class="admin-sub-tabs" style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+              <button type="button" class="admin-subtab-btn active" id="btnEditKitPoints" style="padding: 7px 14px; font-size: 0.85rem; font-weight: 700; border-radius: 6px; cursor: pointer; border: 1px solid var(--color-accent); background: var(--color-accent); color: var(--color-primary-dark);">
+                📍 Edit Kit Collection Points
+              </button>
+              <button type="button" class="admin-subtab-btn" id="btnEditBusRoutes" style="padding: 7px 14px; font-size: 0.85rem; font-weight: 700; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.3); color: #fff;">
+                🚌 Edit Bus Routes & Schedule
+              </button>
+            </div>
+
+            <!-- Kit Points Form Fields -->
+            <div id="sectionEditKitPoints">
+              <!-- Point 1 (DU) -->
+              <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); padding: 14px; border-radius: 8px; margin-bottom: 14px;">
+                <h4 style="font-size: 0.88rem; color: #00ff88; margin-bottom: 10px;">🏛️ Kit Point 1: Dhaka University (DU Point)</h4>
+                
+                <div class="form-group" style="margin-bottom: 10px;">
+                  <label class="form-label" style="font-size: 0.78rem;">Point Title</label>
+                  <input type="text" id="kitPt1Title" class="form-input form-input-sm" value="🏛️ Dhaka University (DU) Point" style="background: rgba(0,0,0,0.3); color: #fff;">
+                </div>
+                <div class="form-group" style="margin-bottom: 10px;">
+                  <label class="form-label" style="font-size: 0.78rem;">Location / Venue</label>
+                  <input type="text" id="kitPt1Location" class="form-input form-input-sm" value="Physical Education Centre / TSC, Dhaka University Campus" style="background: rgba(0,0,0,0.3); color: #fff;">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">📅 Dates</label>
+                    <input type="text" id="kitPt1Dates" class="form-input form-input-sm" value="28 – 30 September 2026" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">⏰ Timing</label>
+                    <input type="text" id="kitPt1Timing" class="form-input form-input-sm" value="10:00 AM – 06:00 PM" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">📋 Pickup Requirements</label>
+                    <input type="text" id="kitPt1Req" class="form-input form-input-sm" value="E-Bib Screenshot / PDF & Valid Photo ID (Student/NID)" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">📞 Helpline / Contact</label>
+                    <input type="text" id="kitPt1Contact" class="form-input form-input-sm" value="01317982413" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" style="font-size: 0.78rem;">📍 Google Maps URL</label>
+                  <input type="text" id="kitPt1Map" class="form-input form-input-sm" value="https://maps.google.com/?q=TSC+Dhaka+University" style="background: rgba(0,0,0,0.3); color: #fff;">
+                </div>
+              </div>
+
+              <!-- Point 2 (JU) -->
+              <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); padding: 14px; border-radius: 8px; margin-bottom: 14px;">
+                <h4 style="font-size: 0.88rem; color: var(--color-accent); margin-bottom: 10px;">🌳 Kit Point 2: Jahangirnagar University (JU Point)</h4>
+                
+                <div class="form-group" style="margin-bottom: 10px;">
+                  <label class="form-label" style="font-size: 0.78rem;">Point Title</label>
+                  <input type="text" id="kitPt2Title" class="form-input form-input-sm" value="🌳 Jahangirnagar University (JU) Point" style="background: rgba(0,0,0,0.3); color: #fff;">
+                </div>
+                <div class="form-group" style="margin-bottom: 10px;">
+                  <label class="form-label" style="font-size: 0.78rem;">Location / Venue</label>
+                  <input type="text" id="kitPt2Location" class="form-input form-input-sm" value="JUCSU Office / Central Gymnasium, JU Campus, Savar" style="background: rgba(0,0,0,0.3); color: #fff;">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">📅 Dates</label>
+                    <input type="text" id="kitPt2Dates" class="form-input form-input-sm" value="28 September – 01 October 2026" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">⏰ Timing</label>
+                    <input type="text" id="kitPt2Timing" class="form-input form-input-sm" value="10:00 AM – 07:00 PM" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">📋 Pickup Requirements</label>
+                    <input type="text" id="kitPt2Req" class="form-input form-input-sm" value="E-Bib Screenshot / PDF & Valid Photo ID (Student/NID)" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">📞 Helpline / Contact</label>
+                    <input type="text" id="kitPt2Contact" class="form-input form-input-sm" value="01317982413" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" style="font-size: 0.78rem;">📍 Google Maps URL</label>
+                  <input type="text" id="kitPt2Map" class="form-input form-input-sm" value="https://maps.google.com/?q=Jahangirnagar+University+Gymnasium" style="background: rgba(0,0,0,0.3); color: #fff;">
+                </div>
+              </div>
+            </div>
+
+            <!-- Bus Routes Form Fields -->
+            <div id="sectionEditBusRoutes" style="display: none;">
+              <!-- General Notice Alert -->
+              <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); padding: 14px; border-radius: 8px; margin-bottom: 14px;">
+                <h4 style="font-size: 0.88rem; color: #ffaa00; margin-bottom: 10px;">⏰ Bus Departure Notice & Guidelines</h4>
+                <div class="form-group" style="margin-bottom: 10px;">
+                  <label class="form-label" style="font-size: 0.78rem;">Alert Header</label>
+                  <input type="text" id="busAlertTitle" class="form-input form-input-sm" value="Race Day Bus Departure: 04:30 AM Sharp (October 2, 2026)" style="background: rgba(0,0,0,0.3); color: #fff;">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" style="font-size: 0.78rem;">Alert Description</label>
+                  <textarea id="busAlertDesc" class="form-input form-input-sm" rows="2" style="background: rgba(0,0,0,0.3); color: #fff; resize: vertical;">Official dedicated buses will depart from all pickup points simultaneously at 04:30 AM to ensure arrival before Flag-off (06:10 AM). Return buses from JU campus back to Dhaka will depart at 11:30 AM.</textarea>
+                </div>
+              </div>
+
+              <!-- Route 1 -->
+              <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); padding: 14px; border-radius: 8px; margin-bottom: 14px;">
+                <h4 style="font-size: 0.88rem; color: var(--color-accent); margin-bottom: 10px;">🚌 Route 01: Uttara Route</h4>
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">Route Name</label>
+                    <input type="text" id="busR1Title" class="form-input form-input-sm" value="Uttara Route" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">⏰ Time</label>
+                    <input type="text" id="busR1Time" class="form-input form-input-sm" value="04:30 AM" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">📞 Coordinator</label>
+                    <input type="text" id="busR1Contact" class="form-input form-input-sm" value="01317982413" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" style="font-size: 0.78rem;">Stops Timeline (1 Stop per line: <code>Stop Name | Timing or note</code>)</label>
+                  <textarea id="busR1Stops" class="form-input form-input-sm" rows="4" style="background: rgba(0,0,0,0.3); color: #fff; font-family: monospace; font-size: 0.82rem; resize: vertical;">House Building (Uttara) | Main Starting Point (04:30 AM)
+Rajlakshmi & Azampur | 04:35 AM
+Airport / Kawla | 04:45 AM
+JU Campus (Shaheed Minar) | Expected Arrival: 05:30 AM</textarea>
+                </div>
+              </div>
+
+              <!-- Route 2 -->
+              <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); padding: 14px; border-radius: 8px; margin-bottom: 14px;">
+                <h4 style="font-size: 0.88rem; color: var(--color-accent); margin-bottom: 10px;">🚌 Route 02: Gulshan & Mohakhali</h4>
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">Route Name</label>
+                    <input type="text" id="busR2Title" class="form-input form-input-sm" value="Gulshan & Mohakhali" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">⏰ Time</label>
+                    <input type="text" id="busR2Time" class="form-input form-input-sm" value="04:30 AM" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">📞 Coordinator</label>
+                    <input type="text" id="busR2Contact" class="form-input form-input-sm" value="01317982413" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" style="font-size: 0.78rem;">Stops Timeline (1 Stop per line: <code>Stop Name | Timing or note</code>)</label>
+                  <textarea id="busR2Stops" class="form-input form-input-sm" rows="4" style="background: rgba(0,0,0,0.3); color: #fff; font-family: monospace; font-size: 0.82rem; resize: vertical;">Gulshan 1 Circle | Main Starting Point (04:30 AM)
+Mohakhali Bus Stand & Farmgate | 04:40 AM
+Shyamoli & Gabtoli | 04:55 AM
+JU Campus (Shaheed Minar) | Expected Arrival: 05:35 AM</textarea>
+                </div>
+              </div>
+
+              <!-- Route 3 -->
+              <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); padding: 14px; border-radius: 8px; margin-bottom: 14px;">
+                <h4 style="font-size: 0.88rem; color: var(--color-accent); margin-bottom: 10px;">🚌 Route 03: Bongobazar & DU Route</h4>
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">Route Name</label>
+                    <input type="text" id="busR3Title" class="form-input form-input-sm" value="Bongobazar & DU Route" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">⏰ Time</label>
+                    <input type="text" id="busR3Time" class="form-input form-input-sm" value="04:30 AM" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem;">📞 Coordinator</label>
+                    <input type="text" id="busR3Contact" class="form-input form-input-sm" value="01317982413" style="background: rgba(0,0,0,0.3); color: #fff;">
+                  </div>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" style="font-size: 0.78rem;">Stops Timeline (1 Stop per line: <code>Stop Name | Timing or note</code>)</label>
+                  <textarea id="busR3Stops" class="form-input form-input-sm" rows="4" style="background: rgba(0,0,0,0.3); color: #fff; font-family: monospace; font-size: 0.82rem; resize: vertical;">TSC / Bongobazar Area | Main Starting Point (04:30 AM)
+Nilkhet & Science Lab | 04:40 AM
+Asad Gate & Kalyanpur | 04:55 AM
+JU Campus (Shaheed Minar) | Expected Arrival: 05:35 AM</textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer Save Actions -->
+            <div style="display: flex; gap: 10px; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); flex-wrap: wrap;">
+              <span id="logisticsSaveStatus" style="font-size: 0.8rem; color: var(--color-accent); font-weight: 600; display: none;">✓ Saved & Synced!</span>
+              <div style="display: flex; gap: 10px; margin-left: auto;">
+                <button type="button" id="resetLogisticsDefaultsBtn" class="btn btn-outline btn-sm" style="padding: 7px 14px; font-size: 0.82rem;">
+                  ↺ Reset Defaults
+                </button>
+                <button type="button" id="saveLogisticsSettingsBtn" class="btn btn-lime btn-sm" style="padding: 9px 20px; font-weight: 700;">
+                  <span>💾 Save & Sync Logistics</span>
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -526,6 +769,6 @@
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=2.8"></script>
+  <script src="admin.js?v=2.9"></script>
 </body>
 </html>

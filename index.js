@@ -1398,9 +1398,9 @@ async function initDynamicEventSettings() {
 }
 
 /* ==========================================
-   LOGISTICS & BUS ROUTE TABS TOGGLE
+   LOGISTICS & BUS ROUTE DYNAMIC RENDERER & TABS
    ========================================== */
-function initLogisticsTabs() {
+async function initLogisticsTabs() {
   const tabs = document.querySelectorAll('.logistics-tab-btn');
   const contents = document.querySelectorAll('.logistics-tab-content');
 
@@ -1421,4 +1421,259 @@ function initLogisticsTabs() {
       });
     });
   });
+
+  // Load and render dynamic content based on admin settings
+  await loadAndRenderLogistics();
 }
+
+async function loadAndRenderLogistics() {
+  let settings = null;
+
+  // 1. Try fetching from Supabase if client is ready
+  if (supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('event_settings')
+        .select('*')
+        .eq('id', 'logistics_settings')
+        .single();
+      if (!error && data && data.data) {
+        settings = data.data;
+      }
+    } catch (e) {}
+  }
+
+  // 2. Try localStorage
+  if (!settings) {
+    const local = localStorage.getItem('jucsu_logistics_settings');
+    if (local) {
+      try {
+        settings = JSON.parse(local);
+      } catch (e) {}
+    }
+  }
+
+  // 3. Fallback to standard defaults
+  if (!settings) {
+    settings = {
+      kit_status: 'active',
+      bus_status: 'active',
+      kit_points: [
+        {
+          id: 'du',
+          title: '🏛️ Dhaka University (DU) Point',
+          location: 'Physical Education Centre / TSC, Dhaka University Campus',
+          dates: '28 – 30 September 2026',
+          time: '10:00 AM – 06:00 PM',
+          requirements: 'E-Bib Screenshot / PDF & Valid Photo ID (Student/NID)',
+          contact: '01317982413',
+          map_url: 'https://maps.google.com/?q=TSC+Dhaka+University'
+        },
+        {
+          id: 'ju',
+          title: '🌳 Jahangirnagar University (JU) Point',
+          location: 'JUCSU Office / Central Gymnasium, JU Campus, Savar',
+          dates: '28 September – 01 October 2026',
+          time: '10:00 AM – 07:00 PM',
+          requirements: 'E-Bib Screenshot / PDF & Valid Photo ID (Student/NID)',
+          contact: '01317982413',
+          map_url: 'https://maps.google.com/?q=Jahangirnagar+University+Gymnasium'
+        }
+      ],
+      bus_alert: {
+        title: 'Race Day Bus Departure: 04:30 AM Sharp (October 2, 2026)',
+        desc: 'Official dedicated buses will depart from all pickup points simultaneously at 04:30 AM to ensure arrival before Flag-off (06:10 AM). Return buses from JU campus back to Dhaka will depart at 11:30 AM.'
+      },
+      bus_routes: [
+        {
+          id: 'r1',
+          num: 'Route 01',
+          title: 'Uttara Route',
+          time: '04:30 AM',
+          contact: '01317982413',
+          stops_text: 'House Building (Uttara) | Main Starting Point (04:30 AM)\nRajlakshmi & Azampur | 04:35 AM\nAirport / Kawla | 04:45 AM\nJU Campus (Shaheed Minar) | Expected Arrival: 05:30 AM'
+        },
+        {
+          id: 'r2',
+          num: 'Route 02',
+          title: 'Gulshan & Mohakhali',
+          time: '04:30 AM',
+          contact: '01317982413',
+          stops_text: 'Gulshan 1 Circle | Main Starting Point (04:30 AM)\nMohakhali Bus Stand & Farmgate | 04:40 AM\nShyamoli & Gabtoli | 04:55 AM\nJU Campus (Shaheed Minar) | Expected Arrival: 05:35 AM'
+        },
+        {
+          id: 'r3',
+          num: 'Route 03',
+          title: 'Bongobazar & DU Route',
+          time: '04:30 AM',
+          contact: '01317982413',
+          stops_text: 'TSC / Bongobazar Area | Main Starting Point (04:30 AM)\nNilkhet & Science Lab | 04:40 AM\nAsad Gate & Kalyanpur | 04:55 AM\nJU Campus (Shaheed Minar) | Expected Arrival: 05:35 AM'
+        }
+      ]
+    };
+  }
+
+  // Render Kit Points Section
+  renderKitPointsSection(settings);
+
+  // Render Bus Routes Section
+  renderBusRoutesSection(settings);
+}
+
+function renderKitPointsSection(settings) {
+  const container = document.getElementById('kitPointsContainer');
+  if (!container) return;
+
+  const isKitActive = settings.kit_status === 'active';
+
+  if (!isKitActive) {
+    container.innerHTML = `
+      <div class="coming-soon-card glass-panel text-center">
+        <span class="coming-soon-badge">ANNOUNCEMENT</span>
+        <div class="coming-soon-icon">⏳</div>
+        <h3 class="coming-soon-title">Kit Collection Details Coming Soon!</h3>
+        <p class="coming-soon-desc">The official kit pickup points, dates, and instructions will be announced soon. Please keep an eye on this website or join our WhatsApp community for instant updates.</p>
+        <div class="coming-soon-actions">
+          <a href="https://chat.whatsapp.com/Hauj6W8EzPp17mGwKkMBTD" target="_blank" class="btn btn-lime btn-sm">💬 Join WhatsApp Community</a>
+          <a href="https://wa.me/8801317982413" target="_blank" class="btn btn-outline btn-sm">📞 Helpline: 01317982413</a>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const points = settings.kit_points || [];
+  let pointsHtml = '<div class="grid grid-2-col logistics-grid">';
+
+  points.forEach((pt, idx) => {
+    const isCity = idx === 0;
+    pointsHtml += `
+      <div class="logistics-card glass-panel">
+        <div class="logistics-card-header">
+          <span class="logistics-badge ${isCity ? 'badge-lime' : ''}">${isCity ? 'Dhaka City Point' : 'Campus Point'}</span>
+          <h3 class="logistics-point-title">${escapeHtml(pt.title || '')}</h3>
+          <p class="logistics-location-text">${escapeHtml(pt.location || '')}</p>
+        </div>
+        <div class="logistics-info-list">
+          <div class="logistics-info-row">
+            <span class="log-info-label">📅 Dates:</span>
+            <span class="log-info-val">${escapeHtml(pt.dates || '')}</span>
+          </div>
+          <div class="logistics-info-row">
+            <span class="log-info-label">⏰ Timing:</span>
+            <span class="log-info-val">${escapeHtml(pt.time || '')}</span>
+          </div>
+          <div class="logistics-info-row">
+            <span class="log-info-label">📋 Required for Pickup:</span>
+            <span class="log-info-val">${escapeHtml(pt.requirements || '')}</span>
+          </div>
+          <div class="logistics-info-row">
+            <span class="log-info-label">📞 Point In-Charge:</span>
+            <span class="log-info-val"><a href="tel:${escapeHtml(pt.contact || '01317982413')}" class="text-lime">${escapeHtml(pt.contact || '01317982413')}</a></span>
+          </div>
+        </div>
+        <div class="logistics-action">
+          <a href="${escapeHtml(pt.map_url || '#')}" target="_blank" rel="noopener" class="btn btn-outline btn-full btn-map-dir">
+            <span>📍 View on Google Maps</span>
+            <span>↗</span>
+          </a>
+        </div>
+      </div>
+    `;
+  });
+
+  pointsHtml += '</div>';
+  container.innerHTML = pointsHtml;
+}
+
+function renderBusRoutesSection(settings) {
+  const container = document.getElementById('busRoutesContainer');
+  if (!container) return;
+
+  const isBusActive = settings.bus_status === 'active';
+
+  if (!isBusActive) {
+    container.innerHTML = `
+      <div class="coming-soon-card glass-panel text-center">
+        <span class="coming-soon-badge">TRANSPORTATION SCHEDULE</span>
+        <div class="coming-soon-icon">🚌</div>
+        <h3 class="coming-soon-title">Race Day Bus Routes Coming Soon!</h3>
+        <p class="coming-soon-desc">Official race-day bus pickup points, arrival timelines, and route coordinator details will be published shortly before the race day.</p>
+        <div class="coming-soon-actions">
+          <a href="https://chat.whatsapp.com/Hauj6W8EzPp17mGwKkMBTD" target="_blank" class="btn btn-lime btn-sm">💬 Join WhatsApp Community</a>
+          <a href="https://wa.me/8801317982413" target="_blank" class="btn btn-outline btn-sm">📞 Helpline: 01317982413</a>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const alertInfo = settings.bus_alert || {};
+  const routes = settings.bus_routes || [];
+
+  let html = `
+    <div class="bus-schedule-alert glass-panel">
+      <div class="bus-alert-icon">⏰</div>
+      <div class="bus-alert-text">
+        <h4>${escapeHtml(alertInfo.title || 'Race Day Bus Departure: 04:30 AM Sharp')}</h4>
+        <p>${escapeHtml(alertInfo.desc || '')}</p>
+      </div>
+    </div>
+
+    <div class="grid grid-3-col bus-routes-grid">
+  `;
+
+  routes.forEach((route, idx) => {
+    const stopsLines = (route.stops_text || '').split('\n').filter(l => l.trim().length > 0);
+    let stopsHtml = '';
+
+    stopsLines.forEach((line, sIdx) => {
+      const isFirst = sIdx === 0;
+      const isLast = sIdx === stopsLines.length - 1;
+      const stopClass = isFirst ? 'start-stop' : (isLast ? 'end-stop' : '');
+      const parts = line.split('|');
+      const stopName = (parts[0] || '').trim();
+      const stopTime = (parts[1] || '').trim();
+
+      stopsHtml += `
+        <div class="stop-item ${stopClass}">
+          <span class="stop-dot"></span>
+          <div class="stop-info">
+            <strong>${escapeHtml(stopName)}</strong>
+            <span>${escapeHtml(stopTime)}</span>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+      <div class="bus-route-card glass-panel">
+        <div class="bus-route-header">
+          <span class="badge-lime bus-route-num">${escapeHtml(route.num || `Route 0${idx+1}`)}</span>
+          <h4>${escapeHtml(route.title || '')}</h4>
+          <span class="bus-time-badge">${escapeHtml(route.time || '04:30 AM')}</span>
+        </div>
+        <div class="route-stops-timeline">
+          ${stopsHtml}
+        </div>
+        <div class="bus-contact-box">
+          <span>📞 Coordinator: <strong class="text-lime">${escapeHtml(route.contact || '01317982413')}</strong></span>
+        </div>
+      </div>
+    `;
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+

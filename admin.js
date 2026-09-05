@@ -151,6 +151,8 @@ async function initAdminDashboard() {
   initAiCopilot();
   loadEventSettings();
   setupEventSettingsHandler();
+  loadLogisticsSettings();
+  setupLogisticsSettingsHandler();
   initKitDistributionDesk();
   initVendorPrintSheet();
 }
@@ -1258,6 +1260,307 @@ function setupEventSettingsHandler() {
       }, 3500);
     }
   };
+}
+
+/* ==========================================
+   LOGISTICS & BUS ROUTES SETTINGS HANDLER
+   ========================================== */
+const DEFAULT_LOGISTICS_SETTINGS = {
+  kit_status: 'active',
+  bus_status: 'active',
+  kit_points: [
+    {
+      id: 'du',
+      title: '🏛️ Dhaka University (DU) Point',
+      location: 'Physical Education Centre / TSC, Dhaka University Campus',
+      dates: '28 – 30 September 2026',
+      time: '10:00 AM – 06:00 PM',
+      requirements: 'E-Bib Screenshot / PDF & Valid Photo ID (Student/NID)',
+      contact: '01317982413',
+      map_url: 'https://maps.google.com/?q=TSC+Dhaka+University'
+    },
+    {
+      id: 'ju',
+      title: '🌳 Jahangirnagar University (JU) Point',
+      location: 'JUCSU Office / Central Gymnasium, JU Campus, Savar',
+      dates: '28 September – 01 October 2026',
+      time: '10:00 AM – 07:00 PM',
+      requirements: 'E-Bib Screenshot / PDF & Valid Photo ID (Student/NID)',
+      contact: '01317982413',
+      map_url: 'https://maps.google.com/?q=Jahangirnagar+University+Gymnasium'
+    }
+  ],
+  bus_alert: {
+    title: 'Race Day Bus Departure: 04:30 AM Sharp (October 2, 2026)',
+    desc: 'Official dedicated buses will depart from all pickup points simultaneously at 04:30 AM to ensure arrival before Flag-off (06:10 AM). Return buses from JU campus back to Dhaka will depart at 11:30 AM.'
+  },
+  bus_routes: [
+    {
+      id: 'r1',
+      num: 'Route 01',
+      title: 'Uttara Route',
+      time: '04:30 AM',
+      contact: '01317982413',
+      stops_text: 'House Building (Uttara) | Main Starting Point (04:30 AM)\nRajlakshmi & Azampur | 04:35 AM\nAirport / Kawla | 04:45 AM\nJU Campus (Shaheed Minar) | Expected Arrival: 05:30 AM'
+    },
+    {
+      id: 'r2',
+      num: 'Route 02',
+      title: 'Gulshan & Mohakhali',
+      time: '04:30 AM',
+      contact: '01317982413',
+      stops_text: 'Gulshan 1 Circle | Main Starting Point (04:30 AM)\nMohakhali Bus Stand & Farmgate | 04:40 AM\nShyamoli & Gabtoli | 04:55 AM\nJU Campus (Shaheed Minar) | Expected Arrival: 05:35 AM'
+    },
+    {
+      id: 'r3',
+      num: 'Route 03',
+      title: 'Bongobazar & DU Route',
+      time: '04:30 AM',
+      contact: '01317982413',
+      stops_text: 'TSC / Bongobazar Area | Main Starting Point (04:30 AM)\nNilkhet & Science Lab | 04:40 AM\nAsad Gate & Kalyanpur | 04:55 AM\nJU Campus (Shaheed Minar) | Expected Arrival: 05:35 AM'
+    }
+  ]
+};
+
+async function loadLogisticsSettings() {
+  let settings = null;
+  const local = localStorage.getItem('jucsu_logistics_settings');
+  if (local) {
+    try {
+      settings = JSON.parse(local);
+    } catch (e) {}
+  }
+
+  if (!settings) {
+    settings = JSON.parse(JSON.stringify(DEFAULT_LOGISTICS_SETTINGS));
+  }
+
+  populateLogisticsForm(settings);
+}
+
+function populateLogisticsForm(settings) {
+  const logKitStatus = document.getElementById('logKitStatus');
+  const logBusStatus = document.getElementById('logBusStatus');
+
+  if (logKitStatus) logKitStatus.value = settings.kit_status || 'active';
+  if (logBusStatus) logBusStatus.value = settings.bus_status || 'active';
+
+  // Kit Point 1
+  const pt1 = (settings.kit_points && settings.kit_points[0]) || DEFAULT_LOGISTICS_SETTINGS.kit_points[0];
+  const kitPt1Title = document.getElementById('kitPt1Title');
+  const kitPt1Location = document.getElementById('kitPt1Location');
+  const kitPt1Dates = document.getElementById('kitPt1Dates');
+  const kitPt1Timing = document.getElementById('kitPt1Timing');
+  const kitPt1Req = document.getElementById('kitPt1Req');
+  const kitPt1Contact = document.getElementById('kitPt1Contact');
+  const kitPt1Map = document.getElementById('kitPt1Map');
+
+  if (kitPt1Title) kitPt1Title.value = pt1.title || '';
+  if (kitPt1Location) kitPt1Location.value = pt1.location || '';
+  if (kitPt1Dates) kitPt1Dates.value = pt1.dates || '';
+  if (kitPt1Timing) kitPt1Timing.value = pt1.time || '';
+  if (kitPt1Req) kitPt1Req.value = pt1.requirements || '';
+  if (kitPt1Contact) kitPt1Contact.value = pt1.contact || '';
+  if (kitPt1Map) kitPt1Map.value = pt1.map_url || '';
+
+  // Kit Point 2
+  const pt2 = (settings.kit_points && settings.kit_points[1]) || DEFAULT_LOGISTICS_SETTINGS.kit_points[1];
+  const kitPt2Title = document.getElementById('kitPt2Title');
+  const kitPt2Location = document.getElementById('kitPt2Location');
+  const kitPt2Dates = document.getElementById('kitPt2Dates');
+  const kitPt2Timing = document.getElementById('kitPt2Timing');
+  const kitPt2Req = document.getElementById('kitPt2Req');
+  const kitPt2Contact = document.getElementById('kitPt2Contact');
+  const kitPt2Map = document.getElementById('kitPt2Map');
+
+  if (kitPt2Title) kitPt2Title.value = pt2.title || '';
+  if (kitPt2Location) kitPt2Location.value = pt2.location || '';
+  if (kitPt2Dates) kitPt2Dates.value = pt2.dates || '';
+  if (kitPt2Timing) kitPt2Timing.value = pt2.time || '';
+  if (kitPt2Req) kitPt2Req.value = pt2.requirements || '';
+  if (kitPt2Contact) kitPt2Contact.value = pt2.contact || '';
+  if (kitPt2Map) kitPt2Map.value = pt2.map_url || '';
+
+  // Bus Notice Alert
+  const alertInfo = settings.bus_alert || DEFAULT_LOGISTICS_SETTINGS.bus_alert;
+  const busAlertTitle = document.getElementById('busAlertTitle');
+  const busAlertDesc = document.getElementById('busAlertDesc');
+  if (busAlertTitle) busAlertTitle.value = alertInfo.title || '';
+  if (busAlertDesc) busAlertDesc.value = alertInfo.desc || '';
+
+  // Route 1
+  const r1 = (settings.bus_routes && settings.bus_routes[0]) || DEFAULT_LOGISTICS_SETTINGS.bus_routes[0];
+  const busR1Title = document.getElementById('busR1Title');
+  const busR1Time = document.getElementById('busR1Time');
+  const busR1Contact = document.getElementById('busR1Contact');
+  const busR1Stops = document.getElementById('busR1Stops');
+  if (busR1Title) busR1Title.value = r1.title || '';
+  if (busR1Time) busR1Time.value = r1.time || '';
+  if (busR1Contact) busR1Contact.value = r1.contact || '';
+  if (busR1Stops) busR1Stops.value = r1.stops_text || '';
+
+  // Route 2
+  const r2 = (settings.bus_routes && settings.bus_routes[1]) || DEFAULT_LOGISTICS_SETTINGS.bus_routes[1];
+  const busR2Title = document.getElementById('busR2Title');
+  const busR2Time = document.getElementById('busR2Time');
+  const busR2Contact = document.getElementById('busR2Contact');
+  const busR2Stops = document.getElementById('busR2Stops');
+  if (busR2Title) busR2Title.value = r2.title || '';
+  if (busR2Time) busR2Time.value = r2.time || '';
+  if (busR2Contact) busR2Contact.value = r2.contact || '';
+  if (busR2Stops) busR2Stops.value = r2.stops_text || '';
+
+  // Route 3
+  const r3 = (settings.bus_routes && settings.bus_routes[2]) || DEFAULT_LOGISTICS_SETTINGS.bus_routes[2];
+  const busR3Title = document.getElementById('busR3Title');
+  const busR3Time = document.getElementById('busR3Time');
+  const busR3Contact = document.getElementById('busR3Contact');
+  const busR3Stops = document.getElementById('busR3Stops');
+  if (busR3Title) busR3Title.value = r3.title || '';
+  if (busR3Time) busR3Time.value = r3.time || '';
+  if (busR3Contact) busR3Contact.value = r3.contact || '';
+  if (busR3Stops) busR3Stops.value = r3.stops_text || '';
+}
+
+function setupLogisticsSettingsHandler() {
+  const saveBtn = document.getElementById('saveLogisticsSettingsBtn');
+  const resetBtn = document.getElementById('resetLogisticsDefaultsBtn');
+  const statusSpan = document.getElementById('logisticsSaveStatus');
+
+  const btnEditKit = document.getElementById('btnEditKitPoints');
+  const btnEditBus = document.getElementById('btnEditBusRoutes');
+  const secEditKit = document.getElementById('sectionEditKitPoints');
+  const secEditBus = document.getElementById('sectionEditBusRoutes');
+
+  // Sub-tabs switching in admin
+  if (btnEditKit && btnEditBus && secEditKit && secEditBus) {
+    btnEditKit.onclick = () => {
+      btnEditKit.style.background = 'var(--color-accent)';
+      btnEditKit.style.borderColor = 'var(--color-accent)';
+      btnEditKit.style.color = 'var(--color-primary-dark)';
+
+      btnEditBus.style.background = 'rgba(0,0,0,0.3)';
+      btnEditBus.style.borderColor = 'rgba(255,255,255,0.15)';
+      btnEditBus.style.color = '#fff';
+
+      secEditKit.style.display = 'block';
+      secEditBus.style.display = 'none';
+    };
+
+    btnEditBus.onclick = () => {
+      btnEditBus.style.background = 'var(--color-accent)';
+      btnEditBus.style.borderColor = 'var(--color-accent)';
+      btnEditBus.style.color = 'var(--color-primary-dark)';
+
+      btnEditKit.style.background = 'rgba(0,0,0,0.3)';
+      btnEditKit.style.borderColor = 'rgba(255,255,255,0.15)';
+      btnEditKit.style.color = '#fff';
+
+      secEditBus.style.display = 'block';
+      secEditKit.style.display = 'none';
+    };
+  }
+
+  // Reset defaults handler
+  if (resetBtn) {
+    resetBtn.onclick = () => {
+      if (confirm('Are you sure you want to reset all Kit Points & Bus Routes to original defaults?')) {
+        populateLogisticsForm(DEFAULT_LOGISTICS_SETTINGS);
+      }
+    };
+  }
+
+  // Save handler
+  if (saveBtn) {
+    saveBtn.onclick = async (e) => {
+      e.preventDefault();
+
+      const payload = {
+        kit_status: document.getElementById('logKitStatus')?.value || 'active',
+        bus_status: document.getElementById('logBusStatus')?.value || 'active',
+        kit_points: [
+          {
+            id: 'du',
+            title: document.getElementById('kitPt1Title')?.value.trim() || '🏛️ Dhaka University (DU) Point',
+            location: document.getElementById('kitPt1Location')?.value.trim() || 'Physical Education Centre / TSC, Dhaka University Campus',
+            dates: document.getElementById('kitPt1Dates')?.value.trim() || '28 – 30 September 2026',
+            time: document.getElementById('kitPt1Timing')?.value.trim() || '10:00 AM – 06:00 PM',
+            requirements: document.getElementById('kitPt1Req')?.value.trim() || 'E-Bib Screenshot / PDF & Valid Photo ID (Student/NID)',
+            contact: document.getElementById('kitPt1Contact')?.value.trim() || '01317982413',
+            map_url: document.getElementById('kitPt1Map')?.value.trim() || 'https://maps.google.com/?q=TSC+Dhaka+University'
+          },
+          {
+            id: 'ju',
+            title: document.getElementById('kitPt2Title')?.value.trim() || '🌳 Jahangirnagar University (JU) Point',
+            location: document.getElementById('kitPt2Location')?.value.trim() || 'JUCSU Office / Central Gymnasium, JU Campus, Savar',
+            dates: document.getElementById('kitPt2Dates')?.value.trim() || '28 September – 01 October 2026',
+            time: document.getElementById('kitPt2Timing')?.value.trim() || '10:00 AM – 07:00 PM',
+            requirements: document.getElementById('kitPt2Req')?.value.trim() || 'E-Bib Screenshot / PDF & Valid Photo ID (Student/NID)',
+            contact: document.getElementById('kitPt2Contact')?.value.trim() || '01317982413',
+            map_url: document.getElementById('kitPt2Map')?.value.trim() || 'https://maps.google.com/?q=Jahangirnagar+University+Gymnasium'
+          }
+        ],
+        bus_alert: {
+          title: document.getElementById('busAlertTitle')?.value.trim() || 'Race Day Bus Departure: 04:30 AM Sharp (October 2, 2026)',
+          desc: document.getElementById('busAlertDesc')?.value.trim() || 'Official dedicated buses will depart from all pickup points simultaneously at 04:30 AM to ensure arrival before Flag-off (06:10 AM). Return buses from JU campus back to Dhaka will depart at 11:30 AM.'
+        },
+        bus_routes: [
+          {
+            id: 'r1',
+            num: 'Route 01',
+            title: document.getElementById('busR1Title')?.value.trim() || 'Uttara Route',
+            time: document.getElementById('busR1Time')?.value.trim() || '04:30 AM',
+            contact: document.getElementById('busR1Contact')?.value.trim() || '01317982413',
+            stops_text: document.getElementById('busR1Stops')?.value.trim() || ''
+          },
+          {
+            id: 'r2',
+            num: 'Route 02',
+            title: document.getElementById('busR2Title')?.value.trim() || 'Gulshan & Mohakhali',
+            time: document.getElementById('busR2Time')?.value.trim() || '04:30 AM',
+            contact: document.getElementById('busR2Contact')?.value.trim() || '01317982413',
+            stops_text: document.getElementById('busR2Stops')?.value.trim() || ''
+          },
+          {
+            id: 'r3',
+            num: 'Route 03',
+            title: document.getElementById('busR3Title')?.value.trim() || 'Bongobazar & DU Route',
+            time: document.getElementById('busR3Time')?.value.trim() || '04:30 AM',
+            contact: document.getElementById('busR3Contact')?.value.trim() || '01317982413',
+            stops_text: document.getElementById('busR3Stops')?.value.trim() || ''
+          }
+        ],
+        updated_at: new Date().toISOString()
+      };
+
+      try {
+        localStorage.setItem('jucsu_logistics_settings', JSON.stringify(payload));
+      } catch (err) {}
+
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span>Saving...</span>';
+
+      // Also try sync to Supabase event_settings if available
+      if (supabaseClient) {
+        try {
+          await supabaseClient
+            .from('event_settings')
+            .upsert({ id: 'logistics_settings', data: payload, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+        } catch (e) {}
+      }
+
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<span>💾 Save & Sync Logistics</span>';
+
+      if (statusSpan) {
+        statusSpan.style.display = 'inline';
+        statusSpan.textContent = '✓ Saved & Synced Live!';
+        setTimeout(() => {
+          statusSpan.style.display = 'none';
+        }, 3500);
+      }
+    };
+  }
 }
 
 /* ==========================================

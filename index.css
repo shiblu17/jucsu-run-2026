@@ -2608,3 +2608,58 @@ a {
     padding: 20px 16px;
   }
 }
+
+/* Coming Soon State Cards */
+.coming-soon-card {
+  padding: 50px 30px;
+  background: radial-gradient(circle at top, rgba(193, 216, 47, 0.08) 0%, rgba(13, 27, 20, 0.7) 100%);
+  border: 1px dashed rgba(193, 216, 47, 0.4);
+  border-radius: 16px;
+  max-width: 680px;
+  margin: 15px auto;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+.coming-soon-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  background: rgba(193, 216, 47, 0.12);
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(193, 216, 47, 0.25);
+  margin-bottom: 16px;
+}
+.coming-soon-icon {
+  font-size: 3.2rem;
+  margin-bottom: 12px;
+  animation: pulseIcon 2.2s infinite ease-in-out;
+}
+@keyframes pulseIcon {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+.coming-soon-title {
+  font-family: var(--font-headings);
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin-bottom: 10px;
+  letter-spacing: 0.02em;
+}
+.coming-soon-desc {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+  max-width: 520px;
+  margin: 0 auto 24px auto;
+}
+.coming-soon-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}

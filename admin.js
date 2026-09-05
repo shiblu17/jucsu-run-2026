@@ -157,6 +157,7 @@ async function initAdminDashboard() {
   initVendorPrintSheet();
   initBroadcastTool();
   initRevenueProtection();
+  setupEditRunnerHandler();
 }
 
 async function loadDatabase() {
@@ -270,10 +271,10 @@ function renderAnalyticsCharts() {
   // Render T-Shirt sizes breakdown
   const tShirtSizes = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
   runnerDatabase.forEach(r => {
-    let size = r.tshirt ? r.tshirt.toUpperCase().trim() : '';
-    if (size === 'XXXL') size = '3XL';
-    if (tShirtSizes[size] !== undefined) {
-      tShirtSizes[size]++;
+    let t = (r.tshirt || '').toUpperCase().trim();
+    if (t === 'XXXL') t = '3XL';
+    if (tShirtSizes.hasOwnProperty(t)) {
+      tShirtSizes[t]++;
     }
   });
 
@@ -299,17 +300,17 @@ function renderTable(filterQuery = '') {
   const filteredRunners = runnerDatabase.filter(runner => {
     if (!cleanQuery) return true;
     
-    return runner.name.toLowerCase().includes(cleanQuery) || 
-           runner.bib.toLowerCase().includes(cleanQuery) || 
-           runner.phone.toLowerCase().includes(cleanQuery) || 
+    return (runner.name || '').toLowerCase().includes(cleanQuery) || 
+           (runner.bib || '').toString().toLowerCase().includes(cleanQuery) || 
+           (runner.phone || '').toString().toLowerCase().includes(cleanQuery) || 
            (runner.txnid || '').toLowerCase().includes(cleanQuery) || 
-           runner.category.toLowerCase().includes(cleanQuery);
+           (runner.category || '').toLowerCase().includes(cleanQuery);
   });
 
   filteredRunners.forEach(runner => {
     const tr = document.createElement('tr');
     
-    const statusClass = runner.status.toLowerCase() === 'verified' ? 'verified' : 'pending';
+    const statusClass = (runner.status || '').toLowerCase() === 'verified' ? 'verified' : 'pending';
     const typeLabel = runner.type || 'JU Student (Batch 48 - 55)';
     const txnLabel = runner.txnid || 'N/A';
     
@@ -323,8 +324,11 @@ function renderTable(filterQuery = '') {
       <td><span style="font-size: 0.8rem; color: var(--color-accent);">${runner.kitpoint || 'Jahangirnagar University'}</span></td>
       <td>${runner.blood || 'N/A'}</td>
       <td><code style="color:var(--color-accent); font-weight:700; font-family:monospace; font-size:0.85rem;">${txnLabel}</code></td>
-      <td><span class="badge-status ${statusClass}" data-bib="${runner.bib}" style="cursor:pointer;">${runner.status}</span></td>
-      <td><button class="btn-delete" data-bib="${runner.bib}">Delete</button></td>
+      <td><span class="badge-status ${statusClass}" data-bib="${runner.bib}" style="cursor:pointer;" title="Click to Toggle Status">${runner.status}</span></td>
+      <td style="white-space: nowrap;">
+        <button class="btn-edit-runner" data-bib="${runner.bib}" style="background: rgba(193, 216, 47, 0.15); border: 1px solid rgba(193, 216, 47, 0.4); color: var(--color-accent); font-size: 0.72rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; margin-right: 4px; font-weight: 600;">✏️ Edit</button>
+        <button class="btn-delete" data-bib="${runner.bib}">Delete</button>
+      </td>
     `;
     
     tableBody.appendChild(tr);
@@ -335,6 +339,14 @@ function renderTable(filterQuery = '') {
     badge.addEventListener('click', (e) => {
       const bib = e.target.getAttribute('data-bib');
       toggleRunnerStatus(bib);
+    });
+  });
+
+  // Bind Edit Profile Events
+  document.querySelectorAll('.btn-edit-runner').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const bib = e.target.getAttribute('data-bib');
+      openEditRunnerModal(bib);
     });
   });
 
@@ -492,7 +504,13 @@ function setupCsvImporter() {
 
       const bib = parts[0];
       const name = parts[1];
-      const phone = parts[2];
+      let phone = (parts[2] || '').trim().replace(/[\s\-\+]/g, '');
+      if (phone.startsWith('880')) phone = phone.substring(2);
+      if (phone.startsWith('88')) phone = phone.substring(2);
+      // Auto-restore Excel-stripped leading zero
+      if (phone.length === 10 && phone.startsWith('1')) {
+        phone = '0' + phone;
+      }
       const category = parts[3];
       const tshirt = parts[4] || 'M';
       const kitpoint = parts[5] && (parts[5].includes('Dhaka') || parts[5].includes('Jahangirnagar')) ? parts[5] : 'Jahangirnagar University';
@@ -2351,5 +2369,106 @@ function initRevenueProtection() {
   });
 
   updateRevenueDisplay();
+}
+
+/* ==========================================
+   RUNNER PROFILE EDIT MODAL HANDLER
+   ========================================== */
+function openEditRunnerModal(bib) {
+  const runner = runnerDatabase.find(r => r.bib.toString() === bib.toString());
+  if (!runner) return;
+
+  const modal = document.getElementById('editRunnerModal');
+  if (!modal) return;
+
+  document.getElementById('editBib').value = runner.bib || '';
+  document.getElementById('editName').value = runner.name || '';
+  document.getElementById('editPhone').value = runner.phone || '';
+  document.getElementById('editCategory').value = runner.category || '10K Mini Marathon';
+  document.getElementById('editType').value = runner.type || 'JU Student (Batch 48 - 55)';
+  document.getElementById('editTshirt').value = runner.tshirt || 'M';
+  document.getElementById('editKitPoint').value = runner.kitpoint || 'Jahangirnagar University';
+  document.getElementById('editBlood').value = runner.blood || '';
+  document.getElementById('editPickup').value = runner.pickup || 'Self-Arranged';
+  document.getElementById('editTxnId').value = runner.txnid || '';
+  document.getElementById('editStatus').value = runner.status || 'Pending';
+
+  modal.style.display = 'flex';
+}
+
+function setupEditRunnerHandler() {
+  const modal = document.getElementById('editRunnerModal');
+  const form = document.getElementById('editRunnerForm');
+  const closeBtn = document.getElementById('closeEditRunnerModalBtn');
+  const cancelBtn = document.getElementById('cancelEditRunnerBtn');
+  const saveBtn = document.getElementById('saveEditRunnerBtn');
+
+  if (!modal || !form) return;
+
+  function closeModal() {
+    modal.style.display = 'none';
+  }
+
+  if (closeBtn) closeBtn.onclick = closeModal;
+  if (cancelBtn) cancelBtn.onclick = closeModal;
+  modal.onclick = (e) => {
+    if (e.target === modal) closeModal();
+  };
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const bib = document.getElementById('editBib').value.trim();
+    const runner = runnerDatabase.find(r => r.bib.toString() === bib.toString());
+    if (!runner) return;
+
+    const updatedData = {
+      bib,
+      name: document.getElementById('editName').value.trim(),
+      phone: document.getElementById('editPhone').value.trim(),
+      category: document.getElementById('editCategory').value,
+      type: document.getElementById('editType').value,
+      tshirt: document.getElementById('editTshirt').value,
+      kitpoint: document.getElementById('editKitPoint').value,
+      blood: document.getElementById('editBlood').value.trim().toUpperCase() || 'N/A',
+      pickup: document.getElementById('editPickup').value,
+      txnid: document.getElementById('editTxnId').value.trim().toUpperCase() || 'N/A',
+      status: document.getElementById('editStatus').value
+    };
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span>Saving...</span>';
+
+    // Update in Supabase
+    if (supabaseClient) {
+      try {
+        const { error } = await supabaseClient
+          .from('registrations')
+          .update(updatedData)
+          .eq('bib', bib);
+        
+        if (error) {
+          console.warn('Supabase update warning:', error);
+          if (error.message && error.message.includes('kitpoint')) {
+            const runnerWithoutKit = { ...updatedData };
+            delete runnerWithoutKit.kitpoint;
+            await supabaseClient.from('registrations').update(runnerWithoutKit).eq('bib', bib);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to update Supabase record:', err);
+      }
+    }
+
+    // Update local memory database
+    Object.assign(runner, updatedData);
+    saveDatabase();
+    refreshDashboard();
+
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<span>💾 Save Changes</span>';
+    closeModal();
+
+    alert(`✓ Runner #${bib} (${updatedData.name}) details updated successfully!`);
+  };
 }
 

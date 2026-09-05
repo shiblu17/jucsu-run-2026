@@ -867,24 +867,32 @@ function initRegisterTriggers() {
               <span>💸</span> Payment Instructions:
             </p>
             <p style="margin-bottom: 8px;">Please send the registration fee using <strong>Send Money</strong> to this bKash Personal Number:</p>
-            <p style="margin-bottom: 10px; background: rgba(0, 0, 0, 0.25); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05); display: flex; justify-content: space-between; align-items: center;">
-              <span class="text-lime" style="font-size: 1.1rem; font-weight: 700; letter-spacing: 0.05em;">01317982413</span>
-              <span style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase;">bKash Personal</span>
-            </p>
+            <div style="margin-bottom: 10px; background: rgba(0, 0, 0, 0.3); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="text-lime" style="font-size: 1.15rem; font-weight: 700; letter-spacing: 0.05em; font-family: monospace;">01317982413</span>
+                <span style="font-size: 0.72rem; color: var(--color-text-muted); text-transform: uppercase; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">bKash Personal</span>
+              </div>
+              <button type="button" id="copyBkashNumBtn" class="btn btn-outline btn-sm" style="font-size:0.75rem; padding:4px 10px; border-color:rgba(0,255,136,0.4); color:#00ff88; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+                <span>📋</span> <span id="copyBkashText">Copy Number</span>
+              </button>
+            </div>
             <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(193, 216, 47, 0.12); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(193, 216, 47, 0.2); font-weight: 700; color: #fff;">
               <span>Total Fee:</span>
               <span class="text-lime" id="paymentFeeDisplay" style="font-size: 1rem;">৳800 BDT</span>
             </div>
           </div>
           <div class="form-group" style="gap:6px;">
-            <label class="form-label" style="font-size:0.8rem; font-weight:600;">bKash Transaction ID <span style="color:#ff3b30;">*</span></label>
-            <input type="text" id="pubTxnId" class="form-input" style="padding:12px; font-size:0.95rem; text-transform:uppercase;" required placeholder="e.g. A1B2C3D4E5">
+            <label class="form-label" style="font-size:0.8rem; font-weight:600;">bKash Transaction ID (TrxID) <span style="color:#ff3b30;">*</span></label>
+            <input type="text" id="pubTxnId" class="form-input" style="padding:12px; font-size:0.95rem; text-transform:uppercase; letter-spacing:0.05em; font-family:monospace;" required placeholder="e.g. DI262YRV5W">
+            <span style="font-size:0.72rem; color:var(--color-text-muted);">After Send Money, enter the 8-10 character Transaction ID from bKash SMS.</span>
           </div>
         </div>
 
+        <div id="pubFormErrorAlert" style="display:none; background:rgba(255,59,48,0.15); border:1px solid rgba(255,59,48,0.4); border-radius:8px; padding:10px 14px; font-size:0.82rem; color:#ffb4b0; line-height:1.4;"></div>
+
         <div style="display:flex; gap:12px; justify-content: flex-end; border-top:1px solid rgba(255,255,255,0.08); padding-top:16px; margin-top:10px;">
           <button type="button" class="btn btn-outline btn-sm" id="closeModalBtn" style="border-radius:6px; height:auto; padding:12px 24px;">Cancel</button>
-          <button type="submit" class="btn btn-primary btn-sm" style="border-radius:6px; height:auto; padding:12px 24px; font-weight:700;">Submit Application</button>
+          <button type="submit" class="btn btn-primary btn-sm" id="pubSubmitBtn" style="border-radius:6px; height:auto; padding:12px 24px; font-weight:700;">Submit Application</button>
         </div>
       </form>
     </div>
@@ -894,15 +902,20 @@ function initRegisterTriggers() {
         <span style="font-size: 2rem; color: #00ff80; line-height: 1; font-weight: bold;">✓</span>
       </div>
       <h3 style="font-size: 1.6rem; margin: 10px 0; color:#00ff80;">Registration Submitted!</h3>
-      <p style="color:#fff; font-size:0.95rem; margin-bottom:15px; line-height:1.6;">
-        Runner Name: <strong id="successName">Name</strong>
-      </p>
-      <div style="background: rgba(255,255,255,0.03); border:1px dashed var(--color-glass-border); padding: 15px; border-radius:10px; margin-bottom: 20px; font-size:0.9rem; text-align:left; color:var(--color-text-muted); line-height: 1.5;">
-        <p style="margin-bottom:8px; color:#fff;"><strong>Verification Pending</strong></p>
-        <p>We received your transaction ID: <strong id="successTxnRef" class="text-lime">TXNID</strong></p>
-        <p style="margin-top:8px;">The JUCSU RUN 2026 committee will verify your payment against this Transaction ID within 24-48 hours. Once verified, your status will change from **Pending** to **Verified**, and you will be able to search and download your Digital E-Bib card!</p>
+      <div style="margin-bottom: 15px;">
+        <p style="color:#fff; font-size:0.95rem; margin-bottom:4px;">
+          Runner: <strong id="successName">Name</strong>
+        </p>
+        <p style="color:var(--color-accent); font-size:1.1rem; font-weight:800; font-family:monospace;">
+          Assigned Bib: <span id="successBibNumber">#0000</span>
+        </p>
       </div>
-      <button class="btn btn-primary btn-sm" id="successCloseBtn" style="border-radius:6px; padding:10px 20px; height:auto;">Done</button>
+      <div style="background: rgba(255,255,255,0.03); border:1px dashed var(--color-glass-border); padding: 15px; border-radius:10px; margin-bottom: 20px; font-size:0.88rem; text-align:left; color:var(--color-text-muted); line-height: 1.5;">
+        <p style="margin-bottom:8px; color:#fff;"><strong>Verification Status: Pending</strong></p>
+        <p>Transaction ID: <strong id="successTxnRef" class="text-lime" style="font-family:monospace;">TXNID</strong></p>
+        <p style="margin-top:8px;">The JUCSU RUN 2026 committee will verify your bKash payment within 24-48 hours. Once verified, your status will change to **Verified** and you can download your official E-Bib card from the website checker!</p>
+      </div>
+      <button class="btn btn-primary btn-sm" id="successCloseBtn" style="border-radius:6px; padding:10px 20px; height:auto; font-weight:700;">Done</button>
     </div>
   `;
   document.body.appendChild(modal);
@@ -1026,23 +1039,73 @@ function initRegisterTriggers() {
   function closeModal() {
     backdrop.classList.remove('open');
     modal.classList.remove('open');
+    const errEl = document.getElementById('pubFormErrorAlert');
+    if (errEl) errEl.style.display = 'none';
   }
 
   closeModalBtn.addEventListener('click', closeModal);
   successCloseBtn.addEventListener('click', closeModal);
   backdrop.addEventListener('click', closeModal);
 
-  // Helper to generate next unique Bib
-  function generateNextBib(category) {
+  // 1-Click Copy bKash Number
+  const copyBkashBtn = document.getElementById('copyBkashNumBtn');
+  const copyBkashText = document.getElementById('copyBkashText');
+  if (copyBkashBtn) {
+    copyBkashBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigator.clipboard.writeText('01317982413').then(() => {
+        if (copyBkashText) copyBkashText.textContent = 'Copied! ✓';
+        copyBkashBtn.style.borderColor = '#00ff88';
+        setTimeout(() => {
+          if (copyBkashText) copyBkashText.textContent = 'Copy Number';
+        }, 2500);
+      }).catch(() => {
+        alert('bKash Number: 01317982413');
+      });
+    });
+  }
+
+  function showFormError(msg) {
+    const errEl = document.getElementById('pubFormErrorAlert');
+    if (errEl) {
+      errEl.textContent = '⚠️ ' + msg;
+      errEl.style.display = 'block';
+      errEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      alert(msg);
+    }
+  }
+
+  // Helper to generate next unique Bib directly from Supabase / Local
+  async function generateNextBib(category) {
     const is10K = category.includes('10K');
     const startBib = is10K ? 10001 : 5001;
     
-    // Filter existing bibs that are numbers
+    // First try fetching latest category bibs directly from Supabase to prevent stale collisions
+    if (supabaseClient) {
+      try {
+        const { data, error } = await supabaseClient
+          .from('registrations')
+          .select('bib')
+          .ilike('category', is10K ? '%10K%' : '%5K%');
+        
+        if (!error && data && data.length > 0) {
+          const cloudBibs = data.map(r => parseInt(r.bib)).filter(b => !isNaN(b));
+          if (cloudBibs.length > 0) {
+            const maxCloud = Math.max(...cloudBibs);
+            return (Math.max(maxCloud, startBib - 1) + 1).toString();
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase latest bib lookup note:', err);
+      }
+    }
+    
+    // Fallback to local memory database
     const bibs = runnerDatabase
       .map(r => parseInt(r.bib))
       .filter(b => !isNaN(b));
     
-    // Filter for current category range
     const categoryBibs = bibs.filter(b => {
       if (is10K) {
         return b >= 10001 && b < 50000;
@@ -1062,9 +1125,59 @@ function initRegisterTriggers() {
   publicRegisterForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const name = document.getElementById('pubName').value.trim();
-    const phone = document.getElementById('pubPhone').value.trim();
-    const email = document.getElementById('pubEmail').value.trim();
+    const nameInput = document.getElementById('pubName');
+    const phoneInput = document.getElementById('pubPhone');
+    const emailInput = document.getElementById('pubEmail');
+    const txnidInput = document.getElementById('pubTxnId');
+    const submitBtn = document.getElementById('pubSubmitBtn');
+    const errEl = document.getElementById('pubFormErrorAlert');
+
+    if (errEl) errEl.style.display = 'none';
+
+    const name = nameInput.value.trim();
+    if (name.length < 2) {
+      showFormError('অনুগ্রহ করে আপনার পূর্ণ নাম লিখুন।');
+      nameInput.focus();
+      return;
+    }
+
+    // 1. Bangladeshi 11-digit phone validation (013 - 019)
+    let phone = phoneInput.value.trim().replace(/[\s\-\+]/g, '');
+    if (phone.startsWith('880')) phone = phone.substring(2);
+    if (phone.startsWith('88')) phone = phone.substring(2);
+
+    const phoneRegex = /^01[3-9]\d{8}$/;
+    if (!phoneRegex.test(phone)) {
+      showFormError('অনুগ্রহ করে সঠিক ১১ ডিজিটের বাংলাদেশি মোবাইল নম্বর দিন (যেমন: 017XXXXXXXX)।');
+      phoneInput.focus();
+      return;
+    }
+
+    // 2. Email format validation
+    const email = emailInput.value.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showFormError('অনুগ্রহ করে একটি সঠিক ইমেইল অ্যাড্রেস লিখুন (যেমন: name@example.com)।');
+      emailInput.focus();
+      return;
+    }
+
+    // 3. bKash TrxID validation
+    const txnid = txnidInput.value.trim().toUpperCase();
+    if (txnid.length < 8) {
+      showFormError('অনুগ্রহ করে bKash SMS থেকে পাওয়া ৮-১০ অক্ষরের সঠিক Transaction ID (TrxID) দিন।');
+      txnidInput.focus();
+      return;
+    }
+
+    // 4. Duplicate TrxID check
+    const isDuplicateTxn = runnerDatabase.some(r => (r.txnid || '').toUpperCase() === txnid);
+    if (isDuplicateTxn) {
+      showFormError(`এই ট্রানজেকশন আইডি (${txnid}) দিয়ে ইতোমধ্যে একটি রেজিস্ট্রেশন সাবমিট করা হয়েছে! অনুগ্রহ করে আপনার নিজের সঠিক TrxID দিন।`);
+      txnidInput.focus();
+      return;
+    }
+
     const category = document.querySelector('input[name="pubCategory"]:checked').value;
     const type = document.querySelector('input[name="pubType"]:checked').value;
     const tshirt = document.querySelector('input[name="pubTshirt"]:checked').value;
@@ -1072,59 +1185,89 @@ function initRegisterTriggers() {
     const pickup = document.querySelector('input[name="pubPickup"]:checked').value;
     const kitpoint = document.querySelector('input[name="pubKitPoint"]:checked') ? document.querySelector('input[name="pubKitPoint"]:checked').value : 'Jahangirnagar University';
     const blood = document.getElementById('pubBlood').value.trim().toUpperCase() || 'N/A';
-    const txnid = document.getElementById('pubTxnId').value.trim().toUpperCase();
 
-    // Ensure database loaded
-    await initDatabase();
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Verifying & Submitting...</span>';
 
-    const bib = generateNextBib(category);
-    const newRunner = {
-      bib,
-      name,
-      phone,
-      email,
-      category,
-      tshirt,
-      gender,
-      blood,
-      status: 'Pending',
-      type,
-      pickup,
-      kitpoint,
-      txnid
-    };
+    // Retry loop for Bib generation to handle concurrent submissions
+    let savedSuccessfully = false;
+    let finalBib = '';
+    let retryCount = 0;
+    const maxRetries = 3;
 
-    // If Supabase connected, insert
-    if (supabaseClient) {
-      try {
-        const { error } = await supabaseClient
-          .from('registrations')
-          .insert([newRunner]);
-        if (error) {
-          // If kitpoint column is missing in Supabase table schema, retry insert without kitpoint column
-          if (error.message && error.message.includes('kitpoint')) {
-            const runnerWithoutKit = { ...newRunner };
-            delete runnerWithoutKit.kitpoint;
-            const { error: retryErr } = await supabaseClient
-              .from('registrations')
-              .insert([runnerWithoutKit]);
-            if (retryErr) throw retryErr;
-          } else {
-            throw error;
+    while (!savedSuccessfully && retryCount < maxRetries) {
+      retryCount++;
+      finalBib = await generateNextBib(category);
+      if (retryCount > 1) {
+        finalBib = (parseInt(finalBib) + retryCount - 1).toString();
+      }
+
+      const newRunner = {
+        bib: finalBib,
+        name,
+        phone,
+        email,
+        category,
+        tshirt,
+        gender,
+        blood,
+        status: 'Pending',
+        type,
+        pickup,
+        kitpoint,
+        txnid
+      };
+
+      if (supabaseClient) {
+        try {
+          const { error } = await supabaseClient
+            .from('registrations')
+            .insert([newRunner]);
+          
+          if (error) {
+            // If primary key collision, loop and retry with next bib
+            if (error.code === '23505' || (error.message && error.message.includes('unique'))) {
+              console.warn('Bib collision detected, retrying next Bib...', retryCount);
+              continue;
+            }
+            if (error.message && error.message.includes('kitpoint')) {
+              const runnerWithoutKit = { ...newRunner };
+              delete runnerWithoutKit.kitpoint;
+              const { error: retryErr } = await supabaseClient
+                .from('registrations')
+                .insert([runnerWithoutKit]);
+              if (retryErr) throw retryErr;
+            } else {
+              throw error;
+            }
+          }
+          savedSuccessfully = true;
+          runnerDatabase.push(newRunner);
+          localStorage.setItem('jucsu_registrations', JSON.stringify(runnerDatabase));
+        } catch (err) {
+          console.error('Supabase registration insert error:', err);
+          if (retryCount >= maxRetries) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>Submit Application</span>';
+            showFormError('সার্ভারে ডাটা সংরক্ষণ করতে সমস্যা হচ্ছে। ইন্টারনেট সংযোগ চেক করে আবার চেষ্টা করুন অথবা হেল্পলাইনে যোগাযোগ করুন: 01317982413');
+            return;
           }
         }
-      } catch (err) {
-        console.error('Supabase registration insert error:', err);
+      } else {
+        savedSuccessfully = true;
+        runnerDatabase.push(newRunner);
+        localStorage.setItem('jucsu_registrations', JSON.stringify(runnerDatabase));
       }
     }
 
-    // Save offline
-    runnerDatabase.push(newRunner);
-    localStorage.setItem('jucsu_registrations', JSON.stringify(runnerDatabase));
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<span>Submit Application</span>';
 
     // Show success view
-    successName.textContent = name;
+    document.getElementById('successName').textContent = name;
     document.getElementById('successTxnRef').textContent = txnid;
+    const successBibEl = document.getElementById('successBibNumber');
+    if (successBibEl) successBibEl.textContent = '#' + finalBib;
 
     formContainer.classList.add('hidden');
     successContainer.classList.remove('hidden');

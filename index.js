@@ -1076,12 +1076,15 @@ function initRegisterTriggers() {
     }
   }
 
-  // Helper to generate next unique Bib directly from Supabase / Local
+  // Helper to generate next unique Bib (Smart Gap-Filling: automatically fills deleted/empty bib slots first)
   async function generateNextBib(category) {
     const is10K = category.includes('10K');
     const startBib = is10K ? 10001 : 5001;
+    const maxRange = is10K ? 50000 : 10000;
     
-    // First try fetching latest category bibs directly from Supabase to prevent stale collisions
+    let activeBibs = [];
+
+    // 1. Fetch live active category bibs from Supabase
     if (supabaseClient) {
       try {
         const { data, error } = await supabaseClient
@@ -1090,35 +1093,33 @@ function initRegisterTriggers() {
           .ilike('category', is10K ? '%10K%' : '%5K%');
         
         if (!error && data && data.length > 0) {
-          const cloudBibs = data.map(r => parseInt(r.bib)).filter(b => !isNaN(b));
-          if (cloudBibs.length > 0) {
-            const maxCloud = Math.max(...cloudBibs);
-            return (Math.max(maxCloud, startBib - 1) + 1).toString();
-          }
+          activeBibs = data.map(r => parseInt(r.bib)).filter(b => !isNaN(b));
         }
       } catch (err) {
-        console.warn('Supabase latest bib lookup note:', err);
+        console.warn('Supabase bib lookup note:', err);
       }
     }
-    
-    // Fallback to local memory database
-    const bibs = runnerDatabase
-      .map(r => parseInt(r.bib))
-      .filter(b => !isNaN(b));
-    
-    const categoryBibs = bibs.filter(b => {
-      if (is10K) {
-        return b >= 10001 && b < 50000;
-      } else {
-        return b >= 5001 && b < 10000;
-      }
-    });
-    
-    if (categoryBibs.length === 0) {
-      return startBib.toString();
+
+    // 2. Fallback to local memory database if needed
+    if (activeBibs.length === 0 && runnerDatabase && runnerDatabase.length > 0) {
+      activeBibs = runnerDatabase
+        .filter(r => (r.category || '').includes(is10K ? '10K' : '5K'))
+        .map(r => parseInt(r.bib))
+        .filter(b => !isNaN(b));
     }
-    const maxBib = Math.max(...categoryBibs);
-    return (maxBib + 1).toString();
+
+    const bibSet = new Set(activeBibs);
+
+    // 3. Smart Gap Scan: find the lowest missing/empty Bib number starting from startBib
+    let candidateBib = startBib;
+    while (candidateBib < maxRange) {
+      if (!bibSet.has(candidateBib)) {
+        return candidateBib.toString();
+      }
+      candidateBib++;
+    }
+
+    return candidateBib.toString();
   }
 
   // Handle Submit Form

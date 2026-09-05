@@ -419,16 +419,59 @@ function setupTableSearch() {
 }
 
 /* ==========================================
+   SMART GAP-FILLING BIB GENERATOR (ADMIN)
+   ========================================== */
+function getNextAvailableBib(category) {
+  const is10K = (category || '').includes('10K');
+  const startBib = is10K ? 10001 : 5001;
+  const maxRange = is10K ? 50000 : 10000;
+  
+  const activeBibs = (runnerDatabase || [])
+    .filter(r => (r.category || '').includes(is10K ? '10K' : '5K'))
+    .map(r => parseInt(r.bib))
+    .filter(b => !isNaN(b));
+    
+  const bibSet = new Set(activeBibs);
+  let candidate = startBib;
+  while (candidate < maxRange) {
+    if (!bibSet.has(candidate)) return candidate.toString();
+    candidate++;
+  }
+  return candidate.toString();
+}
+
+/* ==========================================
    MANUAL RUNNER ENTRY FORM
    ========================================== */
 function setupAddRunnerForm() {
   const form = document.getElementById('addRunnerForm');
+  const bibInput = document.getElementById('runBib');
+  const categorySelect = document.getElementById('runCategory');
+
+  // Update placeholder with next available bib
+  function updateBibPlaceholder() {
+    if (bibInput && categorySelect) {
+      const nextBib = getNextAvailableBib(categorySelect.value);
+      bibInput.placeholder = `Auto (Next: #${nextBib})`;
+    }
+  }
+
+  if (categorySelect) {
+    categorySelect.addEventListener('change', updateBibPlaceholder);
+  }
+  updateBibPlaceholder();
   
   form.addEventListener('submit', async () => {
-    const bib = document.getElementById('runBib').value.trim();
+    let bib = bibInput.value.trim();
+    const category = categorySelect.value;
+    
+    // Auto-fill gap if bib left empty
+    if (!bib) {
+      bib = getNextAvailableBib(category);
+    }
+
     const name = document.getElementById('runName').value.trim();
     const phone = document.getElementById('runPhone').value.trim();
-    const category = document.getElementById('runCategory').value;
     const tshirt = document.getElementById('runTshirt').value;
     const kitpoint = document.getElementById('runKitPoint') ? document.getElementById('runKitPoint').value : 'Jahangirnagar University';
     const gender = document.getElementById('runGender').value;
@@ -472,6 +515,7 @@ function setupAddRunnerForm() {
     
     // Clear inputs and reload
     form.reset();
+    updateBibPlaceholder();
     refreshDashboard();
     alert(`Successfully added manual registration: ${name} (Bib: ${bib})`);
   });

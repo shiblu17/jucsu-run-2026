@@ -45,6 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Dynamic Event Settings & Deadlines (Admin Controlled)
   initDynamicEventSettings();
+
+  // Logistics & Bus Route Tabs
+  initLogisticsTabs();
 });
 
 /* ==========================================
@@ -1392,4 +1395,30 @@ async function initDynamicEventSettings() {
       catAction5K.innerHTML = `<button class="btn btn-primary btn-full register-trigger" id="regBtn5K" data-category="5K Run">Register Now</button>`;
     }
   }
+}
+
+/* ==========================================
+   LOGISTICS & BUS ROUTE TABS TOGGLE
+   ========================================== */
+function initLogisticsTabs() {
+  const tabs = document.querySelectorAll('.logistics-tab-btn');
+  const contents = document.querySelectorAll('.logistics-tab-content');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.getAttribute('data-tab');
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      contents.forEach(content => {
+        if (content.id === target) {
+          content.style.display = 'block';
+          content.classList.add('active');
+        } else {
+          content.style.display = 'none';
+          content.classList.remove('active');
+        }
+      });
+    });
+  });
 }

@@ -822,3 +822,79 @@ body {
     font-size: 0.85rem;
   }
 }
+
+/* ==========================================
+   VENDOR PRINT SHEET & PRINT MEDIA STYLES
+   ========================================== */
+.vendor-po-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 15px 0 25px 0;
+  font-size: 0.9rem;
+}
+.vendor-po-table th, .vendor-po-table td {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 10px 14px;
+  text-align: left;
+}
+.vendor-po-table th {
+  background: rgba(193, 216, 47, 0.15);
+  color: var(--color-accent);
+  font-weight: 700;
+}
+.vendor-po-table td.num, .vendor-po-table th.num {
+  text-align: right;
+  font-weight: 600;
+}
+.vendor-po-table tfoot td {
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #vendorSheetModal, #vendorSheetModal * {
+    visibility: visible;
+  }
+  #vendorSheetModal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: auto;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .vendor-modal-content {
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+  .vendor-modal-content h2, .vendor-modal-content p, .vendor-modal-content strong, .vendor-modal-content td, .vendor-modal-content th {
+    color: #000000 !important;
+  }
+  .vendor-po-table th {
+    background: #f0f0f0 !important;
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+  }
+  .vendor-po-table td {
+    border: 1px solid #000000 !important;
+    color: #000000 !important;
+  }
+  .vendor-po-table tfoot td {
+    background: #e0e0e0 !important;
+    color: #000000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

@@ -151,6 +151,8 @@ async function initAdminDashboard() {
   initAiCopilot();
   loadEventSettings();
   setupEventSettingsHandler();
+  initKitDistributionDesk();
+  initVendorPrintSheet();
 }
 
 async function loadDatabase() {
@@ -1256,5 +1258,293 @@ function setupEventSettingsHandler() {
       }, 3500);
     }
   };
+}
+
+/* ==========================================
+   ON-SPOT KIT DISTRIBUTION DESK
+   ========================================== */
+function initKitDistributionDesk() {
+  const input = document.getElementById('kitScanInput');
+  const btn = document.getElementById('kitLookupBtn');
+  const resultCard = document.getElementById('kitResultCard');
+
+  if (!input || !btn || !resultCard) return;
+
+  function performLookup() {
+    const rawQ = input.value.trim();
+    if (!rawQ) {
+      resultCard.style.display = 'none';
+      return;
+    }
+
+    const cleanQ = rawQ.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    // Find runner by bib, phone, or name
+    const runner = runnerDatabase.find(r => {
+      const rBib = (r.bib || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const rPhone = (r.phone || '').replace(/[^0-9]/g, '');
+      const rTxn = (r.txnid || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const rName = (r.name || '').toLowerCase();
+
+      return (cleanQ && rBib === cleanQ) ||
+             (cleanQ && rPhone.includes(cleanQ)) ||
+             (cleanQ && rTxn.includes(cleanQ)) ||
+             (rName.includes(rawQ.toLowerCase()));
+    });
+
+    if (!runner) {
+      resultCard.style.display = 'block';
+      resultCard.innerHTML = `
+        <div style="color: #ffccd0; display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.2rem;">⚠️</span>
+          <span>No runner found matching: <strong>${rawQ}</strong>. Please check Bib or Phone number.</span>
+        </div>
+      `;
+      return;
+    }
+
+    renderKitCard(runner);
+  }
+
+  function renderKitCard(runner) {
+    const isDelivered = runner.kit_status === 'Delivered' || runner.kit_delivered === true;
+    const isVerified = runner.status === 'Verified';
+
+    resultCard.style.display = 'block';
+    resultCard.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
+        <div>
+          <h4 style="color: #fff; font-size: 1.15rem; margin: 0 0 2px 0;">${runner.name}</h4>
+          <span style="font-size: 0.85rem; color: var(--color-text-muted);">
+            Bib: <strong class="text-lime">#${runner.bib}</strong> • 📞 ${runner.phone}
+          </span>
+        </div>
+        <span class="badge" style="font-size: 0.8rem; padding: 4px 10px; border-radius: 4px; ${isVerified ? 'background: rgba(0,255,136,0.15); color: #00ff88; border: 1px solid rgba(0,255,136,0.3);' : 'background: rgba(255,170,0,0.15); color: #ffaa00; border: 1px solid rgba(255,170,0,0.3);'}">
+          ${isVerified ? '✅ Payment Verified' : '⏳ Payment ' + runner.status}
+        </span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; font-size: 0.88rem; color: #fff;">
+        <div style="background: rgba(255,255,255,0.04); padding: 8px 12px; border-radius: 6px;">
+          <span style="color: var(--color-text-muted); font-size: 0.75rem; display: block;">REQUIRED T-SHIRT SIZE:</span>
+          <strong style="font-size: 1.25rem; color: var(--color-accent); font-family: var(--font-headings);">${runner.tshirt || 'M'}</strong>
+        </div>
+        <div style="background: rgba(255,255,255,0.04); padding: 8px 12px; border-radius: 6px;">
+          <span style="color: var(--color-text-muted); font-size: 0.75rem; display: block;">RACE CATEGORY:</span>
+          <strong style="font-size: 0.95rem; color: #fff;">${runner.category || '10K Mini Marathon'}</strong>
+        </div>
+        <div style="background: rgba(255,255,255,0.04); padding: 8px 12px; border-radius: 6px;">
+          <span style="color: var(--color-text-muted); font-size: 0.75rem; display: block;">KIT COLLECTION POINT:</span>
+          <strong style="font-size: 0.9rem; color: #00d2ff;">📍 ${runner.kitpoint || 'Jahangirnagar University'}</strong>
+        </div>
+        <div style="background: rgba(255,255,255,0.04); padding: 8px 12px; border-radius: 6px;">
+          <span style="color: var(--color-text-muted); font-size: 0.75rem; display: block;">KIT STATUS:</span>
+          <strong style="font-size: 0.9rem; color: ${isDelivered ? '#00ff88' : '#ffdd99'};">
+            ${isDelivered ? '🟢 Handed Over (' + (runner.kit_delivered_at || 'Earlier') + ')' : '⚪ Not Handed Over Yet'}
+          </strong>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-end;">
+        ${isDelivered ? `
+          <button type="button" class="btn btn-outline btn-sm disabled" disabled style="opacity: 0.6; cursor: not-allowed;">
+            ✓ Kit Already Handed Over
+          </button>
+        ` : `
+          <button type="button" id="markDeliveredBtn" class="btn btn-lime btn-sm" style="font-weight: 700; padding: 9px 20px;">
+            📦 Mark Kit Handed Over
+          </button>
+        `}
+      </div>
+    `;
+
+    const markBtn = document.getElementById('markDeliveredBtn');
+    if (markBtn) {
+      markBtn.onclick = async () => {
+        markBtn.disabled = true;
+        markBtn.textContent = 'Saving...';
+
+        const nowStr = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        runner.kit_status = 'Delivered';
+        runner.kit_delivered = true;
+        runner.kit_delivered_at = nowStr;
+
+        // Save local
+        saveDatabase();
+
+        // Save Supabase
+        if (supabaseClient) {
+          try {
+            await supabaseClient
+              .from('registrations')
+              .update({ kit_status: 'Delivered', kit_delivered: true, kit_delivered_at: nowStr })
+              .eq('bib', runner.bib);
+          } catch (e) {
+            console.warn('Supabase kit delivery update error:', e);
+          }
+        }
+
+        renderKitCard(runner);
+        refreshDashboard();
+      };
+    }
+  }
+
+  btn.onclick = performLookup;
+  input.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      performLookup();
+    }
+  };
+}
+
+/* ==========================================
+   OFFICIAL VENDOR ORDER PRINT SHEET
+   ========================================== */
+function initVendorPrintSheet() {
+  const openBtn = document.getElementById('openVendorSheetBtn');
+  const modal = document.getElementById('vendorSheetModal');
+  const closeBtn1 = document.getElementById('closeVendorSheetBtn');
+  const closeBtn2 = document.getElementById('closeVendorSheetBtn2');
+  const printBtn = document.getElementById('printVendorSheetBtn');
+  const printArea = document.getElementById('vendorSheetPrintArea');
+
+  if (!openBtn || !modal || !printArea) return;
+
+  function closeModal() {
+    modal.style.display = 'none';
+  }
+
+  closeBtn1.onclick = closeModal;
+  if (closeBtn2) closeBtn2.onclick = closeModal;
+  modal.onclick = (e) => {
+    if (e.target === modal) closeModal();
+  };
+
+  openBtn.onclick = () => {
+    // Calculate counts
+    const sizes10k = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
+    const sizes5k = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
+    const totals = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
+    let countDU = 0, countJU = 0;
+    let total10K = 0, total5K = 0;
+
+    runnerDatabase.forEach(r => {
+      const sz = (r.tshirt || 'M').toUpperCase();
+      const is10 = (r.category || '').includes('10K');
+      const isDU = (r.kitpoint || '').toLowerCase().includes('dhaka');
+
+      if (is10) {
+        total10K++;
+        if (sizes10k[sz] !== undefined) sizes10k[sz]++;
+      } else {
+        total5K++;
+        if (sizes5k[sz] !== undefined) sizes5k[sz]++;
+      }
+
+      if (totals[sz] !== undefined) totals[sz]++;
+
+      if (isDU) countDU++;
+      else countJU++;
+    });
+
+    const grandTotalRunners = runnerDatabase.length;
+    const medals10K = Math.ceil(total10K * 1.05); // +5% safety buffer
+    const medals5K = Math.ceil(total5K * 1.05);
+
+    printArea.innerHTML = `
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.85rem; line-height: 1.6;">
+        <strong>PO Date:</strong> ${new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}<br>
+        <strong>Event:</strong> JUCSU RUN 2026 (The Farewell & Milestones)<br>
+        <strong>Total Active Runners:</strong> ${grandTotalRunners} Runners
+      </div>
+
+      <h3 style="font-size: 1.05rem; color: var(--color-accent); margin-bottom: 8px; font-family: var(--font-headings); text-transform: uppercase;">
+        1. Official Premium T-Shirt Manufacturing Order
+      </h3>
+      <table class="vendor-po-table">
+        <thead>
+          <tr>
+            <th>T-Shirt Size</th>
+            <th class="num">10K Run</th>
+            <th class="num">5K Run</th>
+            <th class="num">Grand Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Small (S)</td><td class="num">${sizes10k.S}</td><td class="num">${sizes5k.S}</td><td class="num">${totals.S}</td></tr>
+          <tr><td>Medium (M)</td><td class="num">${sizes10k.M}</td><td class="num">${sizes5k.M}</td><td class="num">${totals.M}</td></tr>
+          <tr><td>Large (L)</td><td class="num">${sizes10k.L}</td><td class="num">${sizes5k.L}</td><td class="num">${totals.L}</td></tr>
+          <tr><td>Extra Large (XL)</td><td class="num">${sizes10k.XL}</td><td class="num">${sizes5k.XL}</td><td class="num">${totals.XL}</td></tr>
+          <tr><td>Double XL (XXL)</td><td class="num">${sizes10k.XXL}</td><td class="num">${sizes5k.XXL}</td><td class="num">${totals.XXL}</td></tr>
+          <tr><td>Triple XL (3XL)</td><td class="num">${sizes10k['3XL']}</td><td class="num">${sizes5k['3XL']}</td><td class="num">${totals['3XL']}</td></tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>TOTAL PIECES</td>
+            <td class="num">${total10K}</td>
+            <td class="num">${total5K}</td>
+            <td class="num">${grandTotalRunners} Pcs</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <h3 style="font-size: 1.05rem; color: var(--color-accent); margin-bottom: 8px; font-family: var(--font-headings); text-transform: uppercase;">
+        2. Official Heavyweight Finisher Medal Order (+5% Buffer)
+      </h3>
+      <table class="vendor-po-table">
+        <thead>
+          <tr>
+            <th>Medal Category</th>
+            <th class="num">Exact Count</th>
+            <th class="num">+5% Buffer</th>
+            <th class="num">Final Order Quantity</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>10K Finisher Medal</td><td class="num">${total10K}</td><td class="num">+${medals10K - total10K}</td><td class="num"><strong>${medals10K} Pcs</strong></td></tr>
+          <tr><td>5K Finisher Medal</td><td class="num">${total5K}</td><td class="num">+${medals5K - total5K}</td><td class="num"><strong>${medals5K} Pcs</strong></td></tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">TOTAL FINISHER MEDALS</td>
+            <td class="num">${medals10K + medals5K} Pcs</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <h3 style="font-size: 1.05rem; color: var(--color-accent); margin-bottom: 8px; font-family: var(--font-headings); text-transform: uppercase;">
+        3. Kit Packing & Dispatch Breakdown
+      </h3>
+      <table class="vendor-po-table">
+        <thead>
+          <tr>
+            <th>Kit Collection Destination</th>
+            <th>Location</th>
+            <th class="num">Total Runner Kits</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Dhaka University (DU) Desk</strong></td><td>Physical Education Centre / TSC</td><td class="num"><strong>${countDU} Kits</strong></td></tr>
+          <tr><td><strong>Jahangirnagar University (JU) Desk</strong></td><td>JUCSU Office / Gymnasium</td><td class="num"><strong>${countJU} Kits</strong></td></tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2">TOTAL DISPATCH KITS</td>
+            <td class="num">${grandTotalRunners} Kits</td>
+          </tr>
+        </tfoot>
+      </table>
+    `;
+
+    modal.style.display = 'block';
+  };
+
+  if (printBtn) {
+    printBtn.onclick = () => {
+      window.print();
+    };
+  }
 }
 

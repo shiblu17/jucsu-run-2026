@@ -155,6 +155,7 @@ async function initAdminDashboard() {
   setupLogisticsSettingsHandler();
   initKitDistributionDesk();
   initVendorPrintSheet();
+  initBroadcastTool();
 }
 
 async function loadDatabase() {
@@ -203,6 +204,7 @@ function refreshDashboard() {
   renderAnalyticsCharts();
   renderTable();
   updateLogisticsSummary();
+  if (typeof updateBroadcastTool === 'function') updateBroadcastTool();
 }
 
 /* ==========================================
@@ -1849,5 +1851,334 @@ function initVendorPrintSheet() {
       window.print();
     };
   }
+}
+
+/* ==========================================
+   1-CLICK WHATSAPP & SMS NOTIFICATION BROADCASTER
+   ========================================== */
+
+const BROADCAST_TEMPLATES = {
+  kit_reminder: `Dear {name},
+Official Kit Collection for JUCSU RUN 2026 (The Farewell) is open!
+📅 Dates: 28 Sep - 01 Oct (10:00 AM - 06:00 PM)
+📍 Point: {kit_point}
+🆔 Bib: #{bib} ({category})
+⚠️ Note: Please bring your E-Bib screenshot and Student ID/Photo ID.
+Check status & E-Bib: https://jucsu-run-2026.pages.dev#checker
+Helpline: 01317982413
+- JUCSU RUN 2026 Committee`,
+
+  bus_alert: `Dear {name},
+Important Travel Alert for JUCSU RUN 2026!
+🚌 Selected Bus Route: {pickup}
+⏰ Departure Time: 04:30 AM Sharp (October 2, 2026)
+🏁 Race Venue: Central Shaheed Minar, JU Campus, Savar
+📞 Bus Coordinator: 01317982413
+Please report to your pickup point 15 mins early.
+Full Schedule: https://jucsu-run-2026.pages.dev#logistics
+- JUCSU RUN 2026 Committee`,
+
+  payment_reminder: `Hello {name},
+We noticed your registration for JUCSU RUN 2026 (Bib #{bib} - {category}) is pending verification.
+If you have already sent the fee via bKash to 01317982413, please reply with your Transaction ID or verify your status at: https://jucsu-run-2026.pages.dev#checker
+Helpline: 01317982413
+- JUCSU RUN 2026 Committee`,
+
+  ebib_confirmation: `Congratulations {name}!
+Your registration for JUCSU RUN 2026 is Confirmed!
+🎫 Official Bib: #{bib}
+🏃 Category: {category}
+👕 T-Shirt: Confirmed
+📍 Kit Point: {kit_point}
+Download your Digital E-Bib now: https://jucsu-run-2026.pages.dev#checker
+- JUCSU RUN 2026 Committee`,
+
+  race_day_guide: `Get ready {name}!
+JUCSU RUN 2026 starts tomorrow, Oct 2, 2026!
+⏰ Reporting Time: 05:15 AM
+🚩 Flag-off: 06:10 AM Sharp
+📍 Assembly: Central Shaheed Minar Square, JU Campus
+Baggage counters & warm-up zone will be ready. See you at the starting line!
+- JUCSU RUN 2026 Committee`,
+
+  custom: `Dear {name},
+Important update regarding JUCSU RUN 2026 for Bib #{bib} ({category}):
+[Type your message here]
+Website: https://jucsu-run-2026.pages.dev
+Helpline: 01317982413
+- JUCSU RUN 2026 Committee`
+};
+
+function getCleanPhone(phone) {
+  if (!phone) return '';
+  let clean = phone.toString().replace(/[^0-9]/g, '');
+  if (clean.startsWith('880')) return clean;
+  if (clean.startsWith('0')) return '880' + clean.substring(1);
+  if (clean.length === 10 && clean.startsWith('1')) return '880' + clean;
+  return clean;
+}
+
+function personalizeMessage(template, runner) {
+  if (!template) return '';
+  const name = runner.full_name || runner.fullName || runner.name || 'Runner';
+  const bib = runner.bib || runner.bib_number || 'TBD';
+  const category = runner.category || 'Mini Marathon';
+  const kitPoint = runner.kit_pickup || runner.kitPickup || 'JU Campus Desk';
+  const pickup = runner.bus_route || runner.pickup_location || runner.pickupLocation || 'Self Arrival (JU Campus)';
+
+  return template
+    .replace(/{name}/g, name)
+    .replace(/{bib}/g, bib)
+    .replace(/{category}/g, category)
+    .replace(/{kit_point}/g, kitPoint)
+    .replace(/{pickup}/g, pickup)
+    .replace(/{website_link}/g, 'https://jucsu-run-2026.pages.dev');
+}
+
+function getFilteredBroadcastRunners(audienceFilter) {
+  if (!runnerDatabase || !runnerDatabase.length) return [];
+  
+  return runnerDatabase.filter(r => {
+    if (!audienceFilter || audienceFilter === 'all') return true;
+    if (audienceFilter === 'pending') return r.status === 'Pending';
+    if (audienceFilter === 'verified') return r.status === 'Verified';
+    if (audienceFilter === 'du_kit') {
+      const kp = (r.kit_pickup || r.kitPickup || '').toLowerCase();
+      return kp.includes('dhaka') || kp.includes('du');
+    }
+    if (audienceFilter === 'ju_kit') {
+      const kp = (r.kit_pickup || r.kitPickup || '').toLowerCase();
+      return kp.includes('jahangirnagar') || kp.includes('ju') || kp.includes('jucsu') || kp.includes('campus');
+    }
+    if (audienceFilter === 'bus_uttara') {
+      const bus = (r.bus_route || r.pickup_location || r.pickupLocation || '').toLowerCase();
+      return bus.includes('uttara');
+    }
+    if (audienceFilter === 'bus_gulshan') {
+      const bus = (r.bus_route || r.pickup_location || r.pickupLocation || '').toLowerCase();
+      return bus.includes('gulshan');
+    }
+    if (audienceFilter === 'bus_bongobazar') {
+      const bus = (r.bus_route || r.pickup_location || r.pickupLocation || '').toLowerCase();
+      return bus.includes('bongobazar') || bus.includes('bongo');
+    }
+    if (audienceFilter === 'cat_10k') {
+      return (r.category || '').includes('10K');
+    }
+    if (audienceFilter === 'cat_5k') {
+      return (r.category || '').includes('5K');
+    }
+    return true;
+  });
+}
+
+function showBroadcastToast(msg) {
+  const toast = document.getElementById('broadcastToastNotice');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.style.display = 'inline-block';
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, 3500);
+}
+
+function updateBroadcastTool() {
+  const audienceSelect = document.getElementById('broadcastAudience');
+  const countBadge = document.getElementById('broadcastRecipientCount');
+  const searchInput = document.getElementById('broadcastListSearch');
+  const msgTextarea = document.getElementById('broadcastMessageText');
+  
+  const audience = audienceSelect ? audienceSelect.value : 'all';
+  const runners = getFilteredBroadcastRunners(audience);
+  
+  if (countBadge) {
+    countBadge.textContent = runners.length;
+  }
+  
+  const searchQuery = searchInput ? searchInput.value.trim() : '';
+  const currentMsg = msgTextarea ? msgTextarea.value : (BROADCAST_TEMPLATES.kit_reminder || '');
+  
+  renderBroadcastRunnersList(runners, currentMsg, searchQuery);
+}
+
+function renderBroadcastRunnersList(runners, rawTemplate, searchQuery) {
+  const tbody = document.getElementById('broadcastRunnersListBody');
+  if (!tbody) return;
+  
+  let filtered = runners;
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = runners.filter(r => {
+      const name = (r.full_name || r.fullName || r.name || '').toLowerCase();
+      const bib = (r.bib || r.bib_number || '').toString().toLowerCase();
+      const phone = (r.phone || r.phone_number || '').toString().toLowerCase();
+      return name.includes(q) || bib.includes(q) || phone.includes(q);
+    });
+  }
+  
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align: center; padding: 20px; color: var(--color-text-muted);">
+          No runners match the selected filter or search query.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  tbody.innerHTML = filtered.map(runner => {
+    const name = runner.full_name || runner.fullName || runner.name || 'Runner';
+    const bib = runner.bib || runner.bib_number || 'TBD';
+    const cat = runner.category || '5K';
+    const rawPhone = runner.phone || runner.phone_number || '';
+    const cleanPhone = getCleanPhone(rawPhone);
+    const personalized = personalizeMessage(rawTemplate, runner);
+    const waUrl = cleanPhone 
+      ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(personalized)}`
+      : '#';
+    
+    return `
+      <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <td style="padding: 8px 12px; font-weight: 700; color: var(--color-accent);">#${bib}</td>
+        <td style="padding: 8px 12px; font-weight: 600;">${name}</td>
+        <td style="padding: 8px 12px; font-size: 0.78rem; color: #a0aec0;">${cat}</td>
+        <td style="padding: 8px 12px; font-family: monospace; font-size: 0.8rem; color: #e2e8f0;">${rawPhone || 'N/A'}</td>
+        <td style="padding: 8px 12px; text-align: right;">
+          ${cleanPhone ? `
+            <a href="${waUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-lime btn-sm" style="font-size: 0.75rem; padding: 3px 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+              <span>💬 WhatsApp</span>
+            </a>
+          ` : `
+            <span style="font-size: 0.75rem; color: #ff5555;">No Phone</span>
+          `}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function initBroadcastTool() {
+  const audienceSelect = document.getElementById('broadcastAudience');
+  const templateSelect = document.getElementById('broadcastTemplate');
+  const msgTextarea = document.getElementById('broadcastMessageText');
+  const copyTextBtn = document.getElementById('copyBroadcastTextBtn');
+  const copyPhonesBtn = document.getElementById('copyBroadcastPhonesBtn');
+  const downloadPhoneListBtn = document.getElementById('downloadPhoneListBtn');
+  const searchInput = document.getElementById('broadcastListSearch');
+
+  if (!audienceSelect || !templateSelect || !msgTextarea) return;
+
+  // Initialize textarea with default template
+  if (!msgTextarea.value) {
+    msgTextarea.value = BROADCAST_TEMPLATES.kit_reminder;
+  }
+
+  // Template switch event
+  templateSelect.addEventListener('change', () => {
+    const val = templateSelect.value;
+    if (BROADCAST_TEMPLATES[val]) {
+      msgTextarea.value = BROADCAST_TEMPLATES[val];
+    }
+    updateBroadcastTool();
+  });
+
+  // Audience change event
+  audienceSelect.addEventListener('change', () => {
+    updateBroadcastTool();
+  });
+
+  // Message typing event -> re-render runner links
+  msgTextarea.addEventListener('input', () => {
+    const audience = audienceSelect.value;
+    const runners = getFilteredBroadcastRunners(audience);
+    const searchQuery = searchInput ? searchInput.value.trim() : '';
+    renderBroadcastRunnersList(runners, msgTextarea.value, searchQuery);
+  });
+
+  // Search filter typing event
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      const audience = audienceSelect.value;
+      const runners = getFilteredBroadcastRunners(audience);
+      renderBroadcastRunnersList(runners, msgTextarea.value, searchInput.value.trim());
+    });
+  }
+
+  // Copy Message Text button
+  if (copyTextBtn) {
+    copyTextBtn.addEventListener('click', () => {
+      if (!msgTextarea.value) return;
+      navigator.clipboard.writeText(msgTextarea.value).then(() => {
+        showBroadcastToast('✅ Message template copied to clipboard!');
+      }).catch(err => {
+        console.error('Clipboard copy failed', err);
+        showBroadcastToast('⚠️ Failed to copy text');
+      });
+    });
+  }
+
+  // Copy Phone Numbers button
+  if (copyPhonesBtn) {
+    copyPhonesBtn.addEventListener('click', () => {
+      const audience = audienceSelect.value;
+      const runners = getFilteredBroadcastRunners(audience);
+      const phones = runners
+        .map(r => getCleanPhone(r.phone || r.phone_number))
+        .filter(p => p.length > 5);
+      
+      const uniquePhones = [...new Set(phones)];
+      if (uniquePhones.length === 0) {
+        showBroadcastToast('⚠️ No valid phone numbers found for this audience.');
+        return;
+      }
+
+      const phoneStr = uniquePhones.join(', ');
+      navigator.clipboard.writeText(phoneStr).then(() => {
+        showBroadcastToast(`✅ Copied ${uniquePhones.length} phone numbers (comma-separated)!`);
+      }).catch(err => {
+        console.error('Copy phones failed', err);
+        showBroadcastToast('⚠️ Failed to copy numbers');
+      });
+    });
+  }
+
+  // Download Phone List button
+  if (downloadPhoneListBtn) {
+    downloadPhoneListBtn.addEventListener('click', () => {
+      const audience = audienceSelect.value;
+      const runners = getFilteredBroadcastRunners(audience);
+      if (!runners.length) {
+        showBroadcastToast('⚠️ No runners found to export.');
+        return;
+      }
+
+      let content = `JUCSU RUN 2026 - Broadcast Contact List\nTarget Audience: ${audience}\nExported At: ${new Date().toLocaleString()}\nTotal Contacts: ${runners.length}\n` + '='.repeat(50) + '\n\n';
+      
+      runners.forEach(r => {
+        const name = r.full_name || r.fullName || r.name || 'Runner';
+        const bib = r.bib || r.bib_number || 'N/A';
+        const rawPhone = r.phone || r.phone_number || 'N/A';
+        const cleanPhone = getCleanPhone(rawPhone);
+        const cat = r.category || 'N/A';
+        const kit = r.kit_pickup || r.kitPickup || 'N/A';
+        content += `Bib: #${bib} | Name: ${name} | Phone: ${cleanPhone || rawPhone} | Cat: ${cat} | Kit Point: ${kit}\n`;
+      });
+
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `jucsu_broadcast_${audience}_contacts.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showBroadcastToast(`📥 Exported ${runners.length} contacts (.txt)!`);
+    });
+  }
+
+  // Initial populate
+  updateBroadcastTool();
 }
 

@@ -573,6 +573,117 @@ JU Campus (Shaheed Minar) | Expected Arrival: 05:35 AM</textarea>
       <!-- Right Column: Registration Table and Form -->
       <div class="admin-right-col">
         
+        <!-- 1-Click WhatsApp & SMS Notification Broadcaster Panel -->
+        <div class="panel glass-panel border-lime" style="border: 1px solid rgba(0, 255, 136, 0.35); margin-bottom: 25px; background: linear-gradient(180deg, rgba(0,255,136,0.03) 0%, rgba(0,0,0,0.2) 100%);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+            <h3 class="panel-title" style="margin: 0; color: #fff; display: flex; align-items: center; gap: 8px;">
+              <span>💬</span>
+              <span>1-Click WhatsApp & SMS Broadcaster</span>
+            </h3>
+            <span style="background: rgba(0, 255, 136, 0.15); color: #00ff88; font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; border: 1px solid rgba(0,255,136,0.3);">Organizer Tool</span>
+          </div>
+          <p class="panel-desc" style="margin-bottom: 16px;">
+            Filter runners by category, status, bus route or kit collection point, select a pre-built smart template, and send 1-click WhatsApp messages or copy bulk SMS phone numbers.
+          </p>
+
+          <!-- Broadcaster Controls Grid -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <!-- Audience Filter Select -->
+            <div class="form-group" style="margin: 0;">
+              <label for="broadcastAudience" class="form-label" style="font-size: 0.82rem; font-weight: 600; color: var(--color-accent);">
+                🎯 Target Audience (কাদের মেসেজ পাঠাবেন)
+              </label>
+              <select id="broadcastAudience" class="form-select" style="background: rgba(0,0,0,0.4); color: #fff; font-size: 0.85rem;">
+                <option value="all">👥 All Registered Runners (সকল রানার)</option>
+                <option value="pending">⏳ Pending Payment Runners (পেন্ডিং পেমেন্ট)</option>
+                <option value="verified">✅ Verified Payment Runners (ভেরিফায়েড রানার)</option>
+                <option value="du_kit">🏛️ Dhaka University Kit Pickup (ঢাবি বুথ)</option>
+                <option value="ju_kit">🌳 Jahangirnagar University Kit Pickup (জাবি বুথ)</option>
+                <option value="bus_uttara">🚌 Bus Route: Uttara</option>
+                <option value="bus_gulshan">🚌 Bus Route: Gulshan</option>
+                <option value="bus_bongobazar">🚌 Bus Route: Bongobazar</option>
+                <option value="cat_10k">🥇 10K Mini Marathon Runners</option>
+                <option value="cat_5k">🥈 5K Run Runners</option>
+              </select>
+            </div>
+
+            <!-- Pre-Built Template Select -->
+            <div class="form-group" style="margin: 0;">
+              <label for="broadcastTemplate" class="form-label" style="font-size: 0.82rem; font-weight: 600; color: var(--color-accent);">
+                📋 Message Template (মেসেজ টেমপ্লেট)
+              </label>
+              <select id="broadcastTemplate" class="form-select" style="background: rgba(0,0,0,0.4); color: #fff; font-size: 0.85rem;">
+                <option value="kit_reminder">📍 Kit Collection Reminder (কিট তোলার নোটিশ)</option>
+                <option value="bus_alert">🚌 Race Day Bus Departure Schedule (ভোর ৪:৩০ বাস শিডিউল)</option>
+                <option value="payment_reminder">💳 Payment Verification & TrxID Request</option>
+                <option value="ebib_confirmation">🎫 E-Bib & Registration Confirmation</option>
+                <option value="race_day_guide">🏁 Race Day Morning Assembly & Flag-off</option>
+                <option value="custom">✍️ Custom Message (কাস্টম বার্তা লিখুন)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Message Preview & Composer Box -->
+          <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+              <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: #fff; margin: 0;">
+                📝 Message Preview / Composer (ডায়নামিক টেমপ্লেট)
+              </label>
+              <span style="font-size: 0.72rem; color: var(--color-text-muted);">Placeholders: <code>{name}</code>, <code>{bib}</code>, <code>{category}</code>, <code>{kit_point}</code>, <code>{pickup}</code></span>
+            </div>
+            <textarea id="broadcastMessageText" class="form-input" rows="5" style="width: 100%; font-size: 0.85rem; line-height: 1.5; background: rgba(0,0,0,0.4); color: #fff; font-family: inherit; resize: vertical;"></textarea>
+          </div>
+
+          <!-- Bulk Action Bar -->
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 0.85rem; color: #fff;">
+                Target Audience: <strong id="broadcastRecipientCount" class="text-lime" style="font-size: 1.05rem;">0</strong> Runners
+              </span>
+              <span id="broadcastToastNotice" style="font-size: 0.8rem; color: #00ff88; font-weight: 700; display: none;"></span>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" id="copyBroadcastTextBtn" class="btn btn-outline btn-sm" style="font-size: 0.8rem; padding: 7px 14px;">
+                📋 Copy Message Text
+              </button>
+              <button type="button" id="copyBroadcastPhonesBtn" class="btn btn-lime btn-sm" style="font-size: 0.8rem; padding: 7px 14px; font-weight: 700;">
+                📞 Copy Phone Numbers
+              </button>
+              <button type="button" id="downloadPhoneListBtn" class="btn btn-outline btn-sm" style="font-size: 0.8rem; padding: 7px 14px;">
+                📥 Export (.txt)
+              </button>
+            </div>
+          </div>
+
+          <!-- Individual Runner Quick WhatsApp Sender List -->
+          <div style="margin-top: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+              <h4 style="font-size: 0.85rem; color: var(--color-accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">
+                ⚡ 1-Click WhatsApp Direct Sender List
+              </h4>
+              <input type="text" id="broadcastListSearch" placeholder="Search runner name/phone..." class="form-input form-input-sm" style="max-width: 220px; font-size: 0.8rem; background: rgba(0,0,0,0.3); color: #fff;">
+            </div>
+
+            <!-- Scrollable Runner Table / Cards -->
+            <div style="max-height: 280px; overflow-y: auto; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; color: #fff;">
+                <thead style="position: sticky; top: 0; background: #002e1b; z-index: 1;">
+                  <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; opacity: 0.8;">
+                    <th style="padding: 8px 12px;">Bib</th>
+                    <th style="padding: 8px 12px;">Name</th>
+                    <th style="padding: 8px 12px;">Category</th>
+                    <th style="padding: 8px 12px;">Phone</th>
+                    <th style="padding: 8px 12px; text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="broadcastRunnersListBody">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <!-- Add Runner Panel -->
         <div class="panel glass-panel">
           <h3 class="panel-title">Add Runner Manually</h3>
@@ -769,6 +880,6 @@ JU Campus (Shaheed Minar) | Expected Arrival: 05:35 AM</textarea>
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=2.9"></script>
+  <script src="admin.js?v=3.0"></script>
 </body>
 </html>

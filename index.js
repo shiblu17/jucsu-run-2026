@@ -737,32 +737,80 @@ function initRegisterTriggers() {
             </div>
 
             <div class="form-group" style="gap:6px;">
-              <label class="form-label" style="font-size:0.8rem; font-weight:600;">T-Shirt Size <span style="color:#ff3b30;">*</span></label>
-              <div class="radio-tile-group">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
+                <label class="form-label" style="font-size:0.8rem; font-weight:600; margin:0;">T-Shirt Size <span style="color:#ff3b30;">*</span></label>
+                <span style="font-size:0.75rem; color:var(--color-accent); font-weight:600;">📏 Chest & Length in Inches</span>
+              </div>
+              <div class="radio-tile-group" style="grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));">
                 <div class="radio-tile-wrapper">
                   <input type="radio" name="pubTshirt" value="S" required>
-                  <div class="radio-tile-content">S</div>
+                  <div class="radio-tile-content" style="padding: 8px 4px; font-size: 0.85rem; text-align: center;">
+                    <strong style="font-size: 0.95rem;">S</strong><br>
+                    <span style="font-size: 0.7rem; color: var(--color-text-muted);">38"</span>
+                  </div>
                 </div>
                 <div class="radio-tile-wrapper">
                   <input type="radio" name="pubTshirt" value="M" checked required>
-                  <div class="radio-tile-content">M</div>
+                  <div class="radio-tile-content" style="padding: 8px 4px; font-size: 0.85rem; text-align: center;">
+                    <strong style="font-size: 0.95rem;">M</strong><br>
+                    <span style="font-size: 0.7rem; color: var(--color-text-muted);">40"</span>
+                  </div>
                 </div>
                 <div class="radio-tile-wrapper">
                   <input type="radio" name="pubTshirt" value="L" required>
-                  <div class="radio-tile-content">L</div>
+                  <div class="radio-tile-content" style="padding: 8px 4px; font-size: 0.85rem; text-align: center;">
+                    <strong style="font-size: 0.95rem;">L</strong><br>
+                    <span style="font-size: 0.7rem; color: var(--color-text-muted);">42"</span>
+                  </div>
                 </div>
                 <div class="radio-tile-wrapper">
                   <input type="radio" name="pubTshirt" value="XL" required>
-                  <div class="radio-tile-content">XL</div>
+                  <div class="radio-tile-content" style="padding: 8px 4px; font-size: 0.85rem; text-align: center;">
+                    <strong style="font-size: 0.95rem;">XL</strong><br>
+                    <span style="font-size: 0.7rem; color: var(--color-text-muted);">44"</span>
+                  </div>
                 </div>
                 <div class="radio-tile-wrapper">
                   <input type="radio" name="pubTshirt" value="XXL" required>
-                  <div class="radio-tile-content">XXL</div>
+                  <div class="radio-tile-content" style="padding: 8px 4px; font-size: 0.85rem; text-align: center;">
+                    <strong style="font-size: 0.95rem;">2XL</strong><br>
+                    <span style="font-size: 0.7rem; color: var(--color-text-muted);">46"</span>
+                  </div>
                 </div>
                 <div class="radio-tile-wrapper">
                   <input type="radio" name="pubTshirt" value="3XL" required>
-                  <div class="radio-tile-content">3XL</div>
+                  <div class="radio-tile-content" style="padding: 8px 4px; font-size: 0.85rem; text-align: center;">
+                    <strong style="font-size: 0.95rem;">3XL</strong><br>
+                    <span style="font-size: 0.7rem; color: var(--color-text-muted);">48"</span>
+                  </div>
                 </div>
+              </div>
+
+              <!-- Theme Designed Inline Size Chart Card -->
+              <div class="modal-size-chart-box" style="margin-top: 10px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(193, 216, 47, 0.25); border-radius: 8px; padding: 10px 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 4px;">
+                  <span style="color: var(--color-accent); font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; display: flex; align-items: center; gap: 5px;">
+                    <span>📐</span> Size Measurement Chart (সাইজ চার্ট)
+                  </span>
+                  <span style="color: var(--color-text-muted); font-size: 0.7rem;">Inches (ইঞ্চি)</span>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.78rem;">
+                  <thead>
+                    <tr style="background: rgba(193, 216, 47, 0.12); color: var(--color-accent); font-weight: 700;">
+                      <th style="padding: 4px 6px; border: 1px solid rgba(255,255,255,0.08);">SIZE</th>
+                      <th style="padding: 4px 6px; border: 1px solid rgba(255,255,255,0.08);">CHEST (বুক)</th>
+                      <th style="padding: 4px 6px; border: 1px solid rgba(255,255,255,0.08);">LENGTH (দৈর্ঘ্য)</th>
+                    </tr>
+                  </thead>
+                  <tbody style="color: #fff;">
+                    <tr><td style="padding: 3px 6px; font-weight: 700; color: var(--color-accent); border: 1px solid rgba(255,255,255,0.05);">S</td><td style="padding: 3px 6px; border: 1px solid rgba(255,255,255,0.05);">38"</td><td style="padding: 3px 6px; border: 1px solid rgba(255,255,255,0.05);">26"</td></tr>
+                    <tr style="background: rgba(255,255,255,0.02);"><td style="padding: 3px 6px; font-weight: 700; color: var(--color-accent); border: 1px solid rgba(255,255,255,0.05);">M</td><td style="padding: 3px 6px; border: 1px solid rgba(255,255,255,0.05);">40"</td><td style="padding: 3px 6px; border: 1px solid rgba(255,255,255,0.05);">27"</td></tr>
+                    <tr><td style="padding: 3px 6px; font-weight: 700; color: var(--color-accent); border: 1px solid rgba(255,255,255,0.05);">L</td><td style="padding: 3px 6px; border: 1px solid rgba(255,255,255,0.05);">42"</td><td style="padding: 3px 6px; border: 1px solid rgba(255,255,255,0.05);">28"</td></tr>
+                    <tr style="background: rgba(255,255,255,0.02);"><td style="padding: 3px 6px; font-weight: 700; color: var(--color-accent); border: 1px solid rgba(255,255,255,0.05);">XL</td><td style="padding: 3px 6px; border: 1px solid rgba(255,255,255,0.05);">44"</td><td style="padding: 3px 6px; border: 1px solid rgba(255,255,255,0.05);">29"</td></tr>
+                    <tr><td style="padding: 3px 6px; font-weight: 700; color: var(--color-accent); border: 1px solid rgba(255,255,255,0.05);">2XL</td><td style="padding: 3px 6px; border: 1px solid rgba(255,255,255,0.05);">46"</td><td style="padding: 3px 6px; border: 1px solid rgba(255,255,255,0.05);">30"</td></tr>
+                    <tr style="background: rgba(255,255,255,0.02);"><td style="padding: 3px 6px; font-weight: 700; color: var(--color-accent); border: 1px solid rgba(255,255,255,0.05);">3XL</td><td style="padding: 3px 6px; border: 1px solid rgba(255,255,255,0.05);">48"</td><td style="padding: 3px 6px; border: 1px solid rgba(255,255,255,0.05);">31"</td></tr>
+                  </tbody>
+                </table>
               </div>
             </div>
             <div class="form-group" style="gap:6px;">

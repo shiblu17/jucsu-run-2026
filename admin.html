@@ -684,6 +684,65 @@ with check (true);</pre>
           </div>
         </div>
 
+        <!-- Admin Security & Active Device Access Logs Panel -->
+        <div class="panel glass-panel border-lime" style="border: 1px solid rgba(0, 255, 136, 0.35); margin-bottom: 25px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+            <h3 class="panel-title" style="margin: 0; color: #fff; display: flex; align-items: center; gap: 8px;">
+              <span>🛡️</span>
+              <span>Admin Device Access Logs</span>
+            </h3>
+            <span id="deviceCountBadge" style="background: rgba(0, 255, 136, 0.15); color: #00ff88; font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; border: 1px solid rgba(0,255,136,0.3);">
+              🟢 Live Activity
+            </span>
+          </div>
+          <p class="panel-desc" style="margin-bottom: 14px;">
+            Monitor all devices, browsers, IP addresses, and login timestamps currently accessing the admin portal.
+          </p>
+
+          <!-- Current Active Device Summary Card -->
+          <div id="currentDeviceCard" style="background: rgba(0, 255, 136, 0.08); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 1.5rem;" id="currDevIcon">💻</span>
+              <div>
+                <div style="font-size: 0.85rem; font-weight: 700; color: #ffffff;" id="currDevName">Detecting current device...</div>
+                <div style="font-size: 0.75rem; color: var(--color-text-muted);" id="currDevMeta">IP & Location Loading...</div>
+              </div>
+            </div>
+            <span class="badge-lime" style="font-size: 0.7rem; padding: 3px 8px; font-weight: 700;">⭐ This Device</span>
+          </div>
+
+          <!-- Device Logs Table Container -->
+          <div style="max-height: 280px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; background: rgba(0,0,0,0.35);">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.78rem;">
+              <thead>
+                <tr style="background: rgba(255,255,255,0.05); text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); color: var(--color-accent);">
+                  <th style="padding: 8px 10px;">Device / Browser</th>
+                  <th style="padding: 8px 10px;">IP & Location</th>
+                  <th style="padding: 8px 10px;">Time</th>
+                  <th style="padding: 8px 10px; text-align: right;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="deviceLogsTbody">
+                <tr>
+                  <td colspan="4" style="text-align: center; padding: 16px; color: var(--color-text-muted);">
+                    Loading access logs...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Controls: Refresh & Clear -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px;">
+            <button type="button" id="refreshDeviceLogsBtn" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 5px 12px;">
+              🔄 Refresh Logs
+            </button>
+            <button type="button" id="clearDeviceLogsBtn" class="btn btn-outline btn-sm text-danger" style="font-size: 0.75rem; padding: 5px 12px; border-color: rgba(235,50,65,0.4);">
+              🗑️ Clear History
+            </button>
+          </div>
+        </div>
+
         <!-- Reset Panel -->
         <div class="panel glass-panel border-danger-dim">
           <h3 class="panel-title text-danger">Danger Zone</h3>
@@ -1010,7 +1069,7 @@ with check (true);</pre>
       <form id="revenueUnlockForm" onsubmit="return false;">
         <div class="form-group" style="margin-bottom: 14px; text-align: left;">
           <label for="revenuePasscodeInput" class="form-label" style="font-size: 0.8rem; font-weight: 600; color: var(--color-accent);">Enter Passcode</label>
-          <input type="password" id="revenuePasscodeInput" class="form-input" placeholder="Passcode (e.g. jucsu2026)" style="background: rgba(0,0,0,0.5); color: #fff; text-align: center; font-size: 1.05rem; letter-spacing: 0.1em;" autocomplete="off">
+          <input type="password" id="revenuePasscodeInput" class="form-input" placeholder="••••••••" style="background: rgba(0,0,0,0.5); color: #fff; text-align: center; font-size: 1.15rem; letter-spacing: 0.25em;" autocomplete="off">
           <div id="revenueUnlockError" style="color: #ff5555; font-size: 0.78rem; margin-top: 6px; display: none;">❌ Incorrect passcode. Please try again.</div>
         </div>
 
@@ -1116,6 +1175,6 @@ with check (true);</pre>
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=3.5"></script>
+  <script src="admin.js?v=3.6"></script>
 </body>
 </html>

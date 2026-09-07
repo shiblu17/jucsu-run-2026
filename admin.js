@@ -118,8 +118,8 @@ async function initLoginGate() {
         loginBtn.disabled = false;
       }
     } else {
-      // Offline fallback
-      if (password === 'admin' || password === 'jucsu2026') {
+      // Offline fallback / Direct passcode
+      if (password.toUpperCase() === 'KIRON' || password === 'admin' || password === 'jucsu2026') {
         sessionStorage.setItem('jucsu_admin_logged', 'true');
         loginGate.classList.add('hidden');
         adminContent.classList.remove('hidden');
@@ -160,6 +160,7 @@ async function initAdminDashboard() {
   initBroadcastTool();
   initRevenueProtection();
   setupEditRunnerHandler();
+  initDeviceSecurityLogs();
 }
 
 async function loadDatabase() {
@@ -2529,18 +2530,21 @@ function initRevenueProtection() {
     if (e.target === modal) closeModal();
   });
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const entered = input.value.trim().toLowerCase();
+    const entered = input.value.trim().toUpperCase();
     
-    // Accept valid passcodes: 'jucsu2026', 'admin', '2026', or organizer phone suffix
-    const validCodes = ['jucsu2026', 'admin', '2026', '7982', '01317982413'];
+    // Accept valid passcode: 'KIRON'
+    const validCodes = ['KIRON', 'KIRON2026', 'ADMIN', 'JUCSU2026'];
     
     if (validCodes.includes(entered)) {
       isRevenueUnlocked = true;
       sessionStorage.setItem('jucsu_revenue_unlocked', 'true');
       closeModal();
       updateRevenueDisplay();
+      if (typeof recordAdminAccess === 'function') {
+        recordAdminAccess('Revenue Card Unlocked');
+      }
     } else {
       if (errorMsg) {
         errorMsg.style.display = 'block';
@@ -2654,4 +2658,282 @@ function setupEditRunnerHandler() {
     alert(`✓ Runner #${bib} (${updatedData.name}) details updated successfully!`);
   };
 }
+
+/* ==========================================
+   ADMIN SECURITY & DEVICE ACCESS TRACKER
+   ========================================== */
+function getDeviceFingerprint() {
+  const ua = navigator.userAgent || '';
+  let deviceType = 'Desktop';
+  let deviceIcon = '💻';
+  let os = 'Unknown OS';
+  let browser = 'Unknown Browser';
+
+  // Detect OS
+  if (/android/i.test(ua)) {
+    os = 'Android';
+    deviceType = 'Mobile';
+    deviceIcon = '📱';
+  } else if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    os = /iPad/.test(ua) ? 'iPad' : 'iPhone';
+    deviceType = /iPad/.test(ua) ? 'Tablet' : 'Mobile';
+    deviceIcon = '📱';
+  } else if (/Macintosh|Mac OS X/i.test(ua)) {
+    os = 'macOS';
+    deviceType = 'Mac Desktop';
+    deviceIcon = '💻';
+  } else if (/Windows NT 10.0/i.test(ua)) {
+    os = 'Windows 10/11';
+    deviceType = 'Windows PC';
+    deviceIcon = '💻';
+  } else if (/Windows NT/i.test(ua)) {
+    os = 'Windows';
+    deviceType = 'Windows PC';
+    deviceIcon = '💻';
+  } else if (/Linux/i.test(ua)) {
+    os = 'Linux';
+    deviceType = 'Linux Desktop';
+    deviceIcon = '💻';
+  }
+
+  // Detect Browser
+  if (/edg/i.test(ua)) {
+    browser = 'Edge';
+  } else if (/chrome|crios/i.test(ua) && !/opr|opera/i.test(ua)) {
+    browser = 'Chrome';
+  } else if (/safari/i.test(ua) && !/chrome|crios/i.test(ua)) {
+    browser = 'Safari';
+  } else if (/firefox|fxios/i.test(ua)) {
+    browser = 'Firefox';
+  } else if (/opr|opera/i.test(ua)) {
+    browser = 'Opera';
+  } else if (/samsungbrowser/i.test(ua)) {
+    browser = 'Samsung Internet';
+  }
+
+  const screenRes = `${window.screen.width}x${window.screen.height}`;
+  
+  return {
+    deviceType,
+    deviceIcon,
+    os,
+    browser,
+    screenRes,
+    platform: `${browser} on ${os}`,
+    userAgent: ua
+  };
+}
+
+async function fetchClientNetworkInfo() {
+  try {
+    const res = await fetch('https://ipapi.co/json/');
+    if (res.ok) {
+      const data = await res.json();
+      return {
+        ip: data.ip || 'Unknown IP',
+        location: [data.city, data.country_name].filter(Boolean).join(', ') || 'Bangladesh'
+      };
+    }
+  } catch (e) {
+    try {
+      const res2 = await fetch('https://api.ipify.org?format=json');
+      if (res2.ok) {
+        const data2 = await res2.json();
+        return {
+          ip: data2.ip || 'Unknown IP',
+          location: 'Bangladesh'
+        };
+      }
+    } catch (err) {}
+  }
+  return { ip: 'Dynamic IP', location: 'Bangladesh' };
+}
+
+async function recordAdminAccess(actionType = 'Dashboard Access') {
+  const dev = getDeviceFingerprint();
+  let sessionKey = sessionStorage.getItem('jucsu_admin_session_id');
+  if (!sessionKey) {
+    sessionKey = 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+    sessionStorage.setItem('jucsu_admin_session_id', sessionKey);
+  }
+
+  // Update current device banner immediately
+  const currDevName = document.getElementById('currDevName');
+  const currDevIcon = document.getElementById('currDevIcon');
+  const currDevMeta = document.getElementById('currDevMeta');
+  if (currDevName) currDevName.textContent = `${dev.platform} (${dev.deviceType})`;
+  if (currDevIcon) currDevIcon.textContent = dev.deviceIcon;
+
+  // Asynchronously get IP & Location
+  const net = await fetchClientNetworkInfo();
+  if (currDevMeta) currDevMeta.textContent = `IP: ${net.ip} • 📍 ${net.location} • Screen: ${dev.screenRes}`;
+
+  const currentEntry = {
+    sessionId: sessionKey,
+    deviceType: dev.deviceType,
+    deviceIcon: dev.deviceIcon,
+    os: dev.os,
+    browser: dev.browser,
+    platform: dev.platform,
+    ip: net.ip,
+    location: net.location,
+    screenRes: dev.screenRes,
+    action: actionType,
+    timestamp: new Date().toISOString(),
+    formattedTime: new Date().toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    })
+  };
+
+  // Fetch existing logs from Supabase
+  let logs = [];
+  if (supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('event_settings')
+        .select('*')
+        .eq('id', 'admin_device_logs')
+        .maybeSingle();
+      if (!error && data && data.data && Array.isArray(data.data.logs)) {
+        logs = data.data.logs;
+      }
+    } catch (e) {}
+  }
+
+  if (logs.length === 0) {
+    try {
+      const local = localStorage.getItem('jucsu_admin_device_logs');
+      if (local) logs = JSON.parse(local);
+    } catch (e) {}
+  }
+
+  // Remove stale entry with same sessionId and push the newest
+  logs = logs.filter(l => l.sessionId !== sessionKey);
+  logs.unshift(currentEntry);
+  logs = logs.slice(0, 30);
+
+  // Save to local storage
+  try {
+    localStorage.setItem('jucsu_admin_device_logs', JSON.stringify(logs));
+  } catch (e) {}
+
+  // Save to Supabase
+  if (supabaseClient) {
+    try {
+      await supabaseClient
+        .from('event_settings')
+        .upsert({
+          id: 'admin_device_logs',
+          data: { logs, lastUpdated: new Date().toISOString() },
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+    } catch (e) {
+      console.warn('Supabase device log sync note:', e);
+    }
+  }
+
+  renderDeviceLogsTable(logs, sessionKey);
+}
+
+function renderDeviceLogsTable(logs, currentSessionId) {
+  const tbody = document.getElementById('deviceLogsTbody');
+  const countBadge = document.getElementById('deviceCountBadge');
+  if (!tbody) return;
+
+  if (!logs || logs.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align: center; padding: 20px; color: var(--color-text-muted);">
+          No access logs recorded yet.
+        </td>
+      </tr>
+    `;
+    if (countBadge) countBadge.textContent = '0 Logged';
+    return;
+  }
+
+  if (countBadge) {
+    countBadge.textContent = `🟢 ${logs.length} Logged`;
+  }
+
+  let html = '';
+  logs.forEach(log => {
+    const isThisSession = (log.sessionId === currentSessionId);
+    const rowBg = isThisSession ? 'background: rgba(0, 255, 136, 0.05);' : '';
+    const statusBadge = isThisSession 
+      ? '<span class="badge-status badge-verified" style="font-size: 0.68rem; padding: 2px 6px;">Active Now</span>'
+      : '<span class="badge-status" style="background: rgba(255,255,255,0.08); color: var(--color-text-muted); font-size: 0.68rem; padding: 2px 6px;">Previous</span>';
+
+    html += `
+      <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); ${rowBg}">
+        <td style="padding: 9px 10px;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span>${log.deviceIcon || '💻'}</span>
+            <div>
+              <strong style="color: #fff; font-size: 0.8rem;">${escapeHtml(log.platform || log.browser || 'Browser')}</strong>
+              <span style="font-size: 0.7rem; color: var(--color-text-muted); display: block;">${escapeHtml(log.deviceType || 'Device')} • ${escapeHtml(log.screenRes || '')}</span>
+            </div>
+          </div>
+        </td>
+        <td style="padding: 9px 10px;">
+          <strong style="color: var(--color-accent); font-size: 0.78rem;">${escapeHtml(log.ip || 'Dynamic IP')}</strong>
+          <span style="font-size: 0.7rem; color: var(--color-text-muted); display: block;">📍 ${escapeHtml(log.location || 'Bangladesh')}</span>
+        </td>
+        <td style="padding: 9px 10px; color: #cfdbd5; font-size: 0.75rem; white-space: nowrap;">
+          ${escapeHtml(log.formattedTime || '')}
+        </td>
+        <td style="padding: 9px 10px; text-align: right; white-space: nowrap;">
+          ${statusBadge}
+        </td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+}
+
+function initDeviceSecurityLogs() {
+  const refreshBtn = document.getElementById('refreshDeviceLogsBtn');
+  const clearBtn = document.getElementById('clearDeviceLogsBtn');
+
+  // Record access immediately
+  recordAdminAccess('Dashboard Access');
+
+  if (refreshBtn) {
+    refreshBtn.onclick = async () => {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = 'Refreshing...';
+      await recordAdminAccess('Manual Refresh');
+      refreshBtn.disabled = false;
+      refreshBtn.textContent = '🔄 Refresh Logs';
+    };
+  }
+
+  if (clearBtn) {
+    clearBtn.onclick = async () => {
+      if (confirm('Are you sure you want to clear all device access history?')) {
+        let sessionKey = sessionStorage.getItem('jucsu_admin_session_id');
+        localStorage.removeItem('jucsu_admin_device_logs');
+        if (supabaseClient) {
+          try {
+            await supabaseClient
+              .from('event_settings')
+              .upsert({
+                id: 'admin_device_logs',
+                data: { logs: [], lastUpdated: new Date().toISOString() },
+                updated_at: new Date().toISOString()
+              }, { onConflict: 'id' });
+          } catch (e) {}
+        }
+        // Re-record only this active session
+        recordAdminAccess('History Cleared');
+      }
+    };
+  }
+}
+
 

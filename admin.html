@@ -334,12 +334,18 @@
               </div>
             </div>
 
-            <!-- Save Settings Button -->
-            <div style="display: flex; gap: 10px; align-items: center; justify-content: space-between; padding-top: 4px;">
-              <span id="smsSettingsSaveStatus" style="font-size: 0.8rem; color: #00e5ff; font-weight: 600; display: none;">✓ SMS Gateway Settings Saved & Synced!</span>
-              <button id="saveSmsSettingsBtn" class="btn btn-outline btn-sm" style="padding: 8px 18px; font-weight: 700; margin-left: auto; border-color: #00e5ff; color: #00e5ff;">
-                <span>💾 Save SMS Settings</span>
+            <!-- Action Buttons: History Log & Save -->
+            <div style="display: flex; gap: 10px; align-items: center; justify-content: space-between; padding-top: 4px; flex-wrap: wrap;">
+              <button type="button" id="openSmsHistoryBtn" class="btn btn-outline btn-sm" style="padding: 7px 12px; font-size: 0.8rem; border-color: rgba(0, 229, 255, 0.4); color: #00e5ff; display: inline-flex; align-items: center; gap: 5px;">
+                <span>📜 SMS ডেলিভারি লগ</span>
+                <span id="smsHistoryCountBadge" class="badge" style="background: rgba(0,229,255,0.2); color: #00e5ff; font-size: 0.7rem; padding: 1px 6px;">0</span>
               </button>
+              <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
+                <span id="smsSettingsSaveStatus" style="font-size: 0.8rem; color: #00e5ff; font-weight: 600; display: none;">✓ SMS Settings Saved!</span>
+                <button id="saveSmsSettingsBtn" class="btn btn-outline btn-sm" style="padding: 7px 16px; font-weight: 700; border-color: #00e5ff; color: #00e5ff;">
+                  <span>💾 Save Settings</span>
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -867,6 +873,8 @@ with check (true);</pre>
                 <option value="all">👥 All Registered Runners (সকল রানার)</option>
                 <option value="pending">⏳ Pending Payment Runners (পেন্ডিং পেমেন্ট)</option>
                 <option value="verified">✅ Verified Payment Runners (ভেরিফায়েড রানার)</option>
+                <option value="verified_no_sms">📩 Verified - SMS Not Sent Yet (যাদের SMS যায়নি)</option>
+                <option value="verified_has_sms">✅ Verified - SMS Already Sent (যাদের SMS গিয়েছে)</option>
                 <option value="du_kit">🏛️ Dhaka University Kit Pickup (ঢাবি বুথ)</option>
                 <option value="ju_kit">🌳 Jahangirnagar University Kit Pickup (জাবি বুথ)</option>
                 <option value="bus_uttara">🚌 Bus Route: Uttara</option>
@@ -1036,9 +1044,14 @@ with check (true);</pre>
 
         <!-- Database Table Panel -->
         <div class="panel glass-panel">
-          <div class="panel-header-table">
-            <h3 class="panel-title">Registration Database</h3>
-            <div style="display: flex; gap: 10px; align-items: center;">
+          <div class="panel-header-table" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <h3 class="panel-title" style="margin: 0;">Registration Database</h3>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <select id="tableSmsFilter" class="form-select form-input-sm" style="background: rgba(0,0,0,0.4); color: #00e5ff; font-size: 0.8rem; border-color: rgba(0,229,255,0.4); width: auto; font-weight: 600; cursor: pointer;">
+                <option value="all">🔍 All SMS Status</option>
+                <option value="sent">✅ SMS Sent (পাঠানো হয়েছে)</option>
+                <option value="pending">⏳ SMS Pending (পাঠানো বাকি)</option>
+              </select>
               <button id="exportCsvBtn" class="btn btn-lime btn-sm" style="height: auto; padding: 8px 16px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; white-space: nowrap;">Export to CSV</button>
               <div class="table-search-box">
                 <input type="text" id="tableSearch" class="form-input form-input-sm" placeholder="Search by name, bib, or phone...">
@@ -1060,6 +1073,7 @@ with check (true);</pre>
                   <th>Blood</th>
                   <th>Transaction ID</th>
                   <th>Status</th>
+                  <th>SMS Delivery</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -1370,9 +1384,49 @@ with check (true);</pre>
     </div>
   </div>
 
+  <!-- SMS Delivery History Log Modal -->
+  <div id="smsHistoryModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 10003; backdrop-filter: blur(8px); align-items: center; justify-content: center;">
+    <div class="glass-panel" style="max-width: 780px; width: 92%; max-height: 88vh; display: flex; flex-direction: column; background: #031c12; border: 1px solid rgba(0, 229, 255, 0.4); padding: 24px; border-radius: 16px; margin: 30px auto; color: #fff; box-shadow: 0 20px 50px rgba(0,0,0,0.9);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.3rem;">📜</span>
+          <h3 style="color: #fff; font-size: 1.2rem; font-family: var(--font-headings); margin: 0;">
+            SMS Delivery Log & History
+          </h3>
+          <span id="smsHistoryModalCount" class="badge" style="background: rgba(0,229,255,0.2); color: #00e5ff; font-size: 0.75rem; padding: 3px 8px; font-weight: 700;">0 Delivered</span>
+        </div>
+        <button type="button" id="closeSmsHistoryModalBtn" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; line-height: 1;">✕</button>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+        <input type="text" id="smsHistorySearch" class="form-input form-input-sm" placeholder="Search sent SMS by bib, name or phone..." style="max-width: 320px; background: rgba(0,0,0,0.4); color: #fff; font-size: 0.82rem;">
+        <button type="button" id="exportSmsHistoryCsvBtn" class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 6px 14px; border-color: rgba(0,229,255,0.4); color: #00e5ff; font-weight: 600;">
+          📥 Export Log (.CSV)
+        </button>
+      </div>
+
+      <div style="flex-grow: 1; overflow-y: auto; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+          <thead style="position: sticky; top: 0; background: #002e1b; z-index: 1;">
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--color-accent); text-align: left;">
+              <th style="padding: 8px 12px;">Bib</th>
+              <th style="padding: 8px 12px;">Runner Name</th>
+              <th style="padding: 8px 12px;">Phone</th>
+              <th style="padding: 8px 12px;">Sent At</th>
+              <th style="padding: 8px 12px; text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="smsHistoryTableBody">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=4.1"></script>
+  <script src="admin.js?v=4.2"></script>
 </body>
 </html>

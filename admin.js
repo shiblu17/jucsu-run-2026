@@ -15,6 +15,7 @@ if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CO
 }
 
 let runnerDatabase = [];
+let smsDeliveryLogs = {}; // Tracks runners who have received SMS: { [bib]: { bib, phone, name, sentAt } }
 
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Password Verification Gate
@@ -140,6 +141,7 @@ async function initLoginGate() {
    ========================================== */
 async function initAdminDashboard() {
   await loadDatabase();
+  await loadSmsDeliveryLogs();
   refreshDashboard();
 
   // Setup Event Listeners for actions
@@ -297,11 +299,18 @@ function renderAnalyticsCharts() {
 function renderTable(filterQuery = '') {
   const tableBody = document.getElementById('tableBody');
   const footerSummary = document.getElementById('tableFooterSummary');
+  const smsFilterEl = document.getElementById('tableSmsFilter');
+  const smsFilterVal = smsFilterEl ? smsFilterEl.value : 'all';
   tableBody.innerHTML = '';
 
   const cleanQuery = filterQuery.trim().toLowerCase();
 
   const filteredRunners = runnerDatabase.filter(runner => {
+    // Check SMS Status Filter
+    const hasSms = !!(typeof smsDeliveryLogs !== 'undefined' && smsDeliveryLogs[runner.bib]);
+    if (smsFilterVal === 'sent' && !hasSms) return false;
+    if (smsFilterVal === 'pending' && hasSms) return false;
+
     if (!cleanQuery) return true;
     
     return (runner.name || '').toLowerCase().includes(cleanQuery) || 
@@ -317,6 +326,17 @@ function renderTable(filterQuery = '') {
     const statusClass = (runner.status || '').toLowerCase() === 'verified' ? 'verified' : 'pending';
     const typeLabel = runner.type || 'JU Student (Batch 48 - 55)';
     const txnLabel = runner.txnid || 'N/A';
+    const smsLog = (typeof smsDeliveryLogs !== 'undefined') ? smsDeliveryLogs[runner.bib] : null;
+
+    let smsTimeText = '';
+    if (smsLog && smsLog.sentAt) {
+      try {
+        const d = new Date(smsLog.sentAt);
+        smsTimeText = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      } catch (e) {
+        smsTimeText = 'Sent';
+      }
+    }
     
     tr.innerHTML = `
       <td><strong>${runner.bib}</strong></td>
@@ -329,8 +349,21 @@ function renderTable(filterQuery = '') {
       <td>${runner.blood || 'N/A'}</td>
       <td><code style="color:var(--color-accent); font-weight:700; font-family:monospace; font-size:0.85rem;">${txnLabel}</code></td>
       <td><span class="badge-status ${statusClass}" data-bib="${runner.bib}" style="cursor:pointer;" title="Click to Toggle Status">${runner.status}</span></td>
+      <td>
+        ${smsLog ? `
+          <span class="badge" style="background: rgba(0,255,136,0.15); color: #00ff88; border: 1px solid rgba(0,255,136,0.3); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" title="Sent on: ${smsLog.sentAt || ''}">
+            <span>✓ Sent (${smsTimeText})</span>
+          </span>
+        ` : `
+          <span class="badge" style="background: rgba(255,255,255,0.05); color: #a0aec0; border: 1px solid rgba(255,255,255,0.1); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px;">
+            <span>⏳ Not Sent</span>
+          </span>
+        `}
+      </td>
       <td style="white-space: nowrap;">
-        <button class="btn-sms-runner" data-bib="${runner.bib}" title="Send Official SMS">📲 SMS</button>
+        <button class="btn-sms-runner" data-bib="${runner.bib}" title="${smsLog ? 'SMS Already Sent. Click to Resend' : 'Send Official SMS'}" style="${smsLog ? 'background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); color: #00ff88;' : ''}">
+          ${smsLog ? '🔁 Resend' : '📲 SMS'}
+        </button>
         <button class="btn-edit-runner" data-bib="${runner.bib}" style="background: rgba(193, 216, 47, 0.15); border: 1px solid rgba(193, 216, 47, 0.4); color: var(--color-accent); font-size: 0.72rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; margin-right: 4px; font-weight: 600;">✏️ Edit</button>
         <button class="btn-delete" data-bib="${runner.bib}">Delete</button>
       </td>
@@ -430,9 +463,17 @@ async function deleteRunner(bib) {
 
 function setupTableSearch() {
   const tableSearch = document.getElementById('tableSearch');
-  tableSearch.addEventListener('input', (e) => {
-    renderTable(e.target.value);
-  });
+  const tableSmsFilter = document.getElementById('tableSmsFilter');
+  if (tableSearch) {
+    tableSearch.addEventListener('input', (e) => {
+      renderTable(e.target.value);
+    });
+  }
+  if (tableSmsFilter) {
+    tableSmsFilter.addEventListener('change', () => {
+      renderTable(tableSearch ? tableSearch.value : '');
+    });
+  }
 }
 
 /* ==========================================
@@ -2219,6 +2260,14 @@ function getFilteredBroadcastRunners(audienceFilter) {
     if (!audienceFilter || audienceFilter === 'all') return true;
     if (audienceFilter === 'pending') return r.status === 'Pending';
     if (audienceFilter === 'verified') return r.status === 'Verified';
+    if (audienceFilter === 'verified_no_sms') {
+      const hasSms = !!(typeof smsDeliveryLogs !== 'undefined' && smsDeliveryLogs[r.bib]);
+      return r.status === 'Verified' && !hasSms;
+    }
+    if (audienceFilter === 'verified_has_sms') {
+      const hasSms = !!(typeof smsDeliveryLogs !== 'undefined' && smsDeliveryLogs[r.bib]);
+      return r.status === 'Verified' && hasSms;
+    }
     if (audienceFilter === 'du_kit') {
       const kp = (r.kit_pickup || r.kitPickup || '').toLowerCase();
       return kp.includes('dhaka') || kp.includes('du');
@@ -3208,6 +3257,192 @@ async function saveSmsSettings() {
   checkSmsBalance();
 }
 
+/* ==========================================
+   SMS DELIVERY HISTORY & TRACKING LEDGER
+   ========================================== */
+// Load SMS Delivery Logs from Supabase / localStorage
+async function loadSmsDeliveryLogs() {
+  smsDeliveryLogs = {};
+  
+  // 1. Read from localStorage first for instant UI response
+  try {
+    const local = localStorage.getItem('jucsu_sms_delivery_logs');
+    if (local) {
+      smsDeliveryLogs = JSON.parse(local) || {};
+    }
+  } catch (e) {
+    console.warn('Error reading local SMS logs:', e);
+  }
+
+  // 2. Fetch from Supabase event_settings for cross-device synchronization
+  if (supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('event_settings')
+        .select('*')
+        .eq('id', 'sms_delivery_logs')
+        .maybeSingle();
+
+      if (data && data.data && typeof data.data === 'object') {
+        smsDeliveryLogs = { ...smsDeliveryLogs, ...data.data };
+        try {
+          localStorage.setItem('jucsu_sms_delivery_logs', JSON.stringify(smsDeliveryLogs));
+        } catch (e) {}
+      }
+    } catch (err) {
+      console.warn('Could not sync SMS logs from Supabase:', err);
+    }
+  }
+
+  updateSmsHistoryBadge();
+}
+
+// Sync SMS Delivery Logs to Supabase Cloud
+async function syncSmsDeliveryLogsToCloud() {
+  try {
+    localStorage.setItem('jucsu_sms_delivery_logs', JSON.stringify(smsDeliveryLogs));
+  } catch (e) {}
+
+  if (supabaseClient) {
+    try {
+      await supabaseClient
+        .from('event_settings')
+        .upsert({
+          id: 'sms_delivery_logs',
+          data: smsDeliveryLogs,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+    } catch (err) {
+      console.warn('Cloud sync of SMS delivery logs failed:', err);
+    }
+  }
+}
+
+// Record an SMS delivery
+async function recordSmsDelivery(bib, phone, name, syncImmediately = true) {
+  if (!bib) return;
+  const bibStr = bib.toString();
+  smsDeliveryLogs[bibStr] = {
+    bib: bibStr,
+    phone: phone || '',
+    name: name || 'Runner',
+    sentAt: new Date().toISOString()
+  };
+
+  updateSmsHistoryBadge();
+
+  if (syncImmediately) {
+    await syncSmsDeliveryLogsToCloud();
+  }
+}
+
+// Update badge count in header/button
+function updateSmsHistoryBadge() {
+  const count = Object.keys(smsDeliveryLogs || {}).length;
+  const badge = document.getElementById('smsHistoryCountBadge');
+  const modalCount = document.getElementById('smsHistoryModalCount');
+  if (badge) badge.textContent = count;
+  if (modalCount) modalCount.textContent = `${count} Delivered`;
+}
+
+// Render the SMS Delivery History Table in modal
+function renderSmsHistoryTable(filterQuery = '') {
+  const tbody = document.getElementById('smsHistoryTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const query = (filterQuery || '').trim().toLowerCase();
+  const entries = Object.values(smsDeliveryLogs || {}).sort((a, b) => {
+    return new Date(b.sentAt || 0) - new Date(a.sentAt || 0);
+  });
+
+  const filtered = entries.filter(item => {
+    if (!query) return true;
+    return (item.bib || '').toLowerCase().includes(query) ||
+           (item.name || '').toLowerCase().includes(query) ||
+           (item.phone || '').toLowerCase().includes(query);
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align: center; padding: 24px; color: #a0aec0; font-size: 0.85rem;">
+          ${query ? 'কোনো রেকর্ড পাওয়া যায়নি।' : 'এখনো কোনো SMS ডেলিভারি লগ তৈরি হয়নি।'}
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  filtered.forEach(log => {
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+    
+    let timeFormatted = log.sentAt || 'N/A';
+    try {
+      const d = new Date(log.sentAt);
+      timeFormatted = d.toLocaleString('en-BD', { 
+        day: 'numeric', 
+        month: 'short', 
+        year: 'numeric',
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      });
+    } catch (e) {}
+
+    tr.innerHTML = `
+      <td style="padding: 9px 12px; font-weight: 700; color: var(--color-accent);">#${log.bib}</td>
+      <td style="padding: 9px 12px; font-weight: 600; color: #fff;">${log.name || 'Runner'}</td>
+      <td style="padding: 9px 12px; color: #00e5ff; font-family: monospace;">${log.phone || 'N/A'}</td>
+      <td style="padding: 9px 12px; color: #a0aec0; font-size: 0.78rem;">${timeFormatted}</td>
+      <td style="padding: 9px 12px; text-align: right;">
+        <button class="btn-resend-log-sms" data-bib="${log.bib}" style="background: rgba(0,229,255,0.15); border: 1px solid rgba(0,229,255,0.3); color: #00e5ff; font-size: 0.72rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: 600;">
+          🔁 Resend
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Bind resend buttons
+  tbody.querySelectorAll('.btn-resend-log-sms').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const bib = e.target.getAttribute('data-bib');
+      const historyModal = document.getElementById('smsHistoryModal');
+      if (historyModal) historyModal.style.display = 'none';
+      openSingleSmsModal(bib);
+    });
+  });
+}
+
+// Export SMS Delivery History to CSV
+function exportSmsHistoryCsv() {
+  const entries = Object.values(smsDeliveryLogs || {});
+  if (!entries.length) {
+    alert('ডাউনলোড করার মতো কোনো SMS লগ পাওয়া যায়নি।');
+    return;
+  }
+
+  const headers = ['Bib', 'Runner Name', 'Phone', 'Sent At (ISO)', 'Delivery Status'];
+  const rows = entries.map(item => [
+    `"${item.bib}"`,
+    `"${(item.name || '').replace(/"/g, '""')}"`,
+    `"${item.phone || ''}"`,
+    `"${item.sentAt || ''}"`,
+    `"Delivered"`
+  ]);
+
+  const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `jucsu_sms_delivery_logs_${new Date().toISOString().slice(0,10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 // Prompt Quick Verification Confirmation SMS
 function promptQuickVerifySms(runner) {
   const config = getActiveSmsConfig();
@@ -3317,6 +3552,7 @@ async function startBulkSmsBroadcast() {
     const res = await sendBulkSmsRequest(phone, personalized);
     if (res.success) {
       success++;
+      recordSmsDelivery(runner.bib, phone, runner.name, false);
     } else {
       fail++;
       console.warn(`SMS failed for ${runner.name} (${phone}):`, res.message);
@@ -3333,6 +3569,10 @@ async function startBulkSmsBroadcast() {
   }
 
   isBulkSmsRunning = false;
+  await syncSmsDeliveryLogsToCloud();
+  const searchInput = document.getElementById('tableSearch');
+  renderTable(searchInput ? searchInput.value : '');
+
   setTimeout(() => {
     checkSmsBalance();
     if (modal) modal.style.display = 'none';
@@ -3440,6 +3680,9 @@ function initBulkSmsManager() {
           notice.style.background = 'rgba(0,255,136,0.15)';
           notice.style.color = '#00ff88';
           notice.style.border = '1px solid rgba(0,255,136,0.3)';
+          recordSmsDelivery(activeSingleSmsRunner.bib, activeSingleSmsRunner.phone, activeSingleSmsRunner.name);
+          const searchInput = document.getElementById('tableSearch');
+          renderTable(searchInput ? searchInput.value : '');
           setTimeout(closeSingle, 1800);
         } else {
           notice.textContent = '✕ ' + res.message;
@@ -3487,11 +3730,44 @@ function initBulkSmsManager() {
       verifyModal.style.display = 'none';
 
       if (res.success) {
+        recordSmsDelivery(pendingVerificationRunner.bib, pendingVerificationRunner.phone, pendingVerificationRunner.name);
+        const searchInput = document.getElementById('tableSearch');
+        renderTable(searchInput ? searchInput.value : '');
         showBroadcastToast(`✓ Bib confirmation SMS পাঠানো হয়েছে: ${pendingVerificationRunner.name}`);
       } else {
         alert('SMS পাঠানো যায়নি: ' + res.message);
       }
     };
+  }
+
+  // 8. SMS History Log Modal Listeners
+  const openHistoryBtn = document.getElementById('openSmsHistoryBtn');
+  const closeHistoryBtn = document.getElementById('closeSmsHistoryModalBtn');
+  const historyModal = document.getElementById('smsHistoryModal');
+  const historySearch = document.getElementById('smsHistorySearch');
+  const exportHistoryBtn = document.getElementById('exportSmsHistoryCsvBtn');
+
+  if (openHistoryBtn) {
+    openHistoryBtn.onclick = () => {
+      renderSmsHistoryTable();
+      if (historyModal) historyModal.style.display = 'flex';
+    };
+  }
+
+  if (closeHistoryBtn && historyModal) {
+    closeHistoryBtn.onclick = () => {
+      historyModal.style.display = 'none';
+    };
+  }
+
+  if (historySearch) {
+    historySearch.oninput = (e) => {
+      renderSmsHistoryTable(e.target.value);
+    };
+  }
+
+  if (exportHistoryBtn) {
+    exportHistoryBtn.onclick = exportSmsHistoryCsv;
   }
 }
 

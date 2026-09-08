@@ -2167,6 +2167,7 @@ Your registration for JUCSU RUN 2026 is Confirmed!
 👕 T-Shirt: Confirmed
 📍 Kit Point: {kit_point}
 Download your Digital E-Bib now: https://jucsu-run-2026.pages.dev#checker
+Keep an eye on our website for all updates & information: https://jucsu-run-2026.pages.dev
 - JUCSU RUN 2026 Committee`,
 
   race_day_guide: `Get ready {name}!

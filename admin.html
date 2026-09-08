@@ -91,6 +91,24 @@
           </p>
         </div>
       </div>
+
+      <!-- BulkSMSBD Gateway Balance Card -->
+      <div class="admin-stat-card glass-panel border-cyan" id="smsStatCard" style="position: relative;" title="BulkSMSBD Live Balance">
+        <span class="card-icon" style="color: #00e5ff;">📲</span>
+        <div class="card-info" style="flex-grow: 1;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+            <h4 id="statSmsBalance" style="color: #00e5ff; letter-spacing: 0.02em;">250 SMS</h4>
+            <button type="button" id="refreshSmsBalanceBtn" class="btn btn-outline btn-sm" style="padding: 2px 7px; font-size: 0.72rem; border-color: rgba(0,229,255,0.4); color: #00e5ff; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;" title="Refresh SMS Balance">
+              <span id="smsRefreshIcon">🔄</span>
+              <span>Check</span>
+            </button>
+          </div>
+          <p style="display: flex; align-items: center; justify-content: space-between; margin: 0; font-size: 0.8rem;">
+            <span>BulkSMSBD Gateway</span>
+            <span id="smsStatusBadge" style="font-size: 0.65rem; color: #00ff88; text-transform: uppercase; font-weight: 700;">Active</span>
+          </p>
+        </div>
+      </div>
     </section>
 
     <!-- Two Column Utility Section -->
@@ -251,6 +269,76 @@
               <span id="noticeSaveStatus" style="font-size: 0.8rem; color: #00e5ff; font-weight: 600; display: none;">✓ Notice Saved & Synced!</span>
               <button id="saveNoticeSettingsBtn" class="btn btn-outline btn-sm" style="padding: 9px 20px; font-weight: 700; margin-left: auto; border-color: #00e5ff; color: #00e5ff;">
                 <span>📢 Save & Publish Notice</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- BulkSMSBD SMS Gateway & Sender ID Manager Panel -->
+        <div class="panel glass-panel border-cyan" style="border: 1px solid rgba(0, 229, 255, 0.35); margin-bottom: 25px; background: linear-gradient(180deg, rgba(0,229,255,0.03) 0%, rgba(0,0,0,0.2) 100%);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+            <h3 class="panel-title" style="margin: 0; color: #fff; display: flex; align-items: center; gap: 8px;">
+              <span>📲</span>
+              <span>BulkSMSBD Gateway & Sender ID</span>
+            </h3>
+            <span id="smsGatewayActiveBadge" style="background: rgba(0, 229, 255, 0.15); color: #00e5ff; font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; border: 1px solid rgba(0, 229, 255, 0.3);">
+              🟢 Connected (250 Balance)
+            </span>
+          </div>
+          <p class="panel-desc" style="margin-bottom: 15px;">
+            Manage your BulkSMSBD credentials, sender identity, and automated verification SMS delivery to runners across Bangladesh.
+          </p>
+
+          <form id="smsSettingsForm" onsubmit="return false;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+              <!-- API Key Field -->
+              <div class="form-group" style="margin: 0;">
+                <label for="smsApiKeyInput" class="form-label" style="font-size: 0.82rem; font-weight: 600; color: #00e5ff;">
+                  🔑 API Key
+                </label>
+                <div style="display: flex; gap: 6px;">
+                  <input type="password" id="smsApiKeyInput" class="form-input" value="UV0CvJmTqiboWjIL4N3E" style="background: rgba(0,0,0,0.3); color: #fff; font-family: monospace; font-size: 0.85rem;" placeholder="BulkSMSBD API Key">
+                  <button type="button" id="toggleApiKeyBtn" class="btn btn-outline btn-sm" style="padding: 0 10px; font-size: 0.8rem; border-color: rgba(255,255,255,0.2); color: #fff;" title="Show/Hide Key">👁️</button>
+                </div>
+              </div>
+
+              <!-- Sender ID Field -->
+              <div class="form-group" style="margin: 0;">
+                <label for="smsSenderIdInput" class="form-label" style="font-size: 0.82rem; font-weight: 600; color: #00e5ff;">
+                  🏷️ Sender ID (অনুমোদিত সেন্ডার আইডি)
+                </label>
+                <input type="text" id="smsSenderIdInput" class="form-input" value="8809617615024" style="background: rgba(0,0,0,0.3); color: #fff; font-weight: 600; font-size: 0.85rem;" placeholder="e.g. 8809617615024 or Brand ID">
+                <span style="font-size: 0.72rem; color: var(--color-text-muted); display: block; margin-top: 3px;">BulkSMSBD ড্যাশবোর্ডের Sender ID / ভার্চুয়াল নম্বর</span>
+              </div>
+            </div>
+
+            <!-- Auto-Send Verification Toggle -->
+            <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); padding: 12px 14px; border-radius: 8px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px;">
+              <input type="checkbox" id="smsAutoVerifyToggle" checked style="width: 18px; height: 18px; accent-color: #00e5ff; cursor: pointer;">
+              <label for="smsAutoVerifyToggle" style="font-size: 0.85rem; color: #fff; cursor: pointer; user-select: none; line-height: 1.4;">
+                <strong>ভেরিফিকেশনে স্বয়ংক্রিয় SMS প্রম্পট:</strong> রানারের স্ট্যাটাস 'Verified' করার সাথে সাথে নাম, Bib এবং E-Bib ডাউনলোডের লিংকসহ কনফার্মেশন SMS পাঠানো হবে।
+              </label>
+            </div>
+
+            <!-- Test SMS Section -->
+            <div style="background: rgba(0, 229, 255, 0.04); border: 1px solid rgba(0, 229, 255, 0.15); padding: 12px 14px; border-radius: 8px; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 0.82rem; font-weight: 700; color: #00e5ff;">⚡ টেস্ট SMS পাঠান (Test Gateway Delivery)</span>
+                <span id="testSmsStatus" style="font-size: 0.75rem; font-weight: 600; display: none;"></span>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="testSmsPhone" class="form-input form-input-sm" placeholder="আপনার মোবাইল নম্বর (e.g. 017XXXXXXXX)" style="background: rgba(0,0,0,0.4); color: #fff; font-size: 0.85rem;">
+                <button type="button" id="sendTestSmsBtn" class="btn btn-outline btn-sm" style="white-space: nowrap; border-color: #00e5ff; color: #00e5ff; font-weight: 700;">
+                  <span>📨 টেস্ট পাঠান</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Save Settings Button -->
+            <div style="display: flex; gap: 10px; align-items: center; justify-content: space-between; padding-top: 4px;">
+              <span id="smsSettingsSaveStatus" style="font-size: 0.8rem; color: #00e5ff; font-weight: 600; display: none;">✓ SMS Gateway Settings Saved & Synced!</span>
+              <button id="saveSmsSettingsBtn" class="btn btn-outline btn-sm" style="padding: 8px 18px; font-weight: 700; margin-left: auto; border-color: #00e5ff; color: #00e5ff;">
+                <span>💾 Save SMS Settings</span>
               </button>
             </div>
           </form>
@@ -825,11 +913,14 @@ with check (true);</pre>
               <span id="broadcastToastNotice" style="font-size: 0.8rem; color: #00ff88; font-weight: 700; display: none;"></span>
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" id="sendBulkSmsBtn" class="btn btn-lime btn-sm" style="font-size: 0.8rem; padding: 7px 14px; font-weight: 700; background: linear-gradient(135deg, #00e5ff 0%, #00ff88 100%); color: #002214; border: none; display: inline-flex; align-items: center; gap: 5px;">
+                <span>📲 Send Bulk SMS Now</span>
+              </button>
               <button type="button" id="copyBroadcastTextBtn" class="btn btn-outline btn-sm" style="font-size: 0.8rem; padding: 7px 14px;">
-                📋 Copy Message Text
+                📋 Copy Text
               </button>
               <button type="button" id="copyBroadcastPhonesBtn" class="btn btn-lime btn-sm" style="font-size: 0.8rem; padding: 7px 14px; font-weight: 700;">
-                📞 Copy Phone Numbers
+                📞 Copy Phones
               </button>
               <button type="button" id="downloadPhoneListBtn" class="btn btn-outline btn-sm" style="font-size: 0.8rem; padding: 7px 14px;">
                 📥 Export (.txt)
@@ -837,11 +928,11 @@ with check (true);</pre>
             </div>
           </div>
 
-          <!-- Individual Runner Quick WhatsApp Sender List -->
+          <!-- Individual Runner Quick WhatsApp & SMS Sender List -->
           <div style="margin-top: 14px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
               <h4 style="font-size: 0.85rem; color: var(--color-accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">
-                ⚡ 1-Click WhatsApp Direct Sender List
+                ⚡ 1-Click WhatsApp & Direct SMS Sender List
               </h4>
               <input type="text" id="broadcastListSearch" placeholder="Search runner name/phone..." class="form-input form-input-sm" style="max-width: 220px; font-size: 0.8rem; background: rgba(0,0,0,0.3); color: #fff;">
             </div>
@@ -1172,9 +1263,116 @@ with check (true);</pre>
     </div>
   </div>
 
+  <!-- Send Single Runner SMS Modal -->
+  <div id="sendSingleSmsModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10000; backdrop-filter: blur(8px); align-items: center; justify-content: center;">
+    <div class="glass-panel" style="max-width: 520px; width: 92%; background: #031c12; border: 1px solid rgba(0, 229, 255, 0.4); padding: 24px; border-radius: 16px; margin: 30px auto; color: #fff; box-shadow: 0 20px 50px rgba(0,0,0,0.9);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+        <h3 style="color: #fff; font-size: 1.2rem; font-family: var(--font-headings); margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span>📲</span> <span>Send Official SMS to Runner</span>
+        </h3>
+        <button type="button" id="closeSingleSmsModalBtn" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; line-height: 1;">✕</button>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 0.85rem; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+        <div><strong>Runner:</strong> <span id="smsModalRunnerName" class="text-lime">Loading...</span></div>
+        <div><strong>Bib:</strong> <span id="smsModalRunnerBib" style="color: var(--color-accent); font-weight: 700;">#0000</span></div>
+        <div><strong>Phone:</strong> <span id="smsModalRunnerPhone" style="font-family: monospace; color: #00e5ff;">01...</span></div>
+        <div><strong>Category:</strong> <span id="smsModalRunnerCat">10K</span></div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 10px;">
+        <label for="singleSmsText" class="form-label" style="font-size: 0.82rem; font-weight: 600; color: #00e5ff;">Message Content (বার্তা):</label>
+        <textarea id="singleSmsText" class="form-input" rows="5" style="width: 100%; font-size: 0.85rem; line-height: 1.4; background: rgba(0,0,0,0.4); color: #fff; resize: vertical; font-family: inherit;"></textarea>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 0.72rem; color: var(--color-text-muted);">
+          <span id="singleSmsCharCount">0 characters | 1 SMS</span>
+          <span>Gateway: <strong>BulkSMSBD</strong></span>
+        </div>
+      </div>
+
+      <div id="singleSmsResultNotice" style="display: none; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; margin-bottom: 12px; font-weight: 600;"></div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;">
+        <button type="button" id="cancelSingleSmsBtn" class="btn btn-outline btn-sm" style="padding: 7px 16px;">Cancel</button>
+        <button type="button" id="sendSingleSmsSubmitBtn" class="btn btn-lime btn-sm" style="padding: 7px 20px; font-weight: 700; background: #00e5ff; color: #002214; border-color: #00e5ff; display: inline-flex; align-items: center; gap: 5px;">
+          <span>🚀 Send SMS Now</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk SMS Progress Modal -->
+  <div id="bulkSmsProgressModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 10001; backdrop-filter: blur(8px); align-items: center; justify-content: center;">
+    <div class="glass-panel" style="max-width: 500px; width: 92%; background: #031c12; border: 1px solid rgba(0, 229, 255, 0.4); padding: 25px; border-radius: 16px; margin: 30px auto; color: #fff; box-shadow: 0 20px 50px rgba(0,0,0,0.9); text-align: center;">
+      <h3 style="color: #fff; font-size: 1.25rem; font-family: var(--font-headings); margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <span>🚀</span> <span>Bulk SMS Delivery in Progress</span>
+      </h3>
+      <p id="bulkSmsStatusSub" style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 15px;">
+        Sending personalized SMS to filtered runners via BulkSMSBD...
+      </p>
+
+      <div class="sms-progress-bar-container">
+        <div class="sms-progress-bar-fill" id="bulkSmsProgressBar"></div>
+      </div>
+
+      <div style="font-size: 1.1rem; font-weight: 700; color: #00e5ff; margin-bottom: 15px;" id="bulkSmsCounter">
+        0 / 0 Sent
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; margin-bottom: 18px; font-size: 0.82rem;">
+        <div>
+          <div style="color: #00ff88; font-size: 1.1rem; font-weight: 800;" id="bulkSmsSuccessCount">0</div>
+          <div style="color: var(--color-text-muted);">Delivered</div>
+        </div>
+        <div>
+          <div style="color: #ff5555; font-size: 1.1rem; font-weight: 800;" id="bulkSmsFailCount">0</div>
+          <div style="color: var(--color-text-muted);">Failed</div>
+        </div>
+        <div>
+          <div style="color: #00e5ff; font-size: 1.1rem; font-weight: 800;" id="bulkSmsLiveBalance">250</div>
+          <div style="color: var(--color-text-muted);">Remaining</div>
+        </div>
+      </div>
+
+      <button type="button" id="cancelBulkSmsBtn" class="btn btn-outline btn-sm" style="border-color: rgba(235,50,65,0.5); color: #ff5555; padding: 7px 20px;">
+        🛑 Stop Broadcast
+      </button>
+    </div>
+  </div>
+
+  <!-- Quick Runner Verification Confirmation Prompt Modal -->
+  <div id="quickVerifySmsModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10002; backdrop-filter: blur(8px); align-items: center; justify-content: center;">
+    <div class="glass-panel" style="max-width: 480px; width: 92%; background: #031c12; border: 1px solid rgba(0, 255, 136, 0.4); padding: 24px; border-radius: 16px; margin: 30px auto; color: #fff; box-shadow: 0 20px 50px rgba(0,0,0,0.9);">
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+        <span style="font-size: 1.8rem;">🎉</span>
+        <div>
+          <h3 style="margin: 0; font-size: 1.15rem; color: #00ff88;">রানার পেমেন্ট ভেরিফাইড!</h3>
+          <p style="margin: 0; font-size: 0.78rem; color: var(--color-text-muted);" id="quickVerifyPromptSub">Status updated to Verified.</p>
+        </div>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); padding: 12px; border-radius: 8px; margin-bottom: 14px;">
+        <p style="font-size: 0.84rem; color: #e2e8f0; margin-bottom: 6px; line-height: 1.4;" id="quickVerifyPromptText">
+          আপনি কি রানারের নম্বরে (<strong id="quickVerifyPhone">01...</strong>) অফিসিয়াল Bib কনফার্মেশন SMS পাঠাতে চান?
+        </p>
+        <div style="font-size: 0.75rem; color: var(--color-accent); background: rgba(193,216,47,0.08); padding: 8px; border-radius: 6px; border: 1px dashed rgba(193,216,47,0.3); font-style: italic;" id="quickVerifyPreviewText">
+          Loading SMS preview...
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" id="skipQuickVerifySmsBtn" class="btn btn-outline btn-sm" style="padding: 7px 14px; font-size: 0.8rem;">
+          স্কিপ করুন (Skip SMS)
+        </button>
+        <button type="button" id="confirmQuickVerifySmsBtn" class="btn btn-lime btn-sm" style="padding: 7px 18px; font-size: 0.8rem; font-weight: 700; background: #00ff88; color: #002214; border: none; display: inline-flex; align-items: center; gap: 5px;">
+          <span>📲 হ্যাঁ, SMS পাঠান</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=3.6"></script>
+  <script src="admin.js?v=4.0"></script>
 </body>
 </html>

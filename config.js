@@ -5,6 +5,14 @@ const SUPABASE_CONFIG = {
   anonKey: "sb_publishable_TiNMuDMh2hA0Yw4EilPi5A_sEqvqWTv"
 };
 
+// BulkSMSBD Gateway Configuration for JUCSU RUN 2026
+const BULKSMSBD_CONFIG = {
+  apiKey: "UV0CvJmTqiboWjIL4N3E",
+  defaultSenderId: "8809617615024",
+  apiUrl: "https://bulksmsbd.net/api/smsapi",
+  balanceUrl: "https://bulksmsbd.net/api/getBalanceApi"
+};
+
 /*
 =====================================================
 JUCSU RUN 2026 - RECOMMENDED DATABASE SECURITY SETUP

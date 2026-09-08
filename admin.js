@@ -161,6 +161,7 @@ async function initAdminDashboard() {
   initRevenueProtection();
   setupEditRunnerHandler();
   initDeviceSecurityLogs();
+  initBulkSmsManager();
 }
 
 async function loadDatabase() {
@@ -329,6 +330,7 @@ function renderTable(filterQuery = '') {
       <td><code style="color:var(--color-accent); font-weight:700; font-family:monospace; font-size:0.85rem;">${txnLabel}</code></td>
       <td><span class="badge-status ${statusClass}" data-bib="${runner.bib}" style="cursor:pointer;" title="Click to Toggle Status">${runner.status}</span></td>
       <td style="white-space: nowrap;">
+        <button class="btn-sms-runner" data-bib="${runner.bib}" title="Send Official SMS">📲 SMS</button>
         <button class="btn-edit-runner" data-bib="${runner.bib}" style="background: rgba(193, 216, 47, 0.15); border: 1px solid rgba(193, 216, 47, 0.4); color: var(--color-accent); font-size: 0.72rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; margin-right: 4px; font-weight: 600;">✏️ Edit</button>
         <button class="btn-delete" data-bib="${runner.bib}">Delete</button>
       </td>
@@ -342,6 +344,14 @@ function renderTable(filterQuery = '') {
     badge.addEventListener('click', (e) => {
       const bib = e.target.getAttribute('data-bib');
       toggleRunnerStatus(bib);
+    });
+  });
+
+  // Bind SMS Events
+  document.querySelectorAll('.btn-sms-runner').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const bib = e.target.getAttribute('data-bib');
+      openSingleSmsModal(bib);
     });
   });
 
@@ -385,6 +395,10 @@ async function toggleRunnerStatus(bib) {
     runner.status = newStatus;
     saveDatabase();
     refreshDashboard();
+
+    if (newStatus === 'Verified') {
+      promptQuickVerifySms(runner);
+    }
   }
 }
 
@@ -2306,8 +2320,11 @@ function renderBroadcastRunnersList(runners, rawTemplate, searchQuery) {
         <td style="padding: 8px 12px; font-weight: 600;">${name}</td>
         <td style="padding: 8px 12px; font-size: 0.78rem; color: #a0aec0;">${cat}</td>
         <td style="padding: 8px 12px; font-family: monospace; font-size: 0.8rem; color: #e2e8f0;">${rawPhone || 'N/A'}</td>
-        <td style="padding: 8px 12px; text-align: right;">
+        <td style="padding: 8px 12px; text-align: right; white-space: nowrap;">
           ${cleanPhone ? `
+            <button type="button" class="btn-direct-sms" data-bib="${bib}" style="background: rgba(0,229,255,0.15); border: 1px solid rgba(0,229,255,0.4); color: #00e5ff; font-size: 0.72rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; margin-right: 4px; font-weight: 700;">
+              📲 SMS
+            </button>
             <a href="${waUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-lime btn-sm" style="font-size: 0.75rem; padding: 3px 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
               <span>💬 WhatsApp</span>
             </a>
@@ -2318,6 +2335,18 @@ function renderBroadcastRunnersList(runners, rawTemplate, searchQuery) {
       </tr>
     `;
   }).join('');
+
+  // Bind Direct SMS Buttons
+  document.querySelectorAll('.btn-direct-sms').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const bib = e.currentTarget.getAttribute('data-bib');
+      const runner = runnerDatabase.find(r => r.bib.toString() === bib.toString());
+      if (runner) {
+        const personalized = personalizeMessage(rawTemplate, runner);
+        openSingleSmsModal(bib, personalized);
+      }
+    });
+  });
 }
 
 function initBroadcastTool() {
@@ -2931,6 +2960,535 @@ function initDeviceSecurityLogs() {
         }
         // Re-record only this active session
         recordAdminAccess('History Cleared');
+      }
+    };
+  }
+}
+
+/* ==========================================
+   BULKSMSBD SMS GATEWAY & BROADCAST MANAGER
+   ========================================== */
+
+let isBulkSmsRunning = false;
+let stopBulkSmsFlag = false;
+let activeSingleSmsRunner = null;
+let pendingVerificationRunner = null;
+
+// Format phone number to clean Bangladeshi format (8801XXXXXXXXX)
+function formatBdPhoneNumber(phone) {
+  if (!phone) return '';
+  let clean = phone.toString().replace(/[^0-9]/g, '');
+  if (clean.startsWith('880')) return clean;
+  if (clean.startsWith('0')) return '88' + clean;
+  if (clean.length === 10 && clean.startsWith('1')) return '880' + clean;
+  return clean;
+}
+
+// Detect whether text contains Bengali characters
+function containsBengali(text) {
+  return /[\u0980-\u09FF]/.test(text || '');
+}
+
+// Get active BulkSMSBD config (merged with localStorage and Supabase)
+function getActiveSmsConfig() {
+  const savedApiKey = localStorage.getItem('jucsu_bulksms_api_key');
+  const savedSenderId = localStorage.getItem('jucsu_bulksms_sender_id');
+  const autoVerify = localStorage.getItem('jucsu_bulksms_auto_verify');
+
+  return {
+    apiKey: savedApiKey || (typeof BULKSMSBD_CONFIG !== 'undefined' ? BULKSMSBD_CONFIG.apiKey : 'UV0CvJmTqiboWjIL4N3E'),
+    senderId: savedSenderId || (typeof BULKSMSBD_CONFIG !== 'undefined' ? BULKSMSBD_CONFIG.defaultSenderId : '8809617615024'),
+    apiUrl: (typeof BULKSMSBD_CONFIG !== 'undefined' ? BULKSMSBD_CONFIG.apiUrl : 'https://bulksmsbd.net/api/smsapi'),
+    balanceUrl: (typeof BULKSMSBD_CONFIG !== 'undefined' ? BULKSMSBD_CONFIG.balanceUrl : 'https://bulksmsbd.net/api/getBalanceApi'),
+    autoVerify: autoVerify !== 'false'
+  };
+}
+
+// Resilient API Fetcher with open proxy fallbacks for browser CORS handling
+async function executeSmsApiCall(targetUrl) {
+  // Method 1: Direct fetch
+  try {
+    const res = await fetch(targetUrl, { method: 'GET' });
+    if (res.ok) {
+      const data = await res.json();
+      return data;
+    }
+  } catch (err1) {
+    console.warn('Direct SMS API request blocked (likely CORS), attempting proxy 1...', err1);
+  }
+
+  // Method 2: High-reliability AllOrigins CORS proxy
+  try {
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+    const res = await fetch(proxyUrl);
+    if (res.ok) {
+      const data = await res.json();
+      return data;
+    }
+  } catch (err2) {
+    console.warn('Proxy 1 failed, attempting CORS Proxy IO...', err2);
+  }
+
+  // Method 3: Fallback CORS proxy
+  try {
+    const proxyUrl2 = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+    const res = await fetch(proxyUrl2);
+    if (res.ok) {
+      const data = await res.json();
+      return data;
+    }
+  } catch (err3) {
+    console.error('All SMS proxy attempts failed:', err3);
+    throw new Error('SMS Gateway connection failed. Please check network.');
+  }
+
+  throw new Error('SMS Gateway did not return a valid response.');
+}
+
+// Send Single SMS via BulkSMSBD
+async function sendBulkSmsRequest(phone, message) {
+  const config = getActiveSmsConfig();
+  const cleanPhone = formatBdPhoneNumber(phone);
+  
+  if (!cleanPhone || cleanPhone.length < 11) {
+    return { success: false, message: 'ভুল মোবাইল নম্বর: ' + phone };
+  }
+  if (!message || !message.trim()) {
+    return { success: false, message: 'মেসেজ ফাঁকা রাখা যাবে না।' };
+  }
+
+  const isUnicode = containsBengali(message);
+  const type = isUnicode ? 'unicode' : 'text';
+  const url = `${config.apiUrl}?api_key=${encodeURIComponent(config.apiKey)}&type=${type}&number=${encodeURIComponent(cleanPhone)}&senderid=${encodeURIComponent(config.senderId)}&message=${encodeURIComponent(message)}`;
+
+  try {
+    const response = await executeSmsApiCall(url);
+    console.log('BulkSMSBD API response for ' + cleanPhone + ':', response);
+
+    // Response code 202 is success
+    if (response && (response.response_code === 202 || response.response_code === '202')) {
+      setTimeout(() => checkSmsBalance(), 1000);
+      return { 
+        success: true, 
+        message: response.success_message || 'SMS সফলভাবে পাঠানো হয়েছে!', 
+        responseCode: response.response_code 
+      };
+    } else {
+      let errMsg = response.error_message || 'Failed to send SMS';
+      if (response.response_code === 1002) errMsg = 'Invalid / unapproved Sender ID: ' + config.senderId;
+      if (response.response_code === 1007) errMsg = 'BulkSMSBD অ্যাকাউন্টে পর্যাপ্ত SMS ব্যালেন্স নেই!';
+      if (response.response_code === 1013 || response.response_code === 1015) errMsg = 'Sender ID এর জন্য গেটওয়ে পাওয়া যায়নি (' + config.senderId + ')';
+      return { 
+        success: false, 
+        message: errMsg, 
+        responseCode: response.response_code 
+      };
+    }
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+}
+
+// Live Check Balance
+async function checkSmsBalance(notify = false) {
+  const config = getActiveSmsConfig();
+  const url = `${config.balanceUrl}?api_key=${encodeURIComponent(config.apiKey)}`;
+  const statEl = document.getElementById('statSmsBalance');
+  const badgeEl = document.getElementById('smsGatewayActiveBadge');
+  const liveModalEl = document.getElementById('bulkSmsLiveBalance');
+  const iconEl = document.getElementById('smsRefreshIcon');
+
+  if (iconEl) iconEl.style.transform = 'rotate(180deg)';
+
+  try {
+    const res = await executeSmsApiCall(url);
+    console.log('BulkSMSBD Balance check:', res);
+    
+    if (res && (res.response_code === 202 || res.response_code === '202') && res.balance !== undefined) {
+      const balText = `${res.balance} SMS`;
+      if (statEl) statEl.textContent = balText;
+      if (badgeEl) badgeEl.textContent = `🟢 Connected (${balText})`;
+      if (liveModalEl) liveModalEl.textContent = res.balance;
+      
+      if (notify) alert(`✅ BulkSMSBD বর্তমান ব্যালেন্স: ${res.balance} টি SMS`);
+      return res.balance;
+    } else {
+      if (statEl) statEl.textContent = 'Auth Error';
+      if (badgeEl) badgeEl.textContent = '🔴 Invalid API Key';
+    }
+  } catch (e) {
+    console.warn('Balance check error:', e);
+  } finally {
+    if (iconEl) {
+      setTimeout(() => { iconEl.style.transform = 'none'; }, 400);
+    }
+  }
+}
+
+// Load SMS settings from Supabase / localStorage
+async function loadSmsSettings() {
+  const config = getActiveSmsConfig();
+
+  const apiKeyInput = document.getElementById('smsApiKeyInput');
+  const senderIdInput = document.getElementById('smsSenderIdInput');
+  const autoVerifyToggle = document.getElementById('smsAutoVerifyToggle');
+
+  if (apiKeyInput) apiKeyInput.value = config.apiKey;
+  if (senderIdInput) senderIdInput.value = config.senderId;
+  if (autoVerifyToggle) autoVerifyToggle.checked = config.autoVerify;
+
+  // Check Supabase event_settings for cloud synced SMS settings
+  if (supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('event_settings')
+        .select('*')
+        .eq('id', 'sms_gateway_settings')
+        .single();
+
+      if (data && data.data) {
+        const cloudSettings = data.data;
+        if (cloudSettings.apiKey && apiKeyInput) {
+          apiKeyInput.value = cloudSettings.apiKey;
+          localStorage.setItem('jucsu_bulksms_api_key', cloudSettings.apiKey);
+        }
+        if (cloudSettings.senderId && senderIdInput) {
+          senderIdInput.value = cloudSettings.senderId;
+          localStorage.setItem('jucsu_bulksms_sender_id', cloudSettings.senderId);
+        }
+        if (cloudSettings.autoVerify !== undefined && autoVerifyToggle) {
+          autoVerifyToggle.checked = cloudSettings.autoVerify;
+          localStorage.setItem('jucsu_bulksms_auto_verify', cloudSettings.autoVerify.toString());
+        }
+      }
+    } catch (e) {
+      console.warn('Could not fetch cloud SMS settings:', e);
+    }
+  }
+}
+
+// Save SMS Settings
+async function saveSmsSettings() {
+  const apiKeyInput = document.getElementById('smsApiKeyInput');
+  const senderIdInput = document.getElementById('smsSenderIdInput');
+  const autoVerifyToggle = document.getElementById('smsAutoVerifyToggle');
+  const statusSpan = document.getElementById('smsSettingsSaveStatus');
+
+  const apiKey = (apiKeyInput ? apiKeyInput.value.trim() : '') || 'UV0CvJmTqiboWjIL4N3E';
+  const senderId = (senderIdInput ? senderIdInput.value.trim() : '') || '8809617615024';
+  const autoVerify = autoVerifyToggle ? autoVerifyToggle.checked : true;
+
+  localStorage.setItem('jucsu_bulksms_api_key', apiKey);
+  localStorage.setItem('jucsu_bulksms_sender_id', senderId);
+  localStorage.setItem('jucsu_bulksms_auto_verify', autoVerify.toString());
+
+  if (statusSpan) {
+    statusSpan.textContent = '✓ SMS Gateway Settings Saved!';
+    statusSpan.style.display = 'inline';
+    setTimeout(() => { statusSpan.style.display = 'none'; }, 3500);
+  }
+
+  // Cloud sync via Supabase
+  if (supabaseClient) {
+    try {
+      await supabaseClient
+        .from('event_settings')
+        .upsert({
+          id: 'sms_gateway_settings',
+          data: { apiKey, senderId, autoVerify, updatedAt: new Date().toISOString() },
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+    } catch (err) {
+      console.warn('Supabase cloud SMS sync notice:', err);
+    }
+  }
+
+  // Refresh balance with new credentials
+  checkSmsBalance();
+}
+
+// Prompt Quick Verification Confirmation SMS
+function promptQuickVerifySms(runner) {
+  const config = getActiveSmsConfig();
+  if (!config.autoVerify) return;
+
+  const modal = document.getElementById('quickVerifySmsModal');
+  const nameEl = document.getElementById('quickVerifyPromptSub');
+  const phoneEl = document.getElementById('quickVerifyPhone');
+  const previewEl = document.getElementById('quickVerifyPreviewText');
+  if (!modal) return;
+
+  pendingVerificationRunner = runner;
+  const msg = personalizeMessage(BROADCAST_TEMPLATES.ebib_confirmation, runner);
+
+  if (nameEl) nameEl.textContent = `${runner.name} (Bib #${runner.bib}) - ${runner.category}`;
+  if (phoneEl) phoneEl.textContent = runner.phone || 'No phone';
+  if (previewEl) previewEl.textContent = msg;
+
+  modal.style.display = 'flex';
+}
+
+// Single Runner SMS Modal Handler
+function openSingleSmsModal(bib, customMessage = null) {
+  const runner = runnerDatabase.find(r => r.bib.toString() === bib.toString());
+  if (!runner) return;
+
+  const modal = document.getElementById('sendSingleSmsModal');
+  if (!modal) return;
+
+  activeSingleSmsRunner = runner;
+  document.getElementById('smsModalRunnerName').textContent = runner.name || 'Runner';
+  document.getElementById('smsModalRunnerBib').textContent = '#' + (runner.bib || 'TBD');
+  document.getElementById('smsModalRunnerPhone').textContent = runner.phone || 'N/A';
+  document.getElementById('smsModalRunnerCat').textContent = runner.category || '10K';
+
+  const defaultMsg = customMessage || personalizeMessage(BROADCAST_TEMPLATES.ebib_confirmation, runner);
+  const textarea = document.getElementById('singleSmsText');
+  textarea.value = defaultMsg;
+
+  updateSingleSmsCounter();
+
+  const notice = document.getElementById('singleSmsResultNotice');
+  if (notice) notice.style.display = 'none';
+
+  modal.style.display = 'flex';
+}
+
+function updateSingleSmsCounter() {
+  const textarea = document.getElementById('singleSmsText');
+  const countEl = document.getElementById('singleSmsCharCount');
+  if (!textarea || !countEl) return;
+
+  const text = textarea.value;
+  const len = text.length;
+  const isUnicode = containsBengali(text);
+  
+  // Character limits
+  let partSize = isUnicode ? 70 : 160;
+  let multipartSize = isUnicode ? 67 : 153;
+  let parts = 1;
+  
+  if (len > partSize) {
+    parts = Math.ceil(len / multipartSize);
+  }
+
+  countEl.textContent = `${len} characters | ${parts} SMS (${isUnicode ? 'Unicode/বাংলা' : 'English'})`;
+}
+
+// Bulk SMS Broadcast Process
+async function startBulkSmsBroadcast() {
+  const audience = document.getElementById('broadcastAudience').value;
+  const runners = getFilteredBroadcastRunners(audience);
+  const rawTemplate = document.getElementById('broadcastMessageText').value;
+
+  if (!runners.length) {
+    alert('কোনো রানার পাওয়া যায়নি। অনুগ্রহ করে ফিল্টার যাচাই করুন।');
+    return;
+  }
+
+  const confirmMsg = `আপনি কি নিশ্চিত যে ${runners.length} জন রানারের কাছে BulkSMSBD দিয়ে SMS পাঠাতে চান?\n\nআনুমানিক খরচ: ${runners.length} টি SMS ক্রেডিট।`;
+  if (!confirm(confirmMsg)) return;
+
+  const modal = document.getElementById('bulkSmsProgressModal');
+  const progressBar = document.getElementById('bulkSmsProgressBar');
+  const counterEl = document.getElementById('bulkSmsCounter');
+  const successEl = document.getElementById('bulkSmsSuccessCount');
+  const failEl = document.getElementById('bulkSmsFailCount');
+
+  if (modal) modal.style.display = 'flex';
+  isBulkSmsRunning = true;
+  stopBulkSmsFlag = false;
+
+  let success = 0;
+  let fail = 0;
+  const total = runners.length;
+
+  for (let i = 0; i < total; i++) {
+    if (stopBulkSmsFlag) {
+      alert(`ব্রডকাস্ট থামানো হয়েছে। সফল: ${success}, ব্যর্থ: ${fail}`);
+      break;
+    }
+
+    const runner = runners[i];
+    const personalized = personalizeMessage(rawTemplate, runner);
+    const phone = runner.phone;
+
+    const res = await sendBulkSmsRequest(phone, personalized);
+    if (res.success) {
+      success++;
+    } else {
+      fail++;
+      console.warn(`SMS failed for ${runner.name} (${phone}):`, res.message);
+    }
+
+    const pct = Math.round(((i + 1) / total) * 100);
+    if (progressBar) progressBar.style.width = pct + '%';
+    if (counterEl) counterEl.textContent = `${i + 1} / ${total} Sent (${pct}%)`;
+    if (successEl) successEl.textContent = success;
+    if (failEl) failEl.textContent = fail;
+
+    // 350ms delay between sending to respect rate limits
+    await new Promise(r => setTimeout(r, 350));
+  }
+
+  isBulkSmsRunning = false;
+  setTimeout(() => {
+    checkSmsBalance();
+    if (modal) modal.style.display = 'none';
+    alert(`🎉 Bulk SMS সম্পন্ন হয়েছে!\n\nমোট ডেলিভারি: ${success} জন\nব্যর্থ: ${fail} জন`);
+  }, 1000);
+}
+
+// Master Initialization of SMS Manager
+function initBulkSmsManager() {
+  loadSmsSettings();
+  checkSmsBalance();
+
+  // 1. Balance refresh button
+  const refreshBtn = document.getElementById('refreshSmsBalanceBtn');
+  if (refreshBtn) {
+    refreshBtn.onclick = () => checkSmsBalance(true);
+  }
+
+  // 2. Toggle API Key visibility
+  const toggleKeyBtn = document.getElementById('toggleApiKeyBtn');
+  const apiKeyInput = document.getElementById('smsApiKeyInput');
+  if (toggleKeyBtn && apiKeyInput) {
+    toggleKeyBtn.onclick = () => {
+      apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
+      toggleKeyBtn.textContent = apiKeyInput.type === 'password' ? '👁️' : '🔒';
+    };
+  }
+
+  // 3. Save SMS Settings
+  const saveBtn = document.getElementById('saveSmsSettingsBtn');
+  if (saveBtn) {
+    saveBtn.onclick = saveSmsSettings;
+  }
+
+  // 4. Test SMS Button
+  const sendTestBtn = document.getElementById('sendTestSmsBtn');
+  const testPhoneInput = document.getElementById('testSmsPhone');
+  const testStatus = document.getElementById('testSmsStatus');
+  if (sendTestBtn && testPhoneInput) {
+    sendTestBtn.onclick = async () => {
+      const phone = testPhoneInput.value.trim();
+      if (!phone) {
+        alert('অনুগ্রহ করে টেস্ট মোবাইল নম্বর লিখুন');
+        return;
+      }
+      sendTestBtn.disabled = true;
+      sendTestBtn.innerHTML = '<span>⏳ পাঠানো হচ্ছে...</span>';
+      if (testStatus) {
+        testStatus.textContent = 'Connecting gateway...';
+        testStatus.style.color = '#00e5ff';
+        testStatus.style.display = 'inline';
+      }
+
+      const testMsg = 'JUCSU RUN 2026: SMS Gateway Test Successful! Official marathon SMS notification system is active.';
+      const res = await sendBulkSmsRequest(phone, testMsg);
+
+      sendTestBtn.disabled = false;
+      sendTestBtn.innerHTML = '<span>📨 টেস্ট পাঠান</span>';
+
+      if (testStatus) {
+        if (res.success) {
+          testStatus.textContent = '✓ SMS পাঠানো হয়েছে!';
+          testStatus.style.color = '#00ff88';
+        } else {
+          testStatus.textContent = '✕ ' + res.message;
+          testStatus.style.color = '#ff5555';
+        }
+      }
+    };
+  }
+
+  // 5. Single SMS Modal Listeners
+  const closeSingleBtn = document.getElementById('closeSingleSmsModalBtn');
+  const cancelSingleBtn = document.getElementById('cancelSingleSmsBtn');
+  const singleModal = document.getElementById('sendSingleSmsModal');
+  const submitSingleBtn = document.getElementById('sendSingleSmsSubmitBtn');
+  const singleTextarea = document.getElementById('singleSmsText');
+
+  if (singleTextarea) {
+    singleTextarea.oninput = updateSingleSmsCounter;
+  }
+
+  const closeSingle = () => { if (singleModal) singleModal.style.display = 'none'; };
+  if (closeSingleBtn) closeSingleBtn.onclick = closeSingle;
+  if (cancelSingleBtn) cancelSingleBtn.onclick = closeSingle;
+
+  if (submitSingleBtn) {
+    submitSingleBtn.onclick = async () => {
+      if (!activeSingleSmsRunner) return;
+      const text = document.getElementById('singleSmsText').value.trim();
+      const notice = document.getElementById('singleSmsResultNotice');
+
+      submitSingleBtn.disabled = true;
+      submitSingleBtn.innerHTML = '<span>⏳ Sending...</span>';
+
+      const res = await sendBulkSmsRequest(activeSingleSmsRunner.phone, text);
+
+      submitSingleBtn.disabled = false;
+      submitSingleBtn.innerHTML = '<span>🚀 Send SMS Now</span>';
+
+      if (notice) {
+        notice.style.display = 'block';
+        if (res.success) {
+          notice.textContent = '✓ ' + res.message;
+          notice.style.background = 'rgba(0,255,136,0.15)';
+          notice.style.color = '#00ff88';
+          notice.style.border = '1px solid rgba(0,255,136,0.3)';
+          setTimeout(closeSingle, 1800);
+        } else {
+          notice.textContent = '✕ ' + res.message;
+          notice.style.background = 'rgba(235,50,65,0.15)';
+          notice.style.color = '#ff5555';
+          notice.style.border = '1px solid rgba(235,50,65,0.3)';
+        }
+      }
+    };
+  }
+
+  // 6. Bulk SMS Broadcast Button
+  const bulkBtn = document.getElementById('sendBulkSmsBtn');
+  if (bulkBtn) {
+    bulkBtn.onclick = startBulkSmsBroadcast;
+  }
+
+  const cancelBulkBtn = document.getElementById('cancelBulkSmsBtn');
+  if (cancelBulkBtn) {
+    cancelBulkBtn.onclick = () => {
+      stopBulkSmsFlag = true;
+    };
+  }
+
+  // 7. Quick Verify SMS Prompt Listeners
+  const verifyModal = document.getElementById('quickVerifySmsModal');
+  const skipVerifyBtn = document.getElementById('skipQuickVerifySmsBtn');
+  const confirmVerifyBtn = document.getElementById('confirmQuickVerifySmsBtn');
+
+  if (skipVerifyBtn && verifyModal) {
+    skipVerifyBtn.onclick = () => { verifyModal.style.display = 'none'; };
+  }
+
+  if (confirmVerifyBtn && verifyModal) {
+    confirmVerifyBtn.onclick = async () => {
+      if (!pendingVerificationRunner) return;
+      confirmVerifyBtn.disabled = true;
+      confirmVerifyBtn.innerHTML = '<span>⏳ পাঠানো হচ্ছে...</span>';
+
+      const msg = personalizeMessage(BROADCAST_TEMPLATES.ebib_confirmation, pendingVerificationRunner);
+      const res = await sendBulkSmsRequest(pendingVerificationRunner.phone, msg);
+
+      confirmVerifyBtn.disabled = false;
+      confirmVerifyBtn.innerHTML = '<span>📲 হ্যাঁ, SMS পাঠান</span>';
+      verifyModal.style.display = 'none';
+
+      if (res.success) {
+        showBroadcastToast(`✓ Bib confirmation SMS পাঠানো হয়েছে: ${pendingVerificationRunner.name}`);
+      } else {
+        alert('SMS পাঠানো যায়নি: ' + res.message);
       }
     };
   }

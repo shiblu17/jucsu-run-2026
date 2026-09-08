@@ -351,11 +351,11 @@ function renderTable(filterQuery = '') {
       <td><span class="badge-status ${statusClass}" data-bib="${runner.bib}" style="cursor:pointer;" title="Click to Toggle Status">${runner.status}</span></td>
       <td>
         ${smsLog ? `
-          <span class="badge" style="background: rgba(0,255,136,0.15); color: #00ff88; border: 1px solid rgba(0,255,136,0.3); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" title="Sent on: ${smsLog.sentAt || ''}">
+          <span class="badge badge-sms-toggle" data-bib="${runner.bib}" style="background: rgba(0,255,136,0.15); color: #00ff88; border: 1px solid rgba(0,255,136,0.3); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;" title="ক্লিক করে SMS Sent স্ট্যাটাস পরিবর্তন করুন">
             <span>✓ Sent (${smsTimeText})</span>
           </span>
         ` : `
-          <span class="badge" style="background: rgba(255,255,255,0.05); color: #a0aec0; border: 1px solid rgba(255,255,255,0.1); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px;">
+          <span class="badge badge-sms-toggle" data-bib="${runner.bib}" style="background: rgba(255,255,255,0.05); color: #a0aec0; border: 1px solid rgba(255,255,255,0.1); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; cursor: pointer;" title="ক্লিক করে 'SMS Sent' হিসেবে চিহ্নিত করুন">
             <span>⏳ Not Sent</span>
           </span>
         `}
@@ -377,6 +377,14 @@ function renderTable(filterQuery = '') {
     badge.addEventListener('click', (e) => {
       const bib = e.target.getAttribute('data-bib');
       toggleRunnerStatus(bib);
+    });
+  });
+
+  // Bind SMS Toggle Events (Manual Mark / Unmark)
+  document.querySelectorAll('.badge-sms-toggle').forEach(badge => {
+    badge.addEventListener('click', (e) => {
+      const bib = e.currentTarget.getAttribute('data-bib');
+      toggleSmsStatusManually(bib);
     });
   });
 
@@ -3443,6 +3451,133 @@ function exportSmsHistoryCsv() {
   document.body.removeChild(link);
 }
 
+// Toggle individual runner SMS Sent status manually
+async function toggleSmsStatusManually(bib) {
+  const runner = runnerDatabase.find(r => r.bib.toString() === bib.toString());
+  if (!runner) return;
+  
+  const isSent = !!(typeof smsDeliveryLogs !== 'undefined' && smsDeliveryLogs[bib]);
+  if (isSent) {
+    if (confirm(`Bib #${bib} (${runner.name}) এর 'SMS Sent' স্ট্যাটাস মুছে ফেলে 'Not Sent' করতে চান?`)) {
+      delete smsDeliveryLogs[bib];
+      updateSmsHistoryBadge();
+      await syncSmsDeliveryLogsToCloud();
+      const searchInput = document.getElementById('tableSearch');
+      renderTable(searchInput ? searchInput.value : '');
+    }
+  } else {
+    if (confirm(`Bib #${bib} (${runner.name}) কে 'SMS Sent' হিসেবে চিহ্নিত করতে চান?\n\n(কোনো SMS পাঠানো হবে না, শুধুমাত্র সিস্টেমে রেকর্ড হবে)`)) {
+      await recordSmsDelivery(bib, runner.phone, runner.name, true);
+      const searchInput = document.getElementById('tableSearch');
+      renderTable(searchInput ? searchInput.value : '');
+    }
+  }
+}
+
+// Mark all currently Verified runners as SMS Sent
+async function markAllVerifiedAsSent() {
+  const verifiedRunners = runnerDatabase.filter(r => (r.status || '').toLowerCase() === 'verified');
+  if (!verifiedRunners.length) {
+    alert('কোনো ভেরিফায়েড রানার পাওয়া যায়নি।');
+    return;
+  }
+
+  const confirmMsg = `আপনি কি বর্তমান সকল ভেরিফায়েড (${verifiedRunners.length} জন) রানারকে 'SMS Sent' হিসেবে চিহ্নিত করতে চান?\n\n(এর ফলে কোনো SMS পাঠানো হবে না বা ব্যালেন্স কাটা যাবে না)`;
+  if (!confirm(confirmMsg)) return;
+
+  const now = new Date().toISOString();
+  let countAdded = 0;
+  verifiedRunners.forEach(r => {
+    const bibStr = r.bib.toString();
+    if (!smsDeliveryLogs[bibStr]) {
+      countAdded++;
+    }
+    smsDeliveryLogs[bibStr] = {
+      bib: bibStr,
+      name: r.name || 'Runner',
+      phone: r.phone || '',
+      sentAt: smsDeliveryLogs[bibStr]?.sentAt || now
+    };
+  });
+
+  updateSmsHistoryBadge();
+  await syncSmsDeliveryLogsToCloud();
+  
+  const searchInput = document.getElementById('tableSearch');
+  renderTable(searchInput ? searchInput.value : '');
+  renderSmsHistoryTable();
+  
+  alert(`✓ সফল হয়েছে! মোট ${countAdded} জন নতুন ভেরিফায়েড রানারকে 'SMS Sent' হিসেবে সিস্টেমে সিঙ্ক করা হয়েছে।`);
+}
+
+// Parse range strings like "5001-5050, 5060, 10001-10020"
+function parseBibRangeInput(str) {
+  const parts = str.split(/[,;\s]+/);
+  const result = new Set();
+  parts.forEach(p => {
+    p = p.trim();
+    if (!p) return;
+    if (p.includes('-')) {
+      const [startStr, endStr] = p.split('-');
+      const start = parseInt(startStr, 10);
+      const end = parseInt(endStr, 10);
+      if (!isNaN(start) && !isNaN(end)) {
+        const min = Math.min(start, end);
+        const max = Math.max(start, end);
+        for (let i = min; i <= max; i++) {
+          result.add(i.toString());
+        }
+      }
+    } else {
+      const val = parseInt(p, 10);
+      if (!isNaN(val)) {
+        result.add(val.toString());
+      }
+    }
+  });
+  return Array.from(result);
+}
+
+// Mark a custom range of Bibs as Sent
+async function markBibRangeAsSent() {
+  const input = prompt(
+    'যেসব Bib নম্বরে পূর্বে SMS পাঠানো হয়েছে তা লিখুন:\n(উদাহরণ: 5001-5050 অথবা 5001, 5002, 10001-10020)',
+    ''
+  );
+  if (!input || !input.trim()) return;
+
+  const bibsToMark = parseBibRangeInput(input);
+  if (!bibsToMark.length) {
+    alert('কোনো বৈধ Bib নম্বর পাওয়া যায়নি।');
+    return;
+  }
+
+  const now = new Date().toISOString();
+  let markedCount = 0;
+  bibsToMark.forEach(b => {
+    const bibStr = b.toString();
+    const runner = runnerDatabase.find(r => r.bib.toString() === bibStr);
+    const name = runner ? runner.name : 'Runner';
+    const phone = runner ? runner.phone : '';
+    smsDeliveryLogs[bibStr] = {
+      bib: bibStr,
+      name: name,
+      phone: phone,
+      sentAt: smsDeliveryLogs[bibStr]?.sentAt || now
+    };
+    markedCount++;
+  });
+
+  updateSmsHistoryBadge();
+  await syncSmsDeliveryLogsToCloud();
+
+  const searchInput = document.getElementById('tableSearch');
+  renderTable(searchInput ? searchInput.value : '');
+  renderSmsHistoryTable();
+
+  alert(`✓ সফল হয়েছে! মোট ${markedCount} টি Bib নম্বরে 'SMS Sent' হিসেবে চিহ্নিত করা হয়েছে।`);
+}
+
 // Prompt Quick Verification Confirmation SMS
 function promptQuickVerifySms(runner) {
   const config = getActiveSmsConfig();
@@ -3483,6 +3618,23 @@ function openSingleSmsModal(bib, customMessage = null) {
   textarea.value = defaultMsg;
 
   updateSingleSmsCounter();
+
+  // Configure Mark as Sent button state
+  const markBtn = document.getElementById('markSingleAsSentBtn');
+  const isSent = !!(typeof smsDeliveryLogs !== 'undefined' && smsDeliveryLogs[runner.bib]);
+  if (markBtn) {
+    if (isSent) {
+      markBtn.textContent = '✕ Unmark Sent';
+      markBtn.style.color = '#ffaa00';
+      markBtn.style.borderColor = 'rgba(255,170,0,0.5)';
+      markBtn.title = 'SMS Sent মার্কটি বাতিল করুন';
+    } else {
+      markBtn.textContent = '✓ Mark as Sent (No SMS)';
+      markBtn.style.color = '#00ff88';
+      markBtn.style.borderColor = 'rgba(0,255,136,0.5)';
+      markBtn.title = 'পূর্বে পাঠানো থাকলে চিহ্নিত করুন (ব্যালেন্স কাটবে না)';
+    }
+  }
 
   const notice = document.getElementById('singleSmsResultNotice');
   if (notice) notice.style.display = 'none';
@@ -3659,6 +3811,29 @@ function initBulkSmsManager() {
   if (closeSingleBtn) closeSingleBtn.onclick = closeSingle;
   if (cancelSingleBtn) cancelSingleBtn.onclick = closeSingle;
 
+  const markSingleBtn = document.getElementById('markSingleAsSentBtn');
+  if (markSingleBtn) {
+    markSingleBtn.onclick = async () => {
+      if (!activeSingleSmsRunner) return;
+      const bib = activeSingleSmsRunner.bib.toString();
+      const isSent = !!(typeof smsDeliveryLogs !== 'undefined' && smsDeliveryLogs[bib]);
+      if (isSent) {
+        delete smsDeliveryLogs[bib];
+        await syncSmsDeliveryLogsToCloud();
+        updateSmsHistoryBadge();
+        const searchInput = document.getElementById('tableSearch');
+        renderTable(searchInput ? searchInput.value : '');
+        alert(`Bib #${bib} এর 'SMS Sent' স্ট্যাটাস বাতিল করা হয়েছে।`);
+      } else {
+        await recordSmsDelivery(bib, activeSingleSmsRunner.phone, activeSingleSmsRunner.name, true);
+        const searchInput = document.getElementById('tableSearch');
+        renderTable(searchInput ? searchInput.value : '');
+        alert(`✓ Bib #${bib} কে 'SMS Sent' হিসেবে চিহ্নিত করা হয়েছে (কোনো SMS পাঠানো হয়নি)।`);
+      }
+      closeSingle();
+    };
+  }
+
   if (submitSingleBtn) {
     submitSingleBtn.onclick = async () => {
       if (!activeSingleSmsRunner) return;
@@ -3768,6 +3943,25 @@ function initBulkSmsManager() {
 
   if (exportHistoryBtn) {
     exportHistoryBtn.onclick = exportSmsHistoryCsv;
+  }
+
+  // 9. Quick Prior SMS Sync & Batch Marking Listeners
+  const quickSyncBtn = document.getElementById('quickSyncPriorSmsBtn');
+  if (quickSyncBtn) {
+    quickSyncBtn.onclick = () => {
+      renderSmsHistoryTable();
+      if (historyModal) historyModal.style.display = 'flex';
+    };
+  }
+
+  const markAllVerifiedBtn = document.getElementById('markAllVerifiedSmsBtn');
+  if (markAllVerifiedBtn) {
+    markAllVerifiedBtn.onclick = markAllVerifiedAsSent;
+  }
+
+  const markBibRangeBtnEl = document.getElementById('markBibRangeBtn');
+  if (markBibRangeBtnEl) {
+    markBibRangeBtnEl.onclick = markBibRangeAsSent;
   }
 }
 

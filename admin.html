@@ -335,11 +335,16 @@
             </div>
 
             <!-- Action Buttons: History Log & Save -->
-            <div style="display: flex; gap: 10px; align-items: center; justify-content: space-between; padding-top: 4px; flex-wrap: wrap;">
-              <button type="button" id="openSmsHistoryBtn" class="btn btn-outline btn-sm" style="padding: 7px 12px; font-size: 0.8rem; border-color: rgba(0, 229, 255, 0.4); color: #00e5ff; display: inline-flex; align-items: center; gap: 5px;">
-                <span>📜 SMS ডেলিভারি লগ</span>
-                <span id="smsHistoryCountBadge" class="badge" style="background: rgba(0,229,255,0.2); color: #00e5ff; font-size: 0.7rem; padding: 1px 6px;">0</span>
-              </button>
+            <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between; padding-top: 4px; flex-wrap: wrap;">
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <button type="button" id="openSmsHistoryBtn" class="btn btn-outline btn-sm" style="padding: 7px 12px; font-size: 0.8rem; border-color: rgba(0, 229, 255, 0.4); color: #00e5ff; display: inline-flex; align-items: center; gap: 5px;">
+                  <span>📜 SMS ডেলিভারি লগ</span>
+                  <span id="smsHistoryCountBadge" class="badge" style="background: rgba(0,229,255,0.2); color: #00e5ff; font-size: 0.7rem; padding: 1px 6px;">0</span>
+                </button>
+                <button type="button" id="quickSyncPriorSmsBtn" class="btn btn-outline btn-sm" style="padding: 7px 12px; font-size: 0.8rem; border-color: rgba(0, 255, 136, 0.4); color: #00ff88; display: inline-flex; align-items: center; gap: 5px;" title="আগে পাঠানো SMS সিঙ্ক করুন">
+                  <span>⚡ পূর্বের SMS সিঙ্ক</span>
+                </button>
+              </div>
               <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
                 <span id="smsSettingsSaveStatus" style="font-size: 0.8rem; color: #00e5ff; font-weight: 600; display: none;">✓ SMS Settings Saved!</span>
                 <button id="saveSmsSettingsBtn" class="btn btn-outline btn-sm" style="padding: 7px 16px; font-weight: 700; border-color: #00e5ff; color: #00e5ff;">
@@ -1305,11 +1310,16 @@ with check (true);</pre>
 
       <div id="singleSmsResultNotice" style="display: none; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; margin-bottom: 12px; font-weight: 600;"></div>
 
-      <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;">
-        <button type="button" id="cancelSingleSmsBtn" class="btn btn-outline btn-sm" style="padding: 7px 16px;">Cancel</button>
-        <button type="button" id="sendSingleSmsSubmitBtn" class="btn btn-lime btn-sm" style="padding: 7px 20px; font-weight: 700; background: #00e5ff; color: #002214; border-color: #00e5ff; display: inline-flex; align-items: center; gap: 5px;">
-          <span>🚀 Send SMS Now</span>
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; flex-wrap: wrap;">
+        <button type="button" id="markSingleAsSentBtn" class="btn btn-outline btn-sm" style="padding: 7px 12px; font-size: 0.78rem; border-color: rgba(0,255,136,0.5); color: #00ff88; font-weight: 600;" title="আগে SMS পাঠানো হয়ে থাকলে চিহ্নিত করুন (ব্যালেন্স কাটবে না)">
+          ✓ Mark as Sent
         </button>
+        <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
+          <button type="button" id="cancelSingleSmsBtn" class="btn btn-outline btn-sm" style="padding: 7px 16px;">Cancel</button>
+          <button type="button" id="sendSingleSmsSubmitBtn" class="btn btn-lime btn-sm" style="padding: 7px 20px; font-weight: 700; background: #00e5ff; color: #002214; border-color: #00e5ff; display: inline-flex; align-items: center; gap: 5px;">
+            <span>🚀 Send SMS Now</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1398,6 +1408,22 @@ with check (true);</pre>
         <button type="button" id="closeSmsHistoryModalBtn" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; line-height: 1;">✕</button>
       </div>
 
+      <!-- Prior SMS Quick Sync Banner -->
+      <div style="background: rgba(0, 229, 255, 0.07); border: 1px dashed rgba(0, 229, 255, 0.35); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <div style="font-size: 0.84rem; font-weight: 700; color: #00e5ff;">⚡ পূর্বে পাঠানো SMS সিঙ্ক টুল (One-Click Sync):</div>
+          <div style="font-size: 0.74rem; color: #a0aec0; margin-top: 2px;">যাদের আগে SMS পাঠানো হয়েছে, ব্যালেন্স খরচ ছাড়াই তাদের 'Sent' হিসেবে চিহ্নিত করুন।</div>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button type="button" id="markAllVerifiedSmsBtn" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 6px 12px; border-color: #00ff88; color: #00ff88; font-weight: 700; background: rgba(0,255,136,0.12); display: inline-flex; align-items: center; gap: 4px;">
+            <span>✓ সকল ভেরিফায়েডকে Sent মার্ক করুন</span>
+          </button>
+          <button type="button" id="markBibRangeBtn" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 6px 12px; border-color: #00e5ff; color: #00e5ff; font-weight: 600; background: rgba(0,229,255,0.08); display: inline-flex; align-items: center; gap: 4px;">
+            <span>🎯 নির্দিষ্ট Bib রেঞ্জ মার্ক করুন</span>
+          </button>
+        </div>
+      </div>
+
       <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
         <input type="text" id="smsHistorySearch" class="form-input form-input-sm" placeholder="Search sent SMS by bib, name or phone..." style="max-width: 320px; background: rgba(0,0,0,0.4); color: #fff; font-size: 0.82rem;">
         <button type="button" id="exportSmsHistoryCsvBtn" class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 6px 14px; border-color: rgba(0,229,255,0.4); color: #00e5ff; font-weight: 600;">
@@ -1427,6 +1453,6 @@ with check (true);</pre>
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=4.2"></script>
+  <script src="admin.js?v=4.3"></script>
 </body>
 </html>

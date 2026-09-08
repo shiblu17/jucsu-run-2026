@@ -3292,7 +3292,7 @@ async function loadSmsDeliveryLogs() {
         .maybeSingle();
 
       if (data && data.data && typeof data.data === 'object') {
-        smsDeliveryLogs = { ...smsDeliveryLogs, ...data.data };
+        smsDeliveryLogs = data.data;
         try {
           localStorage.setItem('jucsu_sms_delivery_logs', JSON.stringify(smsDeliveryLogs));
         } catch (e) {}

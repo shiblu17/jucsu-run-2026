@@ -2210,14 +2210,9 @@ Helpline: 01317982413
 - JUCSU RUN 2026 Committee`,
 
   ebib_confirmation: `Congratulations {name}!
-Your registration for JUCSU RUN 2026 is Confirmed!
-🎫 Official Bib: #{bib}
-🏃 Category: {category}
-👕 T-Shirt: Confirmed
-📍 Kit Point: {kit_point}
-Download your Digital E-Bib now: https://jucsu-run-2026.pages.dev#checker
-Keep an eye on our website for all updates & information: https://jucsu-run-2026.pages.dev
-- JUCSU RUN 2026 Committee`,
+JUCSU RUN 2026 Confirmed. Bib: #{bib} ({category}).
+Get E-Bib & Event Info:
+https://jucsu-run-2026.pages.dev`,
 
   race_day_guide: `Get ready {name}!
 JUCSU RUN 2026 starts tomorrow, Oct 2, 2026!

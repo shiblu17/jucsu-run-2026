@@ -2997,7 +2997,7 @@ function getActiveSmsConfig() {
 
   return {
     apiKey: savedApiKey || (typeof BULKSMSBD_CONFIG !== 'undefined' ? BULKSMSBD_CONFIG.apiKey : 'UV0CvJmTqiboWjIL4N3E'),
-    senderId: savedSenderId || (typeof BULKSMSBD_CONFIG !== 'undefined' ? BULKSMSBD_CONFIG.defaultSenderId : '8809617615024'),
+    senderId: savedSenderId || (typeof BULKSMSBD_CONFIG !== 'undefined' ? BULKSMSBD_CONFIG.defaultSenderId : '8809648910854'),
     apiUrl: (typeof BULKSMSBD_CONFIG !== 'undefined' ? BULKSMSBD_CONFIG.apiUrl : 'https://bulksmsbd.net/api/smsapi'),
     balanceUrl: (typeof BULKSMSBD_CONFIG !== 'undefined' ? BULKSMSBD_CONFIG.balanceUrl : 'https://bulksmsbd.net/api/getBalanceApi'),
     autoVerify: autoVerify !== 'false'
@@ -3175,7 +3175,7 @@ async function saveSmsSettings() {
   const statusSpan = document.getElementById('smsSettingsSaveStatus');
 
   const apiKey = (apiKeyInput ? apiKeyInput.value.trim() : '') || 'UV0CvJmTqiboWjIL4N3E';
-  const senderId = (senderIdInput ? senderIdInput.value.trim() : '') || '8809617615024';
+  const senderId = (senderIdInput ? senderIdInput.value.trim() : '') || '8809648910854';
   const autoVerify = autoVerifyToggle ? autoVerifyToggle.checked : true;
 
   localStorage.setItem('jucsu_bulksms_api_key', apiKey);

@@ -8,7 +8,7 @@ const SUPABASE_CONFIG = {
 // BulkSMSBD Gateway Configuration for JUCSU RUN 2026
 const BULKSMSBD_CONFIG = {
   apiKey: "UV0CvJmTqiboWjIL4N3E",
-  defaultSenderId: "8809617615024",
+  defaultSenderId: "8809648910854",
   apiUrl: "https://bulksmsbd.net/api/smsapi",
   balanceUrl: "https://bulksmsbd.net/api/getBalanceApi"
 };

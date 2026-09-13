@@ -325,7 +325,7 @@ function initRegistrationChecker() {
         // NEVER fetch or expose txnid or email in public search!
         let queryBuilder = supabaseClient
           .from('registrations')
-          .select('bib, name, category, status, tshirt, blood, kitpoint, pickup, phone');
+          .select('bib, name, category, type, status, tshirt, blood, kitpoint, pickup, phone');
 
         if (/^\d{3,5}$/.test(cleanDigits)) {
           // Exact Bib search (e.g. 5001, 10052)

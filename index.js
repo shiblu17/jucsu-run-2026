@@ -16,9 +16,6 @@ if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CO
 
 document.addEventListener('DOMContentLoaded', () => {
   
-  // Initialize Database
-  initDatabase();
-
   // Scroll Header Effect
   initHeaderScroll();
 
@@ -54,48 +51,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ==========================================
-   DATABASE INITIALIZATION
+   DATABASE PRIVACY & SECURITY GUARD
    ========================================== */
-let runnerDatabase = [];
-
-async function initDatabase() {
-  if (supabaseClient) {
-    try {
-      const { data, error } = await supabaseClient
-        .from('registrations')
-        .select('*');
-      if (error) throw error;
-      runnerDatabase = data;
-      console.log('Database loaded from Supabase. Total records:', runnerDatabase.length);
-      return;
-    } catch (err) {
-      console.error('Error fetching from Supabase, falling back to local storage', err);
-    }
-  }
-
-  const localData = localStorage.getItem('jucsu_registrations');
-  if (localData) {
-    try {
-      runnerDatabase = JSON.parse(localData);
-      console.log('Database loaded from localStorage. Total records:', runnerDatabase.length);
-      return;
-    } catch (e) {
-      console.error('Error parsing localStorage database, falling back to JSON', e);
-    }
-  }
-
-  // Fallback to fetch registrations.json
-  try {
-    const response = await fetch('registrations.json');
-    if (response.ok) {
-      runnerDatabase = await response.json();
-      localStorage.setItem('jucsu_registrations', JSON.stringify(runnerDatabase));
-      console.log('Database loaded from registrations.json. Total records:', runnerDatabase.length);
-    }
-  } catch (error) {
-    console.error('Failed to fetch registrations.json database', error);
-  }
-}
+// Security: Never preload or expose the global registrations database to visitors!
+try {
+  localStorage.removeItem('jucsu_registrations');
+} catch (e) {}
 
 /* ==========================================
    HEADER SCROLL & ACTIVE NAV
@@ -335,7 +296,7 @@ function initRegistrationChecker() {
       if (pendingType) pendingType.textContent = runner.type || 'JU Student (Batch 48 - 55)';
       if (pendingTshirt) pendingTshirt.textContent = runner.tshirt || 'M';
       if (pendingKitPoint) pendingKitPoint.textContent = runner.kitpoint || 'Jahangirnagar University';
-      if (pendingTxnid) pendingTxnid.textContent = runner.txnid || 'bKash Transaction Pending';
+      if (pendingTxnid) pendingTxnid.textContent = 'bKash Transaction Submitted (Under Review)';
       
       pendingSection.classList.remove('hidden');
     }
@@ -345,10 +306,8 @@ function initRegistrationChecker() {
 
   async function performSearch() {
     const rawQuery = searchInput.value.trim();
-    const query = rawQuery.toLowerCase();
-    
-    if (!query) {
-      alert('Please enter a phone number, bib number, name, or bKash TrxID to search.');
+    if (!rawQuery || rawQuery.length < 3) {
+      alert('অনুগ্রহ করে আপনার সঠিক মোবাইল নম্বর অথবা Bib নম্বর লিখুন (কমপক্ষে ৪ অক্ষর)।');
       return;
     }
 
@@ -356,23 +315,35 @@ function initRegistrationChecker() {
     searchBtn.disabled = true;
 
     try {
-      // Refresh database in case admin updated it in another tab
-      await initDatabase();
+      const cleanDigits = rawQuery.replace(/[^0-9]/g, '');
+      const cleanText = rawQuery.trim();
 
-      const cleanQuery = query.replace(/[^0-9a-zA-Z]/g, ''); // alphanumeric
+      let matches = [];
 
-      // Filter all matches in database
-      const matches = runnerDatabase.filter(runner => {
-        const runnerName = (runner.name || '').toLowerCase();
-        const runnerPhone = (runner.phone || '').replace(/[^0-9]/g, '');
-        const runnerBib = (runner.bib || '').toLowerCase();
-        const runnerTxnid = (runner.txnid || '').toLowerCase();
+      if (supabaseClient) {
+        // Privacy Guard: Query ONLY non-sensitive public e-bib fields
+        // NEVER fetch or expose txnid or email in public search!
+        let queryBuilder = supabaseClient
+          .from('registrations')
+          .select('bib, name, category, status, tshirt, blood, kitpoint, pickup, phone');
 
-        return (cleanQuery && runnerPhone === cleanQuery) ||
-               (cleanQuery && runnerBib === cleanQuery) ||
-               (cleanQuery && runnerTxnid.includes(cleanQuery)) ||
-               (runnerName.includes(query));
-      });
+        if (/^\d{3,5}$/.test(cleanDigits)) {
+          // Exact Bib search (e.g. 5001, 10052)
+          queryBuilder = queryBuilder.eq('bib', cleanDigits);
+        } else if (cleanDigits.length >= 10) {
+          // Phone number search (11-digit BD phone)
+          const last10 = cleanDigits.slice(-10);
+          queryBuilder = queryBuilder.ilike('phone', `%${last10}`);
+        } else {
+          // Search by exact Transaction ID or Bib
+          queryBuilder = queryBuilder.or(`bib.eq.${cleanText},txnid.ilike.${cleanText}`);
+        }
+
+        const { data, error } = await queryBuilder.limit(3);
+        if (!error && data) {
+          matches = data;
+        }
+      }
 
       // Reset results display
       resultsBox.classList.remove('hidden');
@@ -413,6 +384,10 @@ function initRegistrationChecker() {
         notFoundSection.classList.remove('hidden');
         resultsBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
+    } catch (err) {
+      console.error('Search error:', err);
+      currentRunner = null;
+      notFoundSection.classList.remove('hidden');
     } finally {
       if (searchBtnText) searchBtnText.textContent = 'Search Status';
       searchBtn.disabled = false;
@@ -1103,14 +1078,6 @@ function initRegisterTriggers() {
       }
     }
 
-    // 2. Fallback to local memory database if needed
-    if (activeBibs.length === 0 && runnerDatabase && runnerDatabase.length > 0) {
-      activeBibs = runnerDatabase
-        .filter(r => (r.category || '').includes(is10K ? '10K' : '5K'))
-        .map(r => parseInt(r.bib))
-        .filter(b => !isNaN(b));
-    }
-
     const bibSet = new Set(activeBibs);
 
     // 3. Smart Gap Scan: find the lowest missing/empty Bib number starting from startBib
@@ -1175,11 +1142,22 @@ function initRegisterTriggers() {
     }
 
     // 4. Duplicate TrxID check
-    const isDuplicateTxn = runnerDatabase.some(r => (r.txnid || '').toUpperCase() === txnid);
-    if (isDuplicateTxn) {
-      showFormError(`এই ট্রানজেকশন আইডি (${txnid}) দিয়ে ইতোমধ্যে একটি রেজিস্ট্রেশন সাবমিট করা হয়েছে! অনুগ্রহ করে আপনার নিজের সঠিক TrxID দিন।`);
-      txnidInput.focus();
-      return;
+    if (supabaseClient) {
+      try {
+        const { data: existingTxn } = await supabaseClient
+          .from('registrations')
+          .select('bib')
+          .ilike('txnid', txnid)
+          .maybeSingle();
+
+        if (existingTxn) {
+          showFormError(`এই ট্রানজেকশন আইডি (${txnid}) দিয়ে ইতোমধ্যে একটি রেজিস্ট্রেশন সাবমিট করা হয়েছে! অনুগ্রহ করে আপনার নিজের সঠিক TrxID দিন।`);
+          txnidInput.focus();
+          return;
+        }
+      } catch (err) {
+        console.warn('Txn lookup notice:', err);
+      }
     }
 
     const category = document.querySelector('input[name="pubCategory"]:checked').value;
@@ -1246,8 +1224,6 @@ function initRegisterTriggers() {
             }
           }
           savedSuccessfully = true;
-          runnerDatabase.push(newRunner);
-          localStorage.setItem('jucsu_registrations', JSON.stringify(runnerDatabase));
         } catch (err) {
           console.error('Supabase registration insert error:', err);
           if (retryCount >= maxRetries) {
@@ -1259,8 +1235,6 @@ function initRegisterTriggers() {
         }
       } else {
         savedSuccessfully = true;
-        runnerDatabase.push(newRunner);
-        localStorage.setItem('jucsu_registrations', JSON.stringify(runnerDatabase));
       }
     }
 

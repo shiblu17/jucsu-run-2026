@@ -1043,12 +1043,20 @@ function initRegisterTriggers() {
     });
   }
 
+  let isPublicFormSubmitting = false;
+
   function showFormError(msg) {
+    isPublicFormSubmitting = false;
+    const submitBtn = document.getElementById('pubSubmitBtn');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>Complete Registration</span>';
+    }
     const errEl = document.getElementById('pubFormErrorAlert');
     if (errEl) {
-      errEl.textContent = '⚠️ ' + msg;
+      errEl.textContent = msg;
       errEl.style.display = 'block';
-      errEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else {
       alert(msg);
     }
@@ -1092,18 +1100,30 @@ function initRegisterTriggers() {
     return candidateBib.toString();
   }
 
-  // Handle Submit Form
+  // Handle Submit Form with strict race-condition lock
   publicRegisterForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    if (isPublicFormSubmitting) {
+      console.warn('Registration already in progress, ignoring duplicate submit...');
+      return;
+    }
+
+    const submitBtn = document.getElementById('pubSubmitBtn');
     const nameInput = document.getElementById('pubName');
     const phoneInput = document.getElementById('pubPhone');
     const emailInput = document.getElementById('pubEmail');
     const txnidInput = document.getElementById('pubTxnId');
-    const submitBtn = document.getElementById('pubSubmitBtn');
     const errEl = document.getElementById('pubFormErrorAlert');
 
     if (errEl) errEl.style.display = 'none';
+
+    // Immediately lock button & flag to prevent double-clicks/double-taps
+    isPublicFormSubmitting = true;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>⏳ Verifying & Submitting...</span>';
+    }
 
     const name = nameInput.value.trim();
     if (name.length < 2) {
@@ -1134,30 +1154,11 @@ function initRegisterTriggers() {
     }
 
     // 3. bKash TrxID validation
-    const txnid = txnidInput.value.trim().toUpperCase();
+    const txnid = txnidInput.value.trim().toUpperCase().replace(/\s+/g, '');
     if (txnid.length < 8) {
       showFormError('অনুগ্রহ করে bKash SMS থেকে পাওয়া ৮-১০ অক্ষরের সঠিক Transaction ID (TrxID) দিন।');
       txnidInput.focus();
       return;
-    }
-
-    // 4. Duplicate TrxID check
-    if (supabaseClient) {
-      try {
-        const { data: existingTxn } = await supabaseClient
-          .from('registrations')
-          .select('bib')
-          .ilike('txnid', txnid)
-          .maybeSingle();
-
-        if (existingTxn) {
-          showFormError(`এই ট্রানজেকশন আইডি (${txnid}) দিয়ে ইতোমধ্যে একটি রেজিস্ট্রেশন সাবমিট করা হয়েছে! অনুগ্রহ করে আপনার নিজের সঠিক TrxID দিন।`);
-          txnidInput.focus();
-          return;
-        }
-      } catch (err) {
-        console.warn('Txn lookup notice:', err);
-      }
     }
 
     const category = document.querySelector('input[name="pubCategory"]:checked').value;
@@ -1168,8 +1169,37 @@ function initRegisterTriggers() {
     const kitpoint = document.querySelector('input[name="pubKitPoint"]:checked') ? document.querySelector('input[name="pubKitPoint"]:checked').value : 'Jahangirnagar University';
     const blood = document.getElementById('pubBlood').value.trim().toUpperCase() || 'N/A';
 
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span>Verifying & Submitting...</span>';
+    // 4. Duplicate TrxID & Phone check in Supabase
+    if (supabaseClient) {
+      try {
+        const { data: existingTxn } = await supabaseClient
+          .from('registrations')
+          .select('bib, name')
+          .ilike('txnid', txnid)
+          .maybeSingle();
+
+        if (existingTxn) {
+          showFormError(`এই ট্রানজেকশন আইডি (${txnid}) দিয়ে ইতোমধ্যে একটি রেজিস্ট্রেশন সাবমিট করা হয়েছে (Bib: #${existingTxn.bib})! একটি TrxID দিয়ে শুধুমাত্র একবারই রেজিস্ট্রেশন করা যাবে।`);
+          txnidInput.focus();
+          return;
+        }
+
+        const { data: existingPhone } = await supabaseClient
+          .from('registrations')
+          .select('bib, name')
+          .eq('phone', phone)
+          .ilike('category', category.includes('10K') ? '%10K%' : '%5K%')
+          .maybeSingle();
+
+        if (existingPhone) {
+          showFormError(`এই মোবাইল নম্বর (${phone}) দিয়ে ইতোমধ্যে ${category}-তে রেজিস্ট্রেশন রয়েছে (Bib: #${existingPhone.bib})!`);
+          phoneInput.focus();
+          return;
+        }
+      } catch (err) {
+        console.warn('Txn lookup notice:', err);
+      }
+    }
 
     // Retry loop for Bib generation to handle concurrent submissions
     let savedSuccessfully = false;

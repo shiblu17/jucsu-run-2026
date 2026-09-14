@@ -338,6 +338,8 @@ function renderTable(filterQuery = '') {
       }
     }
     
+    const isDupTxn = (txnLabel !== 'N/A') && (runnerDatabase.filter(r => (r.txnid || '').trim().toUpperCase() === (runner.txnid || '').trim().toUpperCase()).length > 1);
+    
     tr.innerHTML = `
       <td><strong>${runner.bib}</strong></td>
       <td>${runner.name}</td>
@@ -347,7 +349,10 @@ function renderTable(filterQuery = '') {
       <td>${runner.tshirt}</td>
       <td><span style="font-size: 0.8rem; color: var(--color-accent);">${runner.kitpoint || 'Jahangirnagar University'}</span></td>
       <td>${runner.blood || 'N/A'}</td>
-      <td><code style="color:var(--color-accent); font-weight:700; font-family:monospace; font-size:0.85rem;">${txnLabel}</code></td>
+      <td>
+        <code style="color:var(--color-accent); font-weight:700; font-family:monospace; font-size:0.85rem;">${txnLabel}</code>
+        ${isDupTxn ? `<span class="badge" style="background: rgba(255,59,48,0.25); color: #ff4d4f; border: 1px solid rgba(255,59,48,0.5); font-size: 0.68rem; margin-left: 4px; font-weight:700;" title="Duplicate Transaction ID found!">⚠️ Dup</span>` : ''}
+      </td>
       <td><span class="badge-status ${statusClass}" data-bib="${runner.bib}" style="cursor:pointer;" title="Click to Toggle Status">${runner.status}</span></td>
       <td>
         ${smsLog ? `

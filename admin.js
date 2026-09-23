@@ -164,6 +164,7 @@ async function initAdminDashboard() {
   setupEditRunnerHandler();
   initDeviceSecurityLogs();
   initBulkSmsManager();
+  initVolunteerManager();
 }
 
 async function loadDatabase() {
@@ -1340,6 +1341,53 @@ async function loadEventSettings() {
   if (status10KInput) status10KInput.value = settings.status_10k || 'open';
   if (status5KInput) status5KInput.value = settings.status_5k || 'open';
   if (raceDateInput && settings.race_date) raceDateInput.value = settings.race_date;
+
+  // Volunteer Status Handling
+  const volStatusInput = document.getElementById('settingVolunteerStatus');
+  let currentVolStatus = settings.volunteer_status || 'open';
+
+  // Check volunteer_settings fallback in localStorage
+  try {
+    const vLocal = localStorage.getItem('jucsu_volunteer_settings');
+    if (vLocal) {
+      const parsed = JSON.parse(vLocal);
+      if (parsed && parsed.status) currentVolStatus = parsed.status;
+    }
+  } catch (e) {}
+
+  if (volStatusInput) {
+    volStatusInput.value = currentVolStatus;
+  }
+  updateVolunteerBadges(currentVolStatus);
+}
+
+function updateVolunteerBadges(status) {
+  const volLiveBadge = document.getElementById('volStatusLiveBadge');
+  const volStatBadge = document.getElementById('volStatsOpenBadge');
+
+  if (status === 'closed') {
+    if (volLiveBadge) {
+      volLiveBadge.textContent = '🔴 CLOSED';
+      volLiveBadge.style.background = 'rgba(235, 50, 65, 0.2)';
+      volLiveBadge.style.color = '#ff8890';
+    }
+    if (volStatBadge) {
+      volStatBadge.textContent = 'Closed';
+      volStatBadge.style.background = 'rgba(235, 50, 65, 0.2)';
+      volStatBadge.style.color = '#ff8890';
+    }
+  } else {
+    if (volLiveBadge) {
+      volLiveBadge.textContent = '🟢 ACTIVE';
+      volLiveBadge.style.background = 'rgba(0, 255, 136, 0.15)';
+      volLiveBadge.style.color = '#00ff88';
+    }
+    if (volStatBadge) {
+      volStatBadge.textContent = 'Open';
+      volStatBadge.style.background = 'rgba(0, 255, 136, 0.15)';
+      volStatBadge.style.color = '#00ff88';
+    }
+  }
 }
 
 function setupEventSettingsHandler() {
@@ -1349,12 +1397,15 @@ function setupEventSettingsHandler() {
   const raceDateInput = document.getElementById('settingRaceDate');
   const status10KInput = document.getElementById('settingStatus10K');
   const status5KInput = document.getElementById('settingStatus5K');
+  const volStatusInput = document.getElementById('settingVolunteerStatus');
   const statusSpan = document.getElementById('settingsSaveStatus');
 
   if (!saveBtn) return;
 
   saveBtn.onclick = async (e) => {
     e.preventDefault();
+    const volunteerStatus = volStatusInput ? volStatusInput.value : 'open';
+
     const payload = {
       id: 'main_event',
       reg_close_date: regCloseInput.value.trim() || '8 September 2026',
@@ -1362,13 +1413,18 @@ function setupEventSettingsHandler() {
       status_10k: status10KInput ? status10KInput.value : 'open',
       status_5k: status5KInput ? status5KInput.value : 'open',
       race_date: raceDateInput ? raceDateInput.value : '2026-10-02T06:10',
+      volunteer_status: volunteerStatus,
       updated_at: new Date().toISOString()
     };
 
     // Save to LocalStorage immediately
     try {
       localStorage.setItem('jucsu_event_settings', JSON.stringify(payload));
+      localStorage.setItem('jucsu_volunteer_settings', JSON.stringify({ status: volunteerStatus }));
     } catch (e) {}
+
+    // Update live badges
+    updateVolunteerBadges(volunteerStatus);
 
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<span>Saving...</span>';
@@ -1382,6 +1438,15 @@ function setupEventSettingsHandler() {
         const { error } = await supabaseClient
           .from('event_settings')
           .upsert(payload, { onConflict: 'id' });
+
+        // Also upsert dedicated volunteer_settings record
+        await supabaseClient
+          .from('event_settings')
+          .upsert({
+            id: 'volunteer_settings',
+            data: { status: volunteerStatus },
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'id' });
 
         if (error) {
           console.warn('Supabase event_settings upsert error:', error);
@@ -3964,5 +4029,332 @@ function initBulkSmsManager() {
     markBibRangeBtnEl.onclick = markBibRangeAsSent;
   }
 }
+
+/* ==========================================
+   VOLUNTEER MANAGEMENT SYSTEM (ADMIN PANEL)
+   ========================================== */
+let volunteerDatabase = [];
+
+async function initVolunteerManager() {
+  const roleFilter = document.getElementById('volRoleFilter');
+  const statusFilter = document.getElementById('volStatusFilter');
+  const searchInput = document.getElementById('volSearchInput');
+  const exportCsvBtn = document.getElementById('exportVolunteersCsvBtn');
+
+  // Setup Global Window Handlers for row buttons
+  window.updateVolunteerStatus = updateVolunteerStatus;
+  window.deleteVolunteerRecord = deleteVolunteerRecord;
+
+  // Filter Listeners
+  if (roleFilter) roleFilter.onchange = () => renderVolunteersTable();
+  if (statusFilter) statusFilter.onchange = () => renderVolunteersTable();
+  if (searchInput) searchInput.oninput = () => renderVolunteersTable();
+  if (exportCsvBtn) exportCsvBtn.onclick = exportVolunteersCsv;
+
+  // Initial load
+  await loadVolunteers();
+}
+
+async function loadVolunteers() {
+  // 1. Try Supabase
+  if (supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('volunteers')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        volunteerDatabase = data;
+        try {
+          localStorage.setItem('jucsu_volunteers_records', JSON.stringify(data));
+        } catch (e) {}
+        renderVolunteersTable();
+        updateVolunteerStats();
+        return;
+      }
+    } catch (err) {
+      console.warn('Supabase volunteer load fallback:', err);
+    }
+  }
+
+  // 2. Fallback to LocalStorage
+  try {
+    const local = localStorage.getItem('jucsu_volunteers_records');
+    if (local) {
+      volunteerDatabase = JSON.parse(local);
+    }
+  } catch (e) {}
+
+  renderVolunteersTable();
+  updateVolunteerStats();
+}
+
+function updateVolunteerStats() {
+  const total = volunteerDatabase.length;
+  const approved = volunteerDatabase.filter(v => (v.status || '').toLowerCase() === 'approved').length;
+  const pending = volunteerDatabase.filter(v => (v.status || '').toLowerCase() === 'pending').length;
+
+  const statTotalEl = document.getElementById('statVolunteers');
+  const statApprEl = document.getElementById('statVolunteersApproved');
+  const badgeCountEl = document.getElementById('volBadgeCount');
+  const summaryEl = document.getElementById('volStatsSummary');
+
+  if (statTotalEl) statTotalEl.textContent = total;
+  if (statApprEl) statApprEl.textContent = `${approved} Approved`;
+  if (badgeCountEl) badgeCountEl.textContent = `${total} Candidates`;
+  if (summaryEl) summaryEl.textContent = `Approved: ${approved} | Pending: ${pending}`;
+}
+
+function renderVolunteersTable() {
+  const tbody = document.getElementById('volTableBody');
+  const footerSummary = document.getElementById('volFooterSummary');
+  if (!tbody) return;
+
+  const roleFilter = document.getElementById('volRoleFilter')?.value || 'all';
+  const statusFilter = document.getElementById('volStatusFilter')?.value || 'all';
+  const query = (document.getElementById('volSearchInput')?.value || '').trim().toLowerCase();
+
+  let filtered = [...volunteerDatabase];
+
+  // Role filter
+  if (roleFilter !== 'all') {
+    filtered = filtered.filter(v => v.preferred_role === roleFilter);
+  }
+
+  // Status filter
+  if (statusFilter !== 'all') {
+    filtered = filtered.filter(v => (v.status || '').toLowerCase() === statusFilter.toLowerCase());
+  }
+
+  // Search filter
+  if (query) {
+    filtered = filtered.filter(v => {
+      const name = (v.name || '').toLowerCase();
+      const phone = (v.phone || '').toLowerCase();
+      const email = (v.email || '').toLowerCase();
+      const dept = (v.dept_batch || '').toLowerCase();
+      const id = (v.vol_id || '').toLowerCase();
+      return name.includes(query) || phone.includes(query) || email.includes(query) || dept.includes(query) || id.includes(query);
+    });
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="11" style="text-align: center; padding: 30px; color: var(--color-text-muted);">
+          কোনো ভলান্টিয়ার আবেদন পাওয়া যায়নি (No volunteers matched the filter).
+        </td>
+      </tr>
+    `;
+    if (footerSummary) {
+      const summaryLeft = footerSummary.querySelector('span:first-child');
+      if (summaryLeft) summaryLeft.textContent = `Showing 0 of ${volunteerDatabase.length} entries`;
+    }
+    return;
+  }
+
+  let html = '';
+  filtered.forEach(v => {
+    const status = v.status || 'Pending';
+    const isApproved = status.toLowerCase() === 'approved';
+    const isRejected = status.toLowerCase() === 'rejected';
+
+    let statusBadge = '';
+    if (isApproved) {
+      statusBadge = `<span class="badge" style="background: rgba(0,255,136,0.15); color: #00ff88; border: 1px solid rgba(0,255,136,0.3); padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 0.72rem;">✓ Approved</span>`;
+    } else if (isRejected) {
+      statusBadge = `<span class="badge" style="background: rgba(235,50,65,0.15); color: #ff8890; border: 1px solid rgba(235,50,65,0.3); padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 0.72rem;">✕ Rejected</span>`;
+    } else {
+      statusBadge = `<span class="badge" style="background: rgba(255,170,0,0.15); color: #ffaa00; border: 1px solid rgba(255,170,0,0.3); padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 0.72rem;">⏳ Pending</span>`;
+    }
+
+    const cleanPhone = (v.phone || '').replace(/[^0-9]/g, '');
+    const waLink = cleanPhone ? `https://wa.me/88${cleanPhone.startsWith('88') ? cleanPhone : cleanPhone.startsWith('0') ? cleanPhone : '0' + cleanPhone}` : '#';
+
+    html += `
+      <tr>
+        <td style="font-family: monospace; font-weight: 700; color: var(--color-accent);">${escapeAdminHtml(v.vol_id || '-')}</td>
+        <td>
+          <strong style="color: #fff; display: block;">${escapeAdminHtml(v.name || '-')}</strong>
+          ${v.experience && v.experience !== 'None provided' ? `<span style="font-size: 0.72rem; color: var(--color-text-muted); display: block;" title="${escapeAdminHtml(v.experience)}">💬 ${escapeAdminHtml(v.experience.slice(0, 30))}${v.experience.length > 30 ? '...' : ''}</span>` : ''}
+        </td>
+        <td>
+          <a href="${waLink}" target="_blank" rel="noopener" style="color: #00e5ff; text-decoration: none; font-weight: 600;" title="WhatsApp এ মেসেজ পাঠান">
+            💬 ${escapeAdminHtml(v.phone || '-')}
+          </a>
+        </td>
+        <td style="font-size: 0.78rem;">
+          <a href="mailto:${escapeAdminHtml(v.email || '')}" style="color: var(--color-text-muted); text-decoration: none;">
+            ${escapeAdminHtml(v.email || '-')}
+          </a>
+        </td>
+        <td style="font-size: 0.8rem; color: #cbd5e0;">${escapeAdminHtml(v.dept_batch || '-')}</td>
+        <td style="font-size: 0.8rem;">
+          <span style="color: #cbd5e0;">${escapeAdminHtml(v.gender || '-')}</span>
+          <span class="badge-lime" style="font-size: 0.7rem; padding: 1px 5px; margin-left: 4px;">${escapeAdminHtml(v.blood || '-')}</span>
+        </td>
+        <td><strong style="color: var(--color-accent);">${escapeAdminHtml(v.tshirt || '-')}</strong></td>
+        <td style="font-size: 0.8rem; color: #fff;">${escapeAdminHtml(v.preferred_role || '-')}</td>
+        <td>${statusBadge}</td>
+        <td>
+          <div style="display: flex; gap: 4px; align-items: center;">
+            ${!isApproved ? `
+              <button type="button" class="btn btn-outline btn-sm text-success" style="padding: 2px 7px; font-size: 0.7rem; border-color: rgba(0,255,136,0.4);" onclick="updateVolunteerStatus('${v.vol_id}', 'Approved')" title="Approve this volunteer">
+                ✓ Approve
+              </button>
+            ` : `
+              <button type="button" class="btn btn-outline btn-sm text-warning" style="padding: 2px 7px; font-size: 0.7rem; border-color: rgba(255,170,0,0.4);" onclick="updateVolunteerStatus('${v.vol_id}', 'Pending')" title="Revert to pending">
+                ↺ Revert
+              </button>
+            `}
+            ${!isRejected ? `
+              <button type="button" class="btn btn-outline btn-sm text-danger" style="padding: 2px 6px; font-size: 0.7rem; border-color: rgba(235,50,65,0.4);" onclick="updateVolunteerStatus('${v.vol_id}', 'Rejected')" title="Reject candidate">
+                ✕
+              </button>
+            ` : ''}
+            <button type="button" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 0.7rem; border-color: rgba(255,255,255,0.2); color: #ff6b6b;" onclick="deleteVolunteerRecord('${v.vol_id}')" title="Delete record">
+              🗑️
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+
+  if (footerSummary) {
+    const summaryLeft = footerSummary.querySelector('span:first-child');
+    if (summaryLeft) summaryLeft.textContent = `Showing ${filtered.length} of ${volunteerDatabase.length} entries`;
+  }
+}
+
+async function updateVolunteerStatus(volId, newStatus) {
+  const index = volunteerDatabase.findIndex(v => v.vol_id === volId);
+  if (index === -1) return;
+
+  volunteerDatabase[index].status = newStatus;
+  renderVolunteersTable();
+  updateVolunteerStats();
+
+  // Try updating Supabase
+  if (supabaseClient) {
+    try {
+      const { error } = await supabaseClient
+        .from('volunteers')
+        .update({ status: newStatus })
+        .eq('vol_id', volId);
+      if (error) console.warn('Supabase volunteer status update error:', error);
+    } catch (err) {
+      console.warn('Supabase volunteer update exception:', err);
+    }
+  }
+
+  // Backup LocalStorage
+  try {
+    localStorage.setItem('jucsu_volunteers_records', JSON.stringify(volunteerDatabase));
+  } catch (e) {}
+}
+
+async function deleteVolunteerRecord(volId) {
+  if (!confirm(`আপনি কি নিশ্চিতভাবে এই ভলান্টিয়ার আবেদনটি (${volId}) মুছে ফেলতে চান?`)) {
+    return;
+  }
+
+  volunteerDatabase = volunteerDatabase.filter(v => v.vol_id !== volId);
+  renderVolunteersTable();
+  updateVolunteerStats();
+
+  // Try deleting from Supabase
+  if (supabaseClient) {
+    try {
+      const { error } = await supabaseClient
+        .from('volunteers')
+        .delete()
+        .eq('vol_id', volId);
+      if (error) console.warn('Supabase volunteer delete error:', error);
+    } catch (err) {
+      console.warn('Supabase volunteer delete exception:', err);
+    }
+  }
+
+  // Backup LocalStorage
+  try {
+    localStorage.setItem('jucsu_volunteers_records', JSON.stringify(volunteerDatabase));
+  } catch (e) {}
+}
+
+function exportVolunteersCsv() {
+  if (volunteerDatabase.length === 0) {
+    alert('কোনো ভলান্টিয়ার ডাটা পাওয়া যায়নি (No volunteer records to export).');
+    return;
+  }
+
+  const headers = [
+    'Vol ID',
+    'Full Name',
+    'Phone',
+    'Email',
+    'Department & Batch',
+    'Gender',
+    'Blood Group',
+    'T-Shirt Size',
+    'Preferred Role',
+    'Availability',
+    'Experience',
+    'Status',
+    'Submitted At'
+  ];
+
+  let csvContent = headers.join(',') + '\r\n';
+
+  volunteerDatabase.forEach(v => {
+    const row = [
+      escapeCsv(v.vol_id || ''),
+      escapeCsv(v.name || ''),
+      escapeCsv(v.phone || ''),
+      escapeCsv(v.email || ''),
+      escapeCsv(v.dept_batch || ''),
+      escapeCsv(v.gender || ''),
+      escapeCsv(v.blood || ''),
+      escapeCsv(v.tshirt || ''),
+      escapeCsv(v.preferred_role || ''),
+      escapeCsv(v.availability || ''),
+      escapeCsv(v.experience || ''),
+      escapeCsv(v.status || 'Pending'),
+      escapeCsv(v.created_at || '')
+    ];
+    csvContent += row.join(',') + '\r\n';
+  });
+
+  // Prepend UTF-8 BOM so Excel opens Bengali and Unicode cleanly
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `JUCSU_RUN_2026_Volunteers_${new Date().toISOString().slice(0,10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function escapeCsv(val) {
+  if (!val) return '""';
+  const str = String(val).replace(/"/g, '""');
+  return `"${str}"`;
+}
+
+function escapeAdminHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 
 

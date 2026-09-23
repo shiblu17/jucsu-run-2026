@@ -109,6 +109,21 @@
           </p>
         </div>
       </div>
+
+      <!-- Volunteer Applications Stat Card -->
+      <div class="admin-stat-card glass-panel border-lime" style="position: relative;" title="Registered Volunteers">
+        <span class="card-icon" style="color: var(--color-accent);">🤝</span>
+        <div class="card-info" style="flex-grow: 1;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+            <h4 id="statVolunteers">0</h4>
+            <span id="volStatsOpenBadge" class="badge-lime" style="font-size: 0.65rem; padding: 2px 6px;">Open</span>
+          </div>
+          <p style="display: flex; align-items: center; justify-content: space-between; margin: 0; font-size: 0.8rem;">
+            <span>Volunteers</span>
+            <span id="statVolunteersApproved" style="font-size: 0.68rem; color: #00ff88; font-weight: 700;">0 Approved</span>
+          </p>
+        </div>
+      </div>
     </section>
 
     <!-- Two Column Utility Section -->
@@ -186,6 +201,26 @@
                     <option value="closed">🔴 Closed (বন্ধ / স্লট ফুল)</option>
                   </select>
                 </div>
+              </div>
+            </div>
+
+            <!-- Volunteer Registration Control (Open / Closed) -->
+            <div style="background: rgba(0,0,0,0.25); padding: 14px; border-radius: 10px; border: 1px solid rgba(0, 255, 136, 0.25); margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h4 style="font-size: 0.85rem; color: #00ff88; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
+                  <span>🤝</span>
+                  <span>Volunteer Registration Control (ভলান্টিয়ার অন/অফ)</span>
+                </h4>
+                <span id="volStatusLiveBadge" style="font-size: 0.7rem; padding: 2px 7px; border-radius: 4px; background: rgba(0, 255, 136, 0.15); color: #00ff88; font-weight: 700;">🟢 ACTIVE</span>
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <select id="settingVolunteerStatus" class="form-select" style="background: rgba(0,0,0,0.35); color: #fff; font-size: 0.85rem;">
+                  <option value="open" selected>🟢 Open (ভলান্টিয়ার আবেদন গ্রহণ চালু)</option>
+                  <option value="closed">🔴 Closed (ভলান্টিয়ার আবেদন বন্ধ / কোটা পূর্ণ)</option>
+                </select>
+                <span style="font-size: 0.72rem; color: var(--color-text-muted); display: block; margin-top: 4px;">
+                  'Closed' সিলেক্ট করে সেভ করলে ওয়েবসাইটে ভলান্টিয়ার ফর্ম স্বয়ংক্রিয়ভাবে বন্ধ হয়ে নোটিশ দেখাবে।
+                </span>
               </div>
             </div>
 
@@ -611,7 +646,8 @@ JU Campus (Shaheed Minar) | Expected Arrival: 05:35 AM</textarea>
             <p style="font-size: 0.8rem; color: #cbd5e0; margin-bottom: 8px; line-height: 1.5;">
               মোবাইল ফোন ও সকল ভিজিটরের ডিভাইসে একসাথে সেটিংস (অন/অফ/তারিখ) লাইভ আপডেট করতে আপনার <strong>Supabase Dashboard -> SQL Editor</strong>-এ গিয়ে নিচের কোডটি রান করুন:
             </p>
-            <pre style="background: rgba(0,0,0,0.6); padding: 12px; border-radius: 6px; font-size: 0.78rem; color: #00ff88; overflow-x: auto; border: 1px solid rgba(255,255,255,0.08); font-family: monospace; line-height: 1.4;">create table if not exists public.event_settings (
+            <pre style="background: rgba(0,0,0,0.6); padding: 12px; border-radius: 6px; font-size: 0.78rem; color: #00ff88; overflow-x: auto; border: 1px solid rgba(255,255,255,0.08); font-family: monospace; line-height: 1.4;">-- 1. EVENT SETTINGS TABLE
+create table if not exists public.event_settings (
   id text primary key,
   data jsonb,
   reg_close_date text,
@@ -621,16 +657,32 @@ JU Campus (Shaheed Minar) | Expected Arrival: 05:35 AM</textarea>
   race_date text,
   updated_at timestamp with time zone default now()
 );
-
 alter table public.event_settings enable row level security;
+create policy "Allow all access to event_settings" on public.event_settings for all using (true) with check (true);
 
-create policy "Allow all access to event_settings"
-on public.event_settings
-for all
-using (true)
-with check (true);</pre>
-            <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
-              <button type="button" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 4px 10px;" onclick="navigator.clipboard.writeText(`create table if not exists public.event_settings (\n  id text primary key,\n  data jsonb,\n  reg_close_date text,\n  reg_status text,\n  status_10k text,\n  status_5k text,\n  race_date text,\n  updated_at timestamp with time zone default now()\n);\n\nalter table public.event_settings enable row level security;\n\ncreate policy \&quot;Allow all access to event_settings\&quot;\non public.event_settings\nfor all\nusing (true)\nwith check (true);`); alert('SQL Code copied to clipboard!');">📋 Copy SQL Code</button>
+-- 2. VOLUNTEERS TABLE
+create table if not exists public.volunteers (
+  id uuid default gen_random_uuid() primary key,
+  vol_id text unique not null,
+  name text not null,
+  phone text not null,
+  email text not null,
+  dept_batch text not null,
+  gender text not null,
+  blood text,
+  tshirt text not null,
+  preferred_role text not null,
+  experience text,
+  availability text not null,
+  status text not null default 'Pending',
+  created_at timestamp with time zone default now()
+);
+alter table public.volunteers enable row level security;
+create policy "Allow public insert on volunteers" on public.volunteers for insert with check (true);
+create policy "Allow public read on volunteers" on public.volunteers for select using (true);
+create policy "Allow admin full access on volunteers" on public.volunteers for all using (true) with check (true);</pre>
+            <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <button type="button" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 4px 10px;" onclick="navigator.clipboard.writeText(`create table if not exists public.event_settings (\n  id text primary key,\n  data jsonb,\n  reg_close_date text,\n  reg_status text,\n  status_10k text,\n  status_5k text,\n  race_date text,\n  updated_at timestamp with time zone default now()\n);\nalter table public.event_settings enable row level security;\ncreate policy \&quot;Allow all access to event_settings\&quot; on public.event_settings for all using (true) with check (true);\n\ncreate table if not exists public.volunteers (\n  id uuid default gen_random_uuid() primary key,\n  vol_id text unique not null,\n  name text not null,\n  phone text not null,\n  email text not null,\n  dept_batch text not null,\n  gender text not null,\n  blood text,\n  tshirt text not null,\n  preferred_role text not null,\n  experience text,\n  availability text not null,\n  status text not null default 'Pending',\n  created_at timestamp with time zone default now()\n);\nalter table public.volunteers enable row level security;\ncreate policy \&quot;Allow public insert on volunteers\&quot; on public.volunteers for insert with check (true);\ncreate policy \&quot;Allow public read on volunteers\&quot; on public.volunteers for select using (true);\ncreate policy \&quot;Allow admin full access on volunteers\&quot; on public.volunteers for all using (true) with check (true);`); alert('All SQL Code copied to clipboard!');">📋 Copy Complete SQL Code</button>
               <a href="https://supabase.com/dashboard/project/xvsmesiaxvlqzvaalarj/sql/new" target="_blank" rel="noopener" class="btn btn-lime btn-sm" style="font-size: 0.75rem; padding: 4px 10px; text-decoration: none;">🚀 Open Supabase SQL Editor ↗</a>
             </div>
           </div>
@@ -1092,6 +1144,87 @@ with check (true);</pre>
           </div>
         </div>
 
+        <!-- Volunteer Applications Management Panel -->
+        <div class="panel glass-panel border-lime" style="margin-top: 25px; border: 1px solid rgba(0, 255, 136, 0.35); background: linear-gradient(180deg, rgba(0,255,136,0.02) 0%, rgba(0,0,0,0.25) 100%);">
+          <div class="panel-header-table" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <div>
+              <h3 class="panel-title" style="margin: 0; color: #fff; display: flex; align-items: center; gap: 8px;">
+                <span>🤝</span>
+                <span>Volunteer Applications Database</span>
+                <span id="volBadgeCount" style="background: rgba(0,255,136,0.15); color: #00ff88; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0,255,136,0.3);">0 Candidates</span>
+              </h3>
+              <p style="font-size: 0.78rem; color: var(--color-text-muted); margin: 3px 0 0 0;">
+                Review volunteer submissions, assign/approve status, and download records as Excel/CSV.
+              </p>
+            </div>
+            
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <!-- Role Filter -->
+              <select id="volRoleFilter" class="form-select form-input-sm" style="background: rgba(0,0,0,0.4); color: #fff; font-size: 0.8rem; width: auto; font-weight: 600; cursor: pointer;">
+                <option value="all">🔍 All Roles (সকল দায়িত্ব)</option>
+                <option value="Hydration & Water Station">💧 Hydration & Water</option>
+                <option value="Route Marshall & Safety">🏁 Route Marshall</option>
+                <option value="Bib & Kit Distribution">🎽 Kit Distribution</option>
+                <option value="Finish Line & Medals">🥇 Finish Line & Medals</option>
+                <option value="Medical & First Aid Support">🚑 First Aid Support</option>
+                <option value="Media & Photography">📷 Media & Coverage</option>
+                <option value="Helpdesk & Runner Care">ℹ️ Helpdesk & Care</option>
+              </select>
+
+              <!-- Status Filter -->
+              <select id="volStatusFilter" class="form-select form-input-sm" style="background: rgba(0,0,0,0.4); color: var(--color-accent); font-size: 0.8rem; width: auto; font-weight: 600; cursor: pointer;">
+                <option value="all">All Status</option>
+                <option value="Approved">✅ Approved (নির্বাচিত)</option>
+                <option value="Pending">⏳ Pending (বিবেচনাধীন)</option>
+                <option value="Rejected">❌ Rejected</option>
+              </select>
+
+              <!-- Export CSV Button -->
+              <button type="button" id="exportVolunteersCsvBtn" class="btn btn-lime btn-sm" style="height: auto; padding: 8px 14px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;">
+                <span>📥</span> Export Volunteers (.CSV)
+              </button>
+
+              <!-- Search Box -->
+              <div class="table-search-box">
+                <input type="text" id="volSearchInput" class="form-input form-input-sm" placeholder="Search volunteer name, phone, dept...">
+              </div>
+            </div>
+          </div>
+
+          <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+            <table class="db-table" id="volTable">
+              <thead style="position: sticky; top: 0; background: #002e1b; z-index: 1;">
+                <tr>
+                  <th>Vol ID</th>
+                  <th>Full Name</th>
+                  <th>Phone / WhatsApp</th>
+                  <th>Email</th>
+                  <th>Dept / Batch</th>
+                  <th>Gender</th>
+                  <th>Blood</th>
+                  <th>T-Shirt</th>
+                  <th>Preferred Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="volTableBody">
+                <!-- Dynamically Populated Rows -->
+                <tr>
+                  <td colspan="11" style="text-align: center; padding: 24px; color: var(--color-text-muted);">
+                    Loading volunteer applications...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="table-footer-summary" id="volFooterSummary" style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; font-size: 0.8rem; color: var(--color-text-muted);">
+            <span>Showing 0 of 0 entries</span>
+            <span id="volStatsSummary" style="color: var(--color-accent); font-weight: 600;">Approved: 0 | Pending: 0</span>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -1453,6 +1586,6 @@ with check (true);</pre>
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=4.6"></script>
+  <script src="admin.js?v=4.7"></script>
 </body>
 </html>

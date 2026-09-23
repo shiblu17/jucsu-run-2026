@@ -48,6 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Logistics & Bus Route Tabs
   initLogisticsTabs();
+
+  // Volunteer Registration & Status Management
+  initVolunteerSection();
 });
 
 /* ==========================================
@@ -1975,4 +1978,262 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+/* ==========================================
+   VOLUNTEER REGISTRATION & STATUS SYSTEM
+   ========================================== */
+async function initVolunteerSection() {
+  const form = document.getElementById('volunteerForm');
+  const formContainer = document.getElementById('volunteerFormContainer');
+  const closedNotice = document.getElementById('volunteerClosedNotice');
+  const closedMsgEl = document.getElementById('volunteerClosedMsg');
+  const successCard = document.getElementById('volunteerSuccessCard');
+  const errorEl = document.getElementById('volFormError');
+  const submitBtn = document.getElementById('volSubmitBtn');
+  const resetBtn = document.getElementById('volResetFormBtn');
+
+  if (!form && !closedNotice) return;
+
+  // 1. Fetch Volunteer Registration Status (Supabase -> LocalStorage -> Default)
+  let volStatus = 'open';
+  let volCustomMsg = '';
+
+  if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+    try {
+      // First check dedicated volunteer_settings
+      const { data, error } = await supabaseClient
+        .from('event_settings')
+        .select('*')
+        .eq('id', 'volunteer_settings')
+        .maybeSingle();
+
+      if (data && !error && data.data) {
+        volStatus = data.data.status || 'open';
+        volCustomMsg = data.data.closed_msg || '';
+        try {
+          localStorage.setItem('jucsu_volunteer_settings', JSON.stringify(data.data));
+        } catch (e) {}
+      } else {
+        // Also check if volunteer_status is in main_event
+        const { data: mainData } = await supabaseClient
+          .from('event_settings')
+          .select('*')
+          .eq('id', 'main_event')
+          .maybeSingle();
+        if (mainData && mainData.data && mainData.data.volunteer_status) {
+          volStatus = mainData.data.volunteer_status;
+        }
+      }
+    } catch (err) {
+      console.warn('Volunteer settings Supabase fetch fallback:', err);
+    }
+  }
+
+  // 2. Fallback to LocalStorage
+  if (!volStatus || volStatus === 'open') {
+    try {
+      const local = localStorage.getItem('jucsu_volunteer_settings');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (parsed && parsed.status) {
+          volStatus = parsed.status;
+          if (parsed.closed_msg) volCustomMsg = parsed.closed_msg;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 3. Render Status (Open vs Closed)
+  if (volStatus === 'closed') {
+    if (closedNotice) {
+      closedNotice.classList.remove('hidden');
+      if (volCustomMsg && closedMsgEl) {
+        closedMsgEl.textContent = volCustomMsg;
+      }
+    }
+    if (formContainer) {
+      formContainer.classList.add('hidden');
+    }
+  } else {
+    if (closedNotice) closedNotice.classList.add('hidden');
+    if (formContainer) formContainer.classList.remove('hidden');
+  }
+
+  // 4. Form Submit Listener
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (errorEl) {
+        errorEl.classList.add('hidden');
+        errorEl.textContent = '';
+      }
+
+      const name = (document.getElementById('volName')?.value || '').trim();
+      let phone = (document.getElementById('volPhone')?.value || '').trim();
+      const email = (document.getElementById('volEmail')?.value || '').trim().toLowerCase();
+      const deptBatch = (document.getElementById('volDeptBatch')?.value || '').trim();
+      const gender = (document.getElementById('volGender')?.value || '').trim();
+      const blood = (document.getElementById('volBlood')?.value || '').trim();
+      const tshirt = (document.getElementById('volTshirt')?.value || '').trim();
+      const role = (document.getElementById('volRole')?.value || '').trim();
+      const experience = (document.getElementById('volExperience')?.value || '').trim();
+      const isAvailable = document.getElementById('volAvailability')?.checked;
+
+      // Validation
+      if (!name || name.length < 2) {
+        showVolError('অনুগ্রহ করে আপনার সঠিক পূর্ণ নাম লিখুন।');
+        return;
+      }
+
+      // Normalize BD Phone
+      phone = phone.replace(/[^0-9+]/g, '');
+      if (phone.startsWith('+880')) phone = '0' + phone.slice(4);
+      else if (phone.startsWith('880')) phone = '0' + phone.slice(3);
+
+      const bdPhoneRegex = /^01[3-9]\d{8}$/;
+      if (!bdPhoneRegex.test(phone)) {
+        showVolError('অনুগ্রহ করে একটি সঠিক ১১ ডিজিটের বাংলাদেশি মোবাইল নম্বর লিখুন (যেমন: 017XXXXXXXX)।');
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRegex.test(email)) {
+        showVolError('অনুগ্রহ করে একটি কার্যকর ইমেইল অ্যাড্রেস লিখুন।');
+        return;
+      }
+
+      if (!deptBatch) {
+        showVolError('অনুগ্রহ করে আপনার বিভাগ ও ব্যাচ / প্রতিষ্ঠান উল্লেখ করুন।');
+        return;
+      }
+
+      if (!gender) {
+        showVolError('অনুগ্রহ করে আপনার জেন্ডার নির্বাচন করুন।');
+        return;
+      }
+
+      if (!blood) {
+        showVolError('অনুগ্রহ করে আপনার রক্তের গ্রুপ নির্বাচন করুন।');
+        return;
+      }
+
+      if (!tshirt) {
+        showVolError('অনুগ্রহ করে ভলান্টিয়ার টি-শার্টের সাইজ নির্বাচন করুন।');
+        return;
+      }
+
+      if (!role) {
+        showVolError('অনুগ্রহ করে আপনার পছন্দের কাজের ক্ষেত্র (Role) নির্বাচন করুন।');
+        return;
+      }
+
+      if (!isAvailable) {
+        showVolError('অনুগ্রহ করে ২রা অক্টোবর ভোরে উপস্থিত থাকার নিশ্চয়তা প্রদান করুন।');
+        return;
+      }
+
+      // Generate unique Volunteer Reference ID
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      const volId = `VOL-2026-${randomNum}`;
+
+      const volunteerData = {
+        vol_id: volId,
+        name,
+        phone,
+        email,
+        dept_batch: deptBatch,
+        gender,
+        blood,
+        tshirt,
+        preferred_role: role,
+        experience: experience || 'None provided',
+        availability: 'Yes (Confirmed 05:00 AM JU Campus)',
+        status: 'Pending',
+        created_at: new Date().toISOString()
+      };
+
+      // Button loading state
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>আবেদন সংরক্ষণ করা হচ্ছে... ⏳</span>';
+      }
+
+      let saved = false;
+
+      // 1. Try Supabase Insert
+      if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+        try {
+          const { error } = await supabaseClient
+            .from('volunteers')
+            .insert([volunteerData]);
+
+          if (error) {
+            console.warn('Supabase volunteer insert error:', error);
+          } else {
+            saved = true;
+          }
+        } catch (err) {
+          console.warn('Supabase volunteer insert exception:', err);
+        }
+      }
+
+      // 2. Always backup to LocalStorage for offline resiliency
+      try {
+        const localVols = JSON.parse(localStorage.getItem('jucsu_volunteers_records') || '[]');
+        localVols.unshift(volunteerData);
+        localStorage.setItem('jucsu_volunteers_records', JSON.stringify(localVols));
+        saved = true;
+      } catch (e) {}
+
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>স্বেচ্ছাসেবক হিসেবে আবেদন জমা দিন →</span>';
+      }
+
+      // 3. Show Success View
+      const idEl = document.getElementById('volSuccessId');
+      const nameEl = document.getElementById('volSuccessName');
+      const roleEl = document.getElementById('volSuccessRole');
+      const tshirtEl = document.getElementById('volSuccessTshirt');
+
+      if (idEl) idEl.textContent = volId;
+      if (nameEl) nameEl.textContent = name;
+      if (roleEl) roleEl.textContent = role;
+      if (tshirtEl) tshirtEl.textContent = tshirt;
+
+      form.classList.add('hidden');
+      if (successCard) {
+        successCard.classList.remove('hidden');
+        successCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }
+
+  // Reset form button
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      if (form) {
+        form.reset();
+        form.classList.remove('hidden');
+      }
+      if (successCard) {
+        successCard.classList.add('hidden');
+      }
+      if (errorEl) {
+        errorEl.classList.add('hidden');
+      }
+    });
+  }
+
+  function showVolError(msg) {
+    if (errorEl) {
+      errorEl.textContent = '⚠️ ' + msg;
+      errorEl.classList.remove('hidden');
+      errorEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      alert(msg);
+    }
+  }
+}
+
 

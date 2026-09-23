@@ -75,4 +75,43 @@ create policy "Allow all access to event_settings"
 on public.event_settings for all
 using (true)
 with check (true);
+
+
+3. VOLUNTEERS TABLE (Volunteer Registration Management):
+
+create table if not exists public.volunteers (
+  id uuid default gen_random_uuid() primary key,
+  vol_id text unique not null,
+  name text not null,
+  phone text not null,
+  email text not null,
+  dept_batch text not null,
+  gender text not null,
+  blood text,
+  tshirt text not null,
+  preferred_role text not null,
+  experience text,
+  availability text not null,
+  status text not null default 'Pending',
+  created_at timestamp with time zone default now()
+);
+
+alter table public.volunteers enable row level security;
+
+-- Allow public insert
+create policy "Allow public insert on volunteers"
+on public.volunteers for insert
+with check (true);
+
+-- Allow public read / search
+create policy "Allow public read on volunteers"
+on public.volunteers for select
+using (true);
+
+-- Allow admin full access
+create policy "Allow admin full access on volunteers"
+on public.volunteers for all
+using (true)
+with check (true);
 */
+

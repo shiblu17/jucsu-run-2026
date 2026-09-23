@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="index.css?v=3.8">
+  <link rel="stylesheet" href="index.css?v=3.9">
 </head>
 <body>
 
@@ -103,6 +103,7 @@
         <a href="#route" class="nav-link">Routes</a>
         <a href="#logistics" class="nav-link">Kit & Bus</a>
         <a href="#badges" class="nav-link">Runner Card</a>
+        <a href="#volunteer" class="nav-link">Volunteer</a>
         <a href="#faq" class="nav-link">FAQs</a>
       </nav>
       <div class="header-actions">
@@ -144,6 +145,7 @@
       <a href="#route" class="mobile-nav-link"><span>🗺️</span> Race Routes</a>
       <a href="#logistics" class="mobile-nav-link"><span>🚌</span> Kit & Bus Routes</a>
       <a href="#badges" class="mobile-nav-link"><span>🖼️</span> Social Runner Card</a>
+      <a href="#volunteer" class="mobile-nav-link"><span>🤝</span> Volunteer</a>
       <a href="#faq" class="mobile-nav-link"><span>❓</span> FAQs</a>
     </nav>
     <div class="mobile-menu-footer">
@@ -1276,6 +1278,205 @@
     </div>
   </section>
 
+  <!-- Volunteer Registration Section -->
+  <section id="volunteer" class="section volunteer-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="section-tag">🤝 Be The Heroes Behind The Scenes</span>
+        <h2 class="section-title">Join as a Volunteer</h2>
+        <div class="header-line"></div>
+        <p class="section-subtitle">
+          ক্যাম্পাসের ঐতিহাসিক ম্যারাথন সফল করতে আমরা খুঁজছি উদ্যমী স্বেচ্ছাসেবকদের। পেছনের কারিগর হয়ে এই স্মরণীয় ইভেন্টের অংশ হোন।
+        </p>
+      </div>
+
+      <!-- Volunteer Perks Showcase -->
+      <div class="volunteer-perks-wrap">
+        <h3 class="perks-heading text-center">
+          <span>✨</span> ভলান্টিয়ার হিসেবে আপনি যা যা পাবেন (Volunteer Perks)
+        </h3>
+        <div class="volunteer-perks-grid">
+          <div class="perk-card glass-panel">
+            <div class="perk-icon">👕</div>
+            <h4>এক্সক্লুসিভ ভলান্টিয়ার টি-শার্ট</h4>
+            <p>JUCSU RUN 2026 অফিসিয়াল ক্রু এডিশন প্রিমিয়াম ড্রাই-ফিট টি-শার্ট ও ভলান্টিয়ার আইডি কিট।</p>
+          </div>
+          <div class="perk-card glass-panel">
+            <div class="perk-icon">🥪</div>
+            <h4>খাবার ও রিফ্রেশমেন্ট</h4>
+            <p>ইভেন্ট ডে-তে পুষ্টিকর ব্রেকফাস্ট, ফ্রেশ রিফ্রেশমেন্ট ও সারাদিনের এনার্জি ড্রিংকস সাপোর্ট।</p>
+          </div>
+          <div class="perk-card glass-panel">
+            <div class="perk-icon">🤝</div>
+            <h4>ম্যারাথন আয়োজনের অনন্য অভিজ্ঞতা</h4>
+            <p>৮০০+ রানারদের মেগা ইভেন্ট পরিচালনা, টিম কোঅর্ডিনেশন ও লিডারশিপের বাস্তব অভিজ্ঞতা।</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Volunteer Status Notice Box (Dynamic: Hidden by default, shown if closed) -->
+      <div id="volunteerClosedNotice" class="volunteer-closed-box glass-panel hidden">
+        <div class="closed-badge">
+          <span class="closed-dot"></span>
+          <span>🔴 রেজিস্ট্রেশন বন্ধ (Closed)</span>
+        </div>
+        <h3 class="closed-title">ভলান্টিয়ার আবেদন গ্রহণ বর্তমানে বন্ধ রয়েছে</h3>
+        <p id="volunteerClosedMsg" class="closed-desc">
+          আমাদের নির্ধারিত ভলান্টিয়ার কোটা পূর্ণ হওয়ায় নতুন আবেদন গ্রহণ সাময়িকভাবে স্থগিত করা হয়েছে। আপনার অপরিসীম আগ্রহ ও ভালোবাসার জন্য আন্তরিক ধন্যবাদ!
+        </p>
+        <div class="closed-actions">
+          <a href="#about" class="btn btn-outline btn-sm">ইভেন্ট সম্পর্কে জানুন</a>
+          <a href="#checker" class="btn btn-glass-nav btn-sm">রানার বিব স্ট্যাটাস দেখুন</a>
+        </div>
+      </div>
+
+      <!-- Volunteer Registration Form Container -->
+      <div id="volunteerFormContainer" class="volunteer-form-wrap glass-panel">
+        <div class="vol-form-top-bar">
+          <div class="vol-form-title">
+            <span>📋</span> ভলান্টিয়ার নিবন্ধন ফর্ম (Volunteer Application)
+          </div>
+          <span class="vol-form-badge">স্লট সীমিত • দ্রুত আবেদন করুন</span>
+        </div>
+
+        <form id="volunteerForm" class="volunteer-form" novalidate>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="volName" class="form-label">পূর্ণ নাম (Full Name) <span class="text-lime">*</span></label>
+              <input type="text" id="volName" class="form-input" placeholder="e.g. সাদিয়া ইসলাম / মোঃ তানভীর" required>
+            </div>
+            <div class="form-group">
+              <label for="volPhone" class="form-label">মোবাইল নম্বর / WhatsApp <span class="text-lime">*</span></label>
+              <input type="tel" id="volPhone" class="form-input" placeholder="01XXXXXXXXX (11 Digits)" maxlength="11" required>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="volEmail" class="form-label">ইমেইল অ্যাড্রেস (Email Address) <span class="text-lime">*</span></label>
+              <input type="email" id="volEmail" class="form-input" placeholder="name@example.com" required>
+            </div>
+            <div class="form-group">
+              <label for="volDeptBatch" class="form-label">বিভাগ ও শিক্ষাবর্ষ / প্রতিষ্ঠান <span class="text-lime">*</span></label>
+              <input type="text" id="volDeptBatch" class="form-input" placeholder="e.g. Economics (Batch 50) / JU Student" required>
+            </div>
+          </div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label for="volGender" class="form-label">জেন্ডার (Gender) <span class="text-lime">*</span></label>
+              <select id="volGender" class="form-select" required>
+                <option value="" disabled selected>জেন্ডার নির্বাচন করুন</option>
+                <option value="Male">পুরুষ (Male)</option>
+                <option value="Female">নারী (Female)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="volBlood" class="form-label">রক্তের গ্রুপ (Blood Group) <span class="text-lime">*</span></label>
+              <select id="volBlood" class="form-select" required>
+                <option value="" disabled selected>রক্তের গ্রুপ নির্বাচন করুন</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="volTshirt" class="form-label">টি-শার্ট সাইজ (T-Shirt Size) <span class="text-lime">*</span></label>
+              <select id="volTshirt" class="form-select" required>
+                <option value="" disabled selected>সাইজ বেছে নিন</option>
+                <option value="S">S (Chest 38")</option>
+                <option value="M">M (Chest 40")</option>
+                <option value="L">L (Chest 42")</option>
+                <option value="XL">XL (Chest 44")</option>
+                <option value="XXL">XXL (Chest 46")</option>
+                <option value="3XL">3XL (Chest 48")</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="volRole" class="form-label">পছন্দের দায়িত্ব / কাজের ক্ষেত্র (Preferred Role) <span class="text-lime">*</span></label>
+            <select id="volRole" class="form-select" required>
+              <option value="" disabled selected>আপনার পছন্দের কাজের ক্ষেত্র নির্বাচন করুন</option>
+              <option value="Hydration & Water Station">💧 হাইড্রেশন ও ওয়াটার পয়েন্ট (Water & Energy Drinks)</option>
+              <option value="Route Marshall & Safety">🏁 রুট মার্শাল ও দৌড়ের ট্র্যাক গাইড (Track Marshall & Safety)</option>
+              <option value="Bib & Kit Distribution">🎽 কিট ও বিব বিতরণ বুথ (Kit & Bib Distribution Booth)</option>
+              <option value="Finish Line & Medals">🥇 ফিনিশ লাইন ও মেডেল ডিস্ট্রিবিউশন (Finish Line & Medals)</option>
+              <option value="Medical & First Aid Support">🚑 ফার্স্ট এইড ও প্রাথমিক চিকিৎসা টিম (First Aid Support)</option>
+              <option value="Media & Photography">📷 মিডিয়া, ফটোগ্রাফি ও সোশ্যাল কভারেজ (Media & Coverage)</option>
+              <option value="Helpdesk & Runner Care">ℹ️ ইনফরমেশন ডেস্ক ও হেল্পলাইন (Helpdesk & Runner Care)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="volExperience" class="form-label">পূর্ববর্তী অভিজ্ঞতা বা বিশেষ দক্ষতা (ঐচ্ছিক)</label>
+            <textarea id="volExperience" class="form-input" rows="2" placeholder="পূর্বে কোনো ম্যারাথন, রোভার স্কাউট, রেড ক্রিসেন্ট বা ক্যাম্পাসের কোনো ইভেন্টে কাজের অভিজ্ঞতা থাকলে সংক্ষেপে লিখুন..."></textarea>
+          </div>
+
+          <div class="form-group-checkbox" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(193,216,47,0.2); border-radius: 8px; padding: 12px 14px; margin-top: 10px;">
+            <input type="checkbox" id="volAvailability" required style="width: 18px; height: 18px; accent-color: var(--color-accent); cursor: pointer;">
+            <label for="volAvailability" style="font-size: 0.85rem; color: #fff; cursor: pointer; user-select: none; line-height: 1.4;">
+              আমি নিশ্চয়তা দিচ্ছি যে <strong>২রা অক্টোবর ২০২৬</strong> রেসের দিন ভোর <strong>০৫:০০ টায়</strong> জাহাঙ্গীরনগর বিশ্ববিদ্যালয় ক্যাম্পাসে যথাসময়ে উপস্থিত থাকতে পারব। <span class="text-lime">*</span>
+            </label>
+          </div>
+
+          <div id="volFormError" class="alert-box alert-warning hidden" style="margin-top: 15px;"></div>
+
+          <div class="volunteer-submit-actions" style="margin-top: 20px;">
+            <button type="submit" id="volSubmitBtn" class="btn btn-lime btn-lg btn-full" style="padding: 14px; font-weight: 800; font-size: 1rem; border-radius: 8px;">
+              <span>স্বেচ্ছাসেবক হিসেবে আবেদন জমা দিন →</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Volunteer Success Card (Hidden until submitted) -->
+        <div id="volunteerSuccessCard" class="volunteer-success-card hidden" style="text-align: center; padding: 25px 15px;">
+          <div class="success-icon-wrap" style="font-size: 3.5rem; margin-bottom: 12px; animation: bounce 1s infinite alternate;">🎉</div>
+          <h3 style="color: #fff; font-size: 1.5rem; font-weight: 800; margin-bottom: 8px;">আবেদন সফলভাবে গৃহীত হয়েছে!</h3>
+          <p style="color: var(--color-text-muted); font-size: 0.9rem; max-width: 500px; margin: 0 auto 20px;">JUCSU RUN 2026 আয়োজক দলের সাথে কাজ করার আগ্রহ প্রকাশের জন্য আপনাকে ধন্যবাদ।</p>
+          
+          <div class="volunteer-card-meta glass-panel" style="max-width: 500px; margin: 0 auto 20px; padding: 18px; border-radius: 12px; border: 1px solid rgba(193,216,47,0.3); background: rgba(0,0,0,0.35); text-align: left;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 8px 0; font-size: 0.85rem;">
+              <span style="color: var(--color-text-muted);">রেফারেন্স ভলান্টিয়ার আইডি:</span>
+              <strong id="volSuccessId" class="text-lime" style="font-size: 0.95rem; font-family: monospace;">VOL-2026-000</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 8px 0; font-size: 0.85rem;">
+              <span style="color: var(--color-text-muted);">নাম:</span>
+              <strong id="volSuccessName" style="color: #fff;">-</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 8px 0; font-size: 0.85rem;">
+              <span style="color: var(--color-text-muted);">পছন্দের ক্ষেত্র:</span>
+              <strong id="volSuccessRole" style="color: #fff;">-</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 8px 0; font-size: 0.85rem;">
+              <span style="color: var(--color-text-muted);">টি-শার্ট সাইজ:</span>
+              <strong id="volSuccessTshirt" style="color: var(--color-accent);">M</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0 0; font-size: 0.85rem; align-items: center;">
+              <span style="color: var(--color-text-muted);">বর্তমান স্ট্যাটাস:</span>
+              <span style="background: rgba(255, 170, 0, 0.15); color: #ffaa00; border: 1px solid rgba(255, 170, 0, 0.3); font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 700;">Pending Review</span>
+            </div>
+          </div>
+
+          <div style="background: rgba(0, 229, 255, 0.08); border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 8px; padding: 12px 16px; max-width: 500px; margin: 0 auto; font-size: 0.82rem; color: #cbd5e0; line-height: 1.5; text-align: left;">
+            ℹ️ <strong>পরবর্তী ধাপ:</strong> আপনার আবেদনটি আয়োজক কমিটি পর্যালোচনা শেষে আপনার ফোন নম্বরে WhatsApp / SMS-এর মাধ্যমে কনফার্মেশন ও ভলান্টিয়ার ওরিয়েন্টেশনের বিস্তারিত পাঠানো হবে।
+          </div>
+
+          <button type="button" id="volResetFormBtn" class="btn btn-outline btn-sm" style="margin-top: 20px; font-size: 0.85rem;">
+            ↺ নতুন আরেকটি আবেদন করুন
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- FAQ Section -->
   <section id="faq" class="section faq-section bg-darker">
     <div class="container">
@@ -1371,6 +1572,7 @@
           <li><a href="#categories">Race Categories</a></li>
           <li><a href="#swag">Runner Swag</a></li>
           <li><a href="#route">Route Maps</a></li>
+          <li><a href="#volunteer">Volunteer Join</a></li>
         </ul>
       </div>
       <div class="footer-links-group">
@@ -1397,6 +1599,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="index.js?v=5.2"></script>
+  <script src="index.js?v=5.3"></script>
 </body>
 </html>

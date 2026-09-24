@@ -1344,9 +1344,22 @@ async function loadEventSettings() {
 
   // Volunteer Status Handling
   const volStatusInput = document.getElementById('settingVolunteerStatus');
-  let currentVolStatus = settings.volunteer_status || 'open';
+  let currentVolStatus = (settings.data && settings.data.volunteer_status) || settings.volunteer_status || 'open';
 
-  // Check volunteer_settings fallback in localStorage
+  // Check volunteer_settings fallback from Supabase or localStorage
+  if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+    try {
+      const { data: vRow } = await supabaseClient
+        .from('event_settings')
+        .select('*')
+        .eq('id', 'volunteer_settings')
+        .maybeSingle();
+      if (vRow && vRow.data && vRow.data.status) {
+        currentVolStatus = vRow.data.status;
+      }
+    } catch (e) {}
+  }
+
   try {
     const vLocal = localStorage.getItem('jucsu_volunteer_settings');
     if (vLocal) {
@@ -1406,6 +1419,7 @@ function setupEventSettingsHandler() {
     e.preventDefault();
     const volunteerStatus = volStatusInput ? volStatusInput.value : 'open';
 
+    // Store volunteer_status inside 'data' jsonb to match existing table schema
     const payload = {
       id: 'main_event',
       reg_close_date: regCloseInput.value.trim() || '8 September 2026',
@@ -1413,7 +1427,7 @@ function setupEventSettingsHandler() {
       status_10k: status10KInput ? status10KInput.value : 'open',
       status_5k: status5KInput ? status5KInput.value : 'open',
       race_date: raceDateInput ? raceDateInput.value : '2026-10-02T06:10',
-      volunteer_status: volunteerStatus,
+      data: { volunteer_status: volunteerStatus },
       updated_at: new Date().toISOString()
     };
 
@@ -1435,12 +1449,12 @@ function setupEventSettingsHandler() {
     // Try saving to Supabase
     if (supabaseClient) {
       try {
-        const { error } = await supabaseClient
+        const { error: mainError } = await supabaseClient
           .from('event_settings')
           .upsert(payload, { onConflict: 'id' });
 
         // Also upsert dedicated volunteer_settings record
-        await supabaseClient
+        const { error: volError } = await supabaseClient
           .from('event_settings')
           .upsert({
             id: 'volunteer_settings',
@@ -1448,9 +1462,9 @@ function setupEventSettingsHandler() {
             updated_at: new Date().toISOString()
           }, { onConflict: 'id' });
 
-        if (error) {
-          console.warn('Supabase event_settings upsert error:', error);
-          cloudErrorMsg = error.message || 'Table not found';
+        if (mainError || volError) {
+          console.warn('Supabase event_settings upsert error:', mainError || volError);
+          cloudErrorMsg = (mainError && mainError.message) || (volError && volError.message) || 'Table error';
         } else {
           isCloudSynced = true;
         }
@@ -1470,7 +1484,7 @@ function setupEventSettingsHandler() {
         statusSpan.textContent = '✓ Saved & Synced Live to Cloud (All Devices)!';
       } else {
         statusSpan.style.color = '#ffaa00';
-        statusSpan.textContent = `⚠️ Saved locally on this device only! (Supabase 'event_settings' table missing)`;
+        statusSpan.textContent = `⚠️ Saved locally on this device only! (${cloudErrorMsg || "Supabase 'event_settings' table issue"})`;
       }
       setTimeout(() => {
         statusSpan.style.display = 'none';

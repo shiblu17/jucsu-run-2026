@@ -2734,6 +2734,10 @@ function openEditRunnerModal(bib) {
   const modal = document.getElementById('editRunnerModal');
   if (!modal) return;
 
+  const originalBibInput = document.getElementById('editOriginalBib');
+  if (originalBibInput) {
+    originalBibInput.value = runner.bib || '';
+  }
   document.getElementById('editBib').value = runner.bib || '';
   document.getElementById('editName').value = runner.name || '';
   document.getElementById('editPhone').value = runner.phone || '';
@@ -2770,12 +2774,31 @@ function setupEditRunnerHandler() {
 
   form.onsubmit = async (e) => {
     e.preventDefault();
-    const bib = document.getElementById('editBib').value.trim();
-    const runner = runnerDatabase.find(r => r.bib.toString() === bib.toString());
-    if (!runner) return;
+    const originalBib = (document.getElementById('editOriginalBib')?.value || '').trim();
+    const newBib = document.getElementById('editBib').value.trim();
+
+    if (!newBib) {
+      alert('দয়া করে একটি বৈধ বিব নম্বর (Bib Number) প্রদান করুন।');
+      return;
+    }
+
+    const runner = runnerDatabase.find(r => r.bib.toString() === originalBib.toString());
+    if (!runner) {
+      alert('রানার রেকর্ড খুঁজে পাওয়া যায়নি!');
+      return;
+    }
+
+    // Check duplicate bib if bib changed
+    if (newBib.toString() !== originalBib.toString()) {
+      const isDuplicate = runnerDatabase.some(r => r.bib.toString() === newBib.toString());
+      if (isDuplicate) {
+        alert(`বিব #${newBib} ইতিমধ্যে অন্য একজন দৌড়বিদের জন্য নির্ধারিত আছে! অনুগ্রহ করে অন্য কোনো ইউনিক বিব নম্বর দিন।`);
+        return;
+      }
+    }
 
     const updatedData = {
-      bib,
+      bib: newBib,
       name: document.getElementById('editName').value.trim(),
       phone: document.getElementById('editPhone').value.trim(),
       category: document.getElementById('editCategory').value,
@@ -2797,14 +2820,17 @@ function setupEditRunnerHandler() {
         const { error } = await supabaseClient
           .from('registrations')
           .update(updatedData)
-          .eq('bib', bib);
+          .eq('bib', originalBib);
         
         if (error) {
           console.warn('Supabase update warning:', error);
           if (error.message && error.message.includes('kitpoint')) {
             const runnerWithoutKit = { ...updatedData };
             delete runnerWithoutKit.kitpoint;
-            await supabaseClient.from('registrations').update(runnerWithoutKit).eq('bib', bib);
+            await supabaseClient.from('registrations').update(runnerWithoutKit).eq('bib', originalBib);
+          } else {
+            console.error('Failed to update Supabase record:', error);
+            alert('সতর্কতা: ক্লাউড ডেটাবেজে আপডেট হতে সমস্যা হয়েছে: ' + (error.message || 'Error'));
           }
         }
       } catch (err) {
@@ -2815,13 +2841,28 @@ function setupEditRunnerHandler() {
     // Update local memory database
     Object.assign(runner, updatedData);
     saveDatabase();
+
+    // Migrate SMS delivery log if bib changed
+    if (newBib !== originalBib && typeof smsDeliveryLogs !== 'undefined' && smsDeliveryLogs[originalBib]) {
+      smsDeliveryLogs[newBib] = {
+        ...smsDeliveryLogs[originalBib],
+        bib: newBib,
+        name: updatedData.name,
+        phone: updatedData.phone
+      };
+      delete smsDeliveryLogs[originalBib];
+      if (typeof syncSmsDeliveryLogsToCloud === 'function') {
+        syncSmsDeliveryLogsToCloud();
+      }
+    }
+
     refreshDashboard();
 
     saveBtn.disabled = false;
     saveBtn.innerHTML = '<span>💾 Save Changes</span>';
     closeModal();
 
-    alert(`✓ Runner #${bib} (${updatedData.name}) details updated successfully!`);
+    alert(`✓ Runner #${newBib} (${updatedData.name}) details updated successfully!`);
   };
 }
 

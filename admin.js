@@ -158,6 +158,7 @@ async function initAdminDashboard() {
   loadLogisticsSettings();
   setupLogisticsSettingsHandler();
   initKitDistributionDesk();
+  initKitMatrixHandlers();
   initVendorPrintSheet();
   initBroadcastTool();
   initRevenueProtection();
@@ -937,6 +938,210 @@ function updateLogisticsSummary() {
 
   if (kDU) kDU.textContent = countKitDU;
   if (kJU) kJU.textContent = countKitJU;
+
+  // Render detailed venue & jersey matrix breakdown
+  renderKitPointsJerseyMatrix();
+}
+
+/* ==========================================
+   KIT POINTS & JERSEY MATRIX BY CATEGORY
+   ========================================== */
+let kitMatrixFilterMode = 'verified'; // 'verified' or 'all'
+
+function renderKitPointsJerseyMatrix() {
+  const duBody = document.getElementById('duKitMatrixBody');
+  const juBody = document.getElementById('juKitMatrixBody');
+  const combBody = document.getElementById('combinedKitMatrixBody');
+  if (!duBody || !juBody || !combBody) return;
+
+  const isVerifiedOnly = (kitMatrixFilterMode === 'verified');
+  const pool = runnerDatabase.filter(r => isVerifiedOnly ? r.status === 'Verified' : true);
+
+  const sizes = ['S', 'M', 'L', 'XL', 'XXL', '3XL'];
+  const createSubTable = () => ({
+    '10k': { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0, total: 0 },
+    '5k':  { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0, total: 0 },
+    totals: { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0, grand: 0 }
+  });
+
+  const du = createSubTable();
+  const ju = createSubTable();
+  const combined = createSubTable();
+
+  pool.forEach(r => {
+    let sz = (r.tshirt || 'M').toUpperCase().trim();
+    if (sz === 'XXXL') sz = '3XL';
+    if (!sizes.includes(sz)) sz = 'M';
+
+    const cat = (r.category || '').includes('10K') ? '10k' : '5k';
+    const kp = (r.kitpoint || r.kit_pickup || r.kitPickup || '').toLowerCase();
+    const isDU = kp.includes('dhaka') || kp.includes('du');
+    const target = isDU ? du : ju;
+
+    target[cat][sz]++;
+    target[cat].total++;
+    target.totals[sz]++;
+    target.totals.grand++;
+
+    combined[cat][sz]++;
+    combined[cat].total++;
+    combined.totals[sz]++;
+    combined.totals.grand++;
+  });
+
+  // Update Badges
+  const duBadge = document.getElementById('duKitMatrixTotalBadge');
+  const juBadge = document.getElementById('juKitMatrixTotalBadge');
+  const combBadge = document.getElementById('combinedKitMatrixTotalBadge');
+  const modeTxt = isVerifiedOnly ? 'Verified Only' : 'All Registrations';
+  if (duBadge) duBadge.textContent = `${du.totals.grand} Jerseys (${modeTxt})`;
+  if (juBadge) juBadge.textContent = `${ju.totals.grand} Jerseys (${modeTxt})`;
+  if (combBadge) combBadge.textContent = `${combined.totals.grand} Jerseys (${modeTxt})`;
+
+  // Generate rows helper
+  function generateRows(data, label, deskColor, deskIcon) {
+    return `
+      <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+        <td style="padding: 7px 8px; text-align: left; font-weight: 600;">
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00e5ff; margin-right: 6px;"></span>
+          10K Mini Marathon <span style="font-size: 0.72rem; color: #00e5ff; opacity: 0.9;">(Jersey Color 1)</span>
+        </td>
+        <td style="padding: 7px 4px;">${data['10k'].S}</td>
+        <td style="padding: 7px 4px;">${data['10k'].M}</td>
+        <td style="padding: 7px 4px;">${data['10k'].L}</td>
+        <td style="padding: 7px 4px;">${data['10k'].XL}</td>
+        <td style="padding: 7px 4px;">${data['10k'].XXL}</td>
+        <td style="padding: 7px 4px;">${data['10k']['3XL']}</td>
+        <td style="padding: 7px 8px; text-align: right; font-weight: 700; color: #00e5ff;">${data['10k'].total}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+        <td style="padding: 7px 8px; text-align: left; font-weight: 600;">
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ffaa00; margin-right: 6px;"></span>
+          5K Run <span style="font-size: 0.72rem; color: #ffaa00; opacity: 0.9;">(Jersey Color 2)</span>
+        </td>
+        <td style="padding: 7px 4px;">${data['5k'].S}</td>
+        <td style="padding: 7px 4px;">${data['5k'].M}</td>
+        <td style="padding: 7px 4px;">${data['5k'].L}</td>
+        <td style="padding: 7px 4px;">${data['5k'].XL}</td>
+        <td style="padding: 7px 4px;">${data['5k'].XXL}</td>
+        <td style="padding: 7px 4px;">${data['5k']['3XL']}</td>
+        <td style="padding: 7px 8px; text-align: right; font-weight: 700; color: #ffaa00;">${data['5k'].total}</td>
+      </tr>
+      <tr style="background: rgba(255,255,255,0.04); font-weight: 700;">
+        <td style="padding: 7px 8px; text-align: left; color: #fff;">${deskIcon} ${label}</td>
+        <td style="padding: 7px 4px;">${data.totals.S}</td>
+        <td style="padding: 7px 4px;">${data.totals.M}</td>
+        <td style="padding: 7px 4px;">${data.totals.L}</td>
+        <td style="padding: 7px 4px;">${data.totals.XL}</td>
+        <td style="padding: 7px 4px;">${data.totals.XXL}</td>
+        <td style="padding: 7px 4px;">${data.totals['3XL']}</td>
+        <td style="padding: 7px 8px; text-align: right; color: ${deskColor}; font-size: 0.88rem;">${data.totals.grand}</td>
+      </tr>
+    `;
+  }
+
+  duBody.innerHTML = generateRows(du, 'DU Desk Total', '#00e5ff', '🏛️');
+  juBody.innerHTML = generateRows(ju, 'JU Desk Total', 'var(--color-accent)', '🌳');
+  combBody.innerHTML = generateRows(combined, 'Combined Production Total', '#00ff88', '📊');
+}
+
+function initKitMatrixHandlers() {
+  const verifiedBtn = document.getElementById('kitMatrixFilterVerifiedBtn');
+  const allBtn = document.getElementById('kitMatrixFilterAllBtn');
+  const exportBtn = document.getElementById('exportKitMatrixCsvBtn');
+
+  if (verifiedBtn && allBtn) {
+    verifiedBtn.onclick = () => {
+      kitMatrixFilterMode = 'verified';
+      verifiedBtn.style.background = 'var(--color-accent)';
+      verifiedBtn.style.color = '#002e1b';
+      verifiedBtn.style.fontWeight = '700';
+      allBtn.style.background = 'transparent';
+      allBtn.style.color = '#aaa';
+      allBtn.style.fontWeight = '600';
+      renderKitPointsJerseyMatrix();
+    };
+
+    allBtn.onclick = () => {
+      kitMatrixFilterMode = 'all';
+      allBtn.style.background = 'var(--color-accent)';
+      allBtn.style.color = '#002e1b';
+      allBtn.style.fontWeight = '700';
+      verifiedBtn.style.background = 'transparent';
+      verifiedBtn.style.color = '#aaa';
+      verifiedBtn.style.fontWeight = '600';
+      renderKitPointsJerseyMatrix();
+    };
+  }
+
+  if (exportBtn) {
+    exportBtn.onclick = exportKitMatrixCsv;
+  }
+}
+
+function exportKitMatrixCsv() {
+  const isVerifiedOnly = (kitMatrixFilterMode === 'verified');
+  const pool = runnerDatabase.filter(r => isVerifiedOnly ? r.status === 'Verified' : true);
+  const modeLabel = isVerifiedOnly ? 'Verified_Only' : 'All_Registrations';
+  
+  const sizes = ['S', 'M', 'L', 'XL', 'XXL', '3XL'];
+  const calc = () => ({
+    '10k': { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0, total: 0 },
+    '5k':  { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0, total: 0 },
+    totals: { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0, grand: 0 }
+  });
+
+  const du = calc();
+  const ju = calc();
+  const combined = calc();
+
+  pool.forEach(r => {
+    let sz = (r.tshirt || 'M').toUpperCase().trim();
+    if (sz === 'XXXL') sz = '3XL';
+    if (!sizes.includes(sz)) sz = 'M';
+
+    const cat = (r.category || '').includes('10K') ? '10k' : '5k';
+    const kp = (r.kitpoint || r.kit_pickup || r.kitPickup || '').toLowerCase();
+    const isDU = kp.includes('dhaka') || kp.includes('du');
+    const target = isDU ? du : ju;
+
+    target[cat][sz]++;
+    target[cat].total++;
+    target.totals[sz]++;
+    target.totals.grand++;
+
+    combined[cat][sz]++;
+    combined[cat].total++;
+    combined.totals[sz]++;
+    combined.totals.grand++;
+  });
+
+  let csv = 'Kit Collection Desk,Race Category,Jersey Color Reference,S,M,L,XL,XXL,3XL,Desk Total\r\n';
+  
+  // DU Rows
+  csv += `Dhaka University (DU) Desk,10K Mini Marathon,10K Jersey (Color 1),${du['10k'].S},${du['10k'].M},${du['10k'].L},${du['10k'].XL},${du['10k'].XXL},${du['10k']['3XL']},${du['10k'].total}\r\n`;
+  csv += `Dhaka University (DU) Desk,5K Run,5K Jersey (Color 2),${du['5k'].S},${du['5k'].M},${du['5k'].L},${du['5k'].XL},${du['5k'].XXL},${du['5k']['3XL']},${du['5k'].total}\r\n`;
+  csv += `Dhaka University (DU) Desk,DU Subtotal,All Colors,${du.totals.S},${du.totals.M},${du.totals.L},${du.totals.XL},${du.totals.XXL},${du.totals['3XL']},${du.totals.grand}\r\n`;
+  
+  // JU Rows
+  csv += `Jahangirnagar University (JU) Desk,10K Mini Marathon,10K Jersey (Color 1),${ju['10k'].S},${ju['10k'].M},${ju['10k'].L},${ju['10k'].XL},${ju['10k'].XXL},${ju['10k']['3XL']},${ju['10k'].total}\r\n`;
+  csv += `Jahangirnagar University (JU) Desk,5K Run,5K Jersey (Color 2),${ju['5k'].S},${ju['5k'].M},${ju['5k'].L},${ju['5k'].XL},${ju['5k'].XXL},${ju['5k']['3XL']},${ju['5k'].total}\r\n`;
+  csv += `Jahangirnagar University (JU) Desk,JU Subtotal,All Colors,${ju.totals.S},${ju.totals.M},${ju.totals.L},${ju.totals.XL},${ju.totals.XXL},${ju.totals['3XL']},${ju.totals.grand}\r\n`;
+
+  // Combined Rows
+  csv += `Combined Grand Total,10K Mini Marathon,Color 1 Total,${combined['10k'].S},${combined['10k'].M},${combined['10k'].L},${combined['10k'].XL},${combined['10k'].XXL},${combined['10k']['3XL']},${combined['10k'].total}\r\n`;
+  csv += `Combined Grand Total,5K Run,Color 2 Total,${combined['5k'].S},${combined['5k'].M},${combined['5k'].L},${combined['5k'].XL},${combined['5k'].XXL},${combined['5k']['3XL']},${combined['5k'].total}\r\n`;
+  csv += `Combined Grand Total,Grand Total,All Colors Combined,${combined.totals.S},${combined.totals.M},${combined.totals.L},${combined.totals.XL},${combined.totals.XXL},${combined.totals['3XL']},${combined.totals.grand}\r\n`;
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `JUCSU_Run_2026_Kit_Points_Jersey_Matrix_${modeLabel}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 /* ==========================================
@@ -2141,20 +2346,42 @@ function initVendorPrintSheet() {
     const sizes10k = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
     const sizes5k = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
     const totals = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
+    const du10k = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0, total: 0 };
+    const du5k  = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0, total: 0 };
+    const ju10k = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0, total: 0 };
+    const ju5k  = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0, total: 0 };
     let countDU = 0, countJU = 0;
     let total10K = 0, total5K = 0;
 
     runnerDatabase.forEach(r => {
-      const sz = (r.tshirt || 'M').toUpperCase();
+      let sz = (r.tshirt || 'M').toUpperCase().trim();
+      if (sz === 'XXXL') sz = '3XL';
+      if (!['S', 'M', 'L', 'XL', 'XXL', '3XL'].includes(sz)) sz = 'M';
+
       const is10 = (r.category || '').includes('10K');
-      const isDU = (r.kitpoint || '').toLowerCase().includes('dhaka');
+      const kp = (r.kitpoint || r.kit_pickup || r.kitPickup || '').toLowerCase();
+      const isDU = kp.includes('dhaka') || kp.includes('du');
 
       if (is10) {
         total10K++;
         if (sizes10k[sz] !== undefined) sizes10k[sz]++;
+        if (isDU) {
+          du10k[sz]++;
+          du10k.total++;
+        } else {
+          ju10k[sz]++;
+          ju10k.total++;
+        }
       } else {
         total5K++;
         if (sizes5k[sz] !== undefined) sizes5k[sz]++;
+        if (isDU) {
+          du5k[sz]++;
+          du5k.total++;
+        } else {
+          ju5k[sz]++;
+          ju5k.total++;
+        }
       }
 
       if (totals[sz] !== undefined) totals[sz]++;
@@ -2175,14 +2402,14 @@ function initVendorPrintSheet() {
       </div>
 
       <h3 style="font-size: 1.05rem; color: var(--color-accent); margin-bottom: 8px; font-family: var(--font-headings); text-transform: uppercase;">
-        1. Official Premium T-Shirt Manufacturing Order
+        1. Official Premium T-Shirt Manufacturing Order (Combined Total)
       </h3>
       <table class="vendor-po-table">
         <thead>
           <tr>
             <th>T-Shirt Size</th>
-            <th class="num">10K Run</th>
-            <th class="num">5K Run</th>
+            <th class="num">10K Run (Color 1)</th>
+            <th class="num">5K Run (Color 2)</th>
             <th class="num">Grand Total</th>
           </tr>
         </thead>
@@ -2204,7 +2431,46 @@ function initVendorPrintSheet() {
         </tfoot>
       </table>
 
-      <h3 style="font-size: 1.05rem; color: var(--color-accent); margin-bottom: 8px; font-family: var(--font-headings); text-transform: uppercase;">
+      <h3 style="font-size: 1.05rem; color: var(--color-accent); margin: 20px 0 8px 0; font-family: var(--font-headings); text-transform: uppercase;">
+        1B. Venue Packing Matrix: Dhaka University vs Jahangirnagar University Desk
+      </h3>
+      <table class="vendor-po-table">
+        <thead>
+          <tr>
+            <th>Kit Venue & Category (Color)</th>
+            <th class="num">S</th>
+            <th class="num">M</th>
+            <th class="num">L</th>
+            <th class="num">XL</th>
+            <th class="num">2XL</th>
+            <th class="num">3XL</th>
+            <th class="num">Total Pcs</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>🏛️ DU Desk - 10K Mini Marathon (Color 1)</strong></td><td class="num">${du10k.S}</td><td class="num">${du10k.M}</td><td class="num">${du10k.L}</td><td class="num">${du10k.XL}</td><td class="num">${du10k.XXL}</td><td class="num">${du10k['3XL']}</td><td class="num"><strong>${du10k.total}</strong></td></tr>
+          <tr><td><strong>🏛️ DU Desk - 5K Run (Color 2)</strong></td><td class="num">${du5k.S}</td><td class="num">${du5k.M}</td><td class="num">${du5k.L}</td><td class="num">${du5k.XL}</td><td class="num">${du5k.XXL}</td><td class="num">${du5k['3XL']}</td><td class="num"><strong>${du5k.total}</strong></td></tr>
+          <tr style="background: rgba(0,229,255,0.08);"><td><strong>👉 DU Desk Total Packing</strong></td><td class="num">${du10k.S + du5k.S}</td><td class="num">${du10k.M + du5k.M}</td><td class="num">${du10k.L + du5k.L}</td><td class="num">${du10k.XL + du5k.XL}</td><td class="num">${du10k.XXL + du5k.XXL}</td><td class="num">${du10k['3XL'] + du5k['3XL']}</td><td class="num"><strong>${countDU} Pcs</strong></td></tr>
+          
+          <tr><td><strong>🌳 JU Desk - 10K Mini Marathon (Color 1)</strong></td><td class="num">${ju10k.S}</td><td class="num">${ju10k.M}</td><td class="num">${ju10k.L}</td><td class="num">${ju10k.XL}</td><td class="num">${ju10k.XXL}</td><td class="num">${ju10k['3XL']}</td><td class="num"><strong>${ju10k.total}</strong></td></tr>
+          <tr><td><strong>🌳 JU Desk - 5K Run (Color 2)</strong></td><td class="num">${ju5k.S}</td><td class="num">${ju5k.M}</td><td class="num">${ju5k.L}</td><td class="num">${ju5k.XL}</td><td class="num">${ju5k.XXL}</td><td class="num">${ju5k['3XL']}</td><td class="num"><strong>${ju5k.total}</strong></td></tr>
+          <tr style="background: rgba(193,216,47,0.08);"><td><strong>👉 JU Desk Total Packing</strong></td><td class="num">${ju10k.S + ju5k.S}</td><td class="num">${ju10k.M + ju5k.M}</td><td class="num">${ju10k.L + ju5k.L}</td><td class="num">${ju10k.XL + ju5k.XL}</td><td class="num">${ju10k.XXL + ju5k.XXL}</td><td class="num">${ju10k['3XL'] + ju5k['3XL']}</td><td class="num"><strong>${countJU} Pcs</strong></td></tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>COMBINED PRODUCTION TOTAL</td>
+            <td class="num">${totals.S}</td>
+            <td class="num">${totals.M}</td>
+            <td class="num">${totals.L}</td>
+            <td class="num">${totals.XL}</td>
+            <td class="num">${totals.XXL}</td>
+            <td class="num">${totals['3XL']}</td>
+            <td class="num">${grandTotalRunners} Pcs</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <h3 style="font-size: 1.05rem; color: var(--color-accent); margin: 20px 0 8px 0; font-family: var(--font-headings); text-transform: uppercase;">
         2. Official Heavyweight Finisher Medal Order (+5% Buffer)
       </h3>
       <table class="vendor-po-table">
@@ -2267,11 +2533,31 @@ function initVendorPrintSheet() {
    ========================================== */
 
 const BROADCAST_TEMPLATES = {
+  kit_reminder_du: `Dear {name},
+Official Kit Collection for JUCSU RUN 2026:
+📍 Venue: Physical Education Centre / TSC, Dhaka University Campus
+📅 Dates: 28 – 30 September 2026 (10:00 AM – 06:00 PM)
+🆔 Bib: #{bib} ({category}) | Jersey Size: {tshirt}
+⚠️ Note: Please bring your E-Bib screenshot and Student/Photo ID.
+Check E-Bib: https://jucsu-run-2026.pages.dev#checker
+Helpline: 01317982413
+- JUCSU RUN 2026 Committee`,
+
+  kit_reminder_ju: `Dear {name},
+Official Kit Collection for JUCSU RUN 2026:
+📍 Venue: JUCSU Office / Central Gymnasium, JU Campus, Savar
+📅 Dates: 28 September – 01 October 2026 (10:00 AM – 07:00 PM)
+🆔 Bib: #{bib} ({category}) | Jersey Size: {tshirt}
+⚠️ Note: Please bring your E-Bib screenshot and Student/Photo ID.
+Check E-Bib: https://jucsu-run-2026.pages.dev#checker
+Helpline: 01317982413
+- JUCSU RUN 2026 Committee`,
+
   kit_reminder: `Dear {name},
 Official Kit Collection for JUCSU RUN 2026 (The Farewell) is open!
 📅 Dates: 28 Sep - 01 Oct (10:00 AM - 06:00 PM)
 📍 Point: {kit_point}
-🆔 Bib: #{bib} ({category})
+🆔 Bib: #{bib} ({category}) | Jersey Size: {tshirt}
 ⚠️ Note: Please bring your E-Bib screenshot and Student ID/Photo ID.
 Check status & E-Bib: https://jucsu-run-2026.pages.dev#checker
 Helpline: 01317982413
@@ -2325,16 +2611,18 @@ function getCleanPhone(phone) {
 
 function personalizeMessage(template, runner) {
   if (!template) return '';
-  const name = runner.full_name || runner.fullName || runner.name || 'Runner';
+  const name = runner.name || runner.full_name || runner.fullName || 'Runner';
   const bib = runner.bib || runner.bib_number || 'TBD';
   const category = runner.category || 'Mini Marathon';
-  const kitPoint = runner.kit_pickup || runner.kitPickup || 'JU Campus Desk';
-  const pickup = runner.bus_route || runner.pickup_location || runner.pickupLocation || 'Self Arrival (JU Campus)';
+  const kitPoint = runner.kitpoint || runner.kit_point || runner.kit_pickup || runner.kitPickup || 'Jahangirnagar University Desk';
+  const pickup = runner.pickup || runner.bus_route || runner.pickup_location || runner.pickupLocation || 'Self Arrival (JU Campus)';
+  const tshirt = (runner.tshirt || runner.tShirt || 'M').toUpperCase();
 
   return template
     .replace(/{name}/g, name)
     .replace(/{bib}/g, bib)
     .replace(/{category}/g, category)
+    .replace(/{tshirt}/g, tshirt)
     .replace(/{kit_point}/g, kitPoint)
     .replace(/{pickup}/g, pickup)
     .replace(/{website_link}/g, 'https://jucsu-run-2026.pages.dev');
@@ -2355,25 +2643,35 @@ function getFilteredBroadcastRunners(audienceFilter) {
       const hasSms = !!(typeof smsDeliveryLogs !== 'undefined' && smsDeliveryLogs[r.bib]);
       return r.status === 'Verified' && hasSms;
     }
+    if (audienceFilter === 'verified_du_kit') {
+      const kp = (r.kitpoint || r.kit_pickup || r.kitPickup || '').toLowerCase();
+      const isDU = kp.includes('dhaka') || kp.includes('du');
+      return r.status === 'Verified' && isDU;
+    }
+    if (audienceFilter === 'verified_ju_kit') {
+      const kp = (r.kitpoint || r.kit_pickup || r.kitPickup || '').toLowerCase();
+      const isDU = kp.includes('dhaka') || kp.includes('du');
+      return r.status === 'Verified' && !isDU;
+    }
     if (audienceFilter === 'du_kit') {
-      const kp = (r.kit_pickup || r.kitPickup || '').toLowerCase();
+      const kp = (r.kitpoint || r.kit_pickup || r.kitPickup || '').toLowerCase();
       return kp.includes('dhaka') || kp.includes('du');
     }
     if (audienceFilter === 'ju_kit') {
-      const kp = (r.kit_pickup || r.kitPickup || '').toLowerCase();
-      return kp.includes('jahangirnagar') || kp.includes('ju') || kp.includes('jucsu') || kp.includes('campus');
+      const kp = (r.kitpoint || r.kit_pickup || r.kitPickup || '').toLowerCase();
+      return !kp.includes('dhaka') && !kp.includes('du');
     }
     if (audienceFilter === 'bus_uttara') {
-      const bus = (r.bus_route || r.pickup_location || r.pickupLocation || '').toLowerCase();
+      const bus = (r.pickup || r.bus_route || r.pickup_location || '').toLowerCase();
       return bus.includes('uttara');
     }
     if (audienceFilter === 'bus_gulshan') {
-      const bus = (r.bus_route || r.pickup_location || r.pickupLocation || '').toLowerCase();
+      const bus = (r.pickup || r.bus_route || r.pickup_location || '').toLowerCase();
       return bus.includes('gulshan');
     }
     if (audienceFilter === 'bus_bongobazar') {
-      const bus = (r.bus_route || r.pickup_location || r.pickupLocation || '').toLowerCase();
-      return bus.includes('bongobazar') || bus.includes('bongo');
+      const bus = (r.pickup || r.bus_route || r.pickup_location || '').toLowerCase();
+      return bus.includes('bongobazar') || bus.includes('bongo') || bus.includes('du route');
     }
     if (audienceFilter === 'cat_10k') {
       return (r.category || '').includes('10K');
@@ -2499,7 +2797,16 @@ function initBroadcastTool() {
 
   // Initialize textarea with default template
   if (!msgTextarea.value) {
-    msgTextarea.value = BROADCAST_TEMPLATES.kit_reminder;
+    const aud = audienceSelect.value;
+    if (aud === 'verified_du_kit' || aud === 'du_kit') {
+      msgTextarea.value = BROADCAST_TEMPLATES.kit_reminder_du;
+      templateSelect.value = 'kit_reminder_du';
+    } else if (aud === 'verified_ju_kit' || aud === 'ju_kit') {
+      msgTextarea.value = BROADCAST_TEMPLATES.kit_reminder_ju;
+      templateSelect.value = 'kit_reminder_ju';
+    } else {
+      msgTextarea.value = BROADCAST_TEMPLATES.kit_reminder_du || BROADCAST_TEMPLATES.kit_reminder;
+    }
   }
 
   // Template switch event
@@ -2511,8 +2818,16 @@ function initBroadcastTool() {
     updateBroadcastTool();
   });
 
-  // Audience change event
+  // Audience change event -> auto switch template for DU & JU Kit Desks
   audienceSelect.addEventListener('change', () => {
+    const aud = audienceSelect.value;
+    if (aud === 'verified_du_kit' || aud === 'du_kit') {
+      templateSelect.value = 'kit_reminder_du';
+      msgTextarea.value = BROADCAST_TEMPLATES.kit_reminder_du;
+    } else if (aud === 'verified_ju_kit' || aud === 'ju_kit') {
+      templateSelect.value = 'kit_reminder_ju';
+      msgTextarea.value = BROADCAST_TEMPLATES.kit_reminder_ju;
+    }
     updateBroadcastTool();
   });
 

@@ -771,6 +771,130 @@ create policy "Allow admin full access on volunteers" on public.volunteers for a
             <div><strong>📍 JU Kit Point:</strong> <span id="kitCountJU" class="text-lime" style="font-weight: 700;">0</span></div>
           </div>
 
+          <!-- Detailed Kit Collection Point & Jersey Matrix Breakdown -->
+          <div style="margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+              <div>
+                <h4 style="font-size: 0.95rem; color: var(--color-accent); font-weight: 700; margin: 0; display: flex; align-items: center; gap: 6px;">
+                  <span>🎽</span>
+                  <span>Kit Points & Jersey Matrix by Category (কিট পয়েন্ট ও জার্সি সাইজ বিশ্লেষণ)</span>
+                </h4>
+                <p style="font-size: 0.76rem; color: var(--color-text-muted); margin: 3px 0 0 0;">
+                  ৫কিমি ও ১০কিমি এর ভিন্ন জার্সির কালার ও সাইজ অনুযায়ী ঢাকা এবং জাহাঙ্গীরনগর কিট পয়েন্টের বিস্তারিত হিসাব
+                </p>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <div class="btn-group" style="display: inline-flex; background: rgba(0,0,0,0.4); border-radius: 6px; padding: 2px; border: 1px solid rgba(255,255,255,0.1);">
+                  <button type="button" id="kitMatrixFilterVerifiedBtn" class="btn btn-sm active" style="font-size: 0.72rem; padding: 4px 10px; border-radius: 4px; border: none; font-weight: 700; background: var(--color-accent); color: #002e1b; cursor: pointer;">
+                    ✅ Verified Only (ভেরিফায়েড)
+                  </button>
+                  <button type="button" id="kitMatrixFilterAllBtn" class="btn btn-sm" style="font-size: 0.72rem; padding: 4px 10px; border-radius: 4px; border: none; font-weight: 600; background: transparent; color: #aaa; cursor: pointer;">
+                    👥 All Registered (সকল)
+                  </button>
+                </div>
+                <button type="button" id="exportKitMatrixCsvBtn" class="btn btn-outline btn-sm" style="font-size: 0.72rem; padding: 4px 10px; border-color: rgba(0,229,255,0.4); color: #00e5ff; cursor: pointer;" title="Export Kit Matrix to CSV">
+                  📥 Export CSV
+                </button>
+              </div>
+            </div>
+
+            <!-- Dhaka University Desk Table Card -->
+            <div style="background: rgba(0, 229, 255, 0.03); border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 0.85rem; font-weight: 700; color: #00e5ff; display: flex; align-items: center; gap: 6px;">
+                  <span>🏛️</span>
+                  <span>Dhaka University (DU) Desk — ঢাকা বিশ্ববিদ্যালয় কিট পয়েন্ট</span>
+                </span>
+                <span id="duKitMatrixTotalBadge" style="font-size: 0.75rem; font-weight: 700; background: rgba(0,229,255,0.15); color: #00e5ff; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0,229,255,0.3);">
+                  0 Jerseys Total
+                </span>
+              </div>
+              <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #fff; text-align: center;">
+                  <thead>
+                    <tr style="background: rgba(0, 229, 255, 0.08); border-bottom: 1px solid rgba(0, 229, 255, 0.2); color: #00e5ff;">
+                      <th style="padding: 6px 8px; text-align: left;">Category (Color)</th>
+                      <th style="padding: 6px 4px;">S</th>
+                      <th style="padding: 6px 4px;">M</th>
+                      <th style="padding: 6px 4px;">L</th>
+                      <th style="padding: 6px 4px;">XL</th>
+                      <th style="padding: 6px 4px;">XXL</th>
+                      <th style="padding: 6px 4px;">3XL</th>
+                      <th style="padding: 6px 8px; text-align: right;">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody id="duKitMatrixBody">
+                    <!-- Populated dynamically via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Jahangirnagar University Desk Table Card -->
+            <div style="background: rgba(193, 216, 47, 0.03); border: 1px solid rgba(193, 216, 47, 0.2); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-accent); display: flex; align-items: center; gap: 6px;">
+                  <span>🌳</span>
+                  <span>Jahangirnagar University (JU) Desk — জাহাঙ্গীরনগর বিশ্ববিদ্যালয় কিট পয়েন্ট</span>
+                </span>
+                <span id="juKitMatrixTotalBadge" style="font-size: 0.75rem; font-weight: 700; background: rgba(193,216,47,0.15); color: var(--color-accent); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(193,216,47,0.3);">
+                  0 Jerseys Total
+                </span>
+              </div>
+              <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #fff; text-align: center;">
+                  <thead>
+                    <tr style="background: rgba(193, 216, 47, 0.08); border-bottom: 1px solid rgba(193, 216, 47, 0.2); color: var(--color-accent);">
+                      <th style="padding: 6px 8px; text-align: left;">Category (Color)</th>
+                      <th style="padding: 6px 4px;">S</th>
+                      <th style="padding: 6px 4px;">M</th>
+                      <th style="padding: 6px 4px;">L</th>
+                      <th style="padding: 6px 4px;">XL</th>
+                      <th style="padding: 6px 4px;">XXL</th>
+                      <th style="padding: 6px 4px;">3XL</th>
+                      <th style="padding: 6px 8px; text-align: right;">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody id="juKitMatrixBody">
+                    <!-- Populated dynamically via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Grand Combined Total Matrix Card -->
+            <div style="background: rgba(0, 255, 136, 0.03); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: 10px; padding: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 0.85rem; font-weight: 700; color: #00ff88; display: flex; align-items: center; gap: 6px;">
+                  <span>📊</span>
+                  <span>Combined Both Kit Desks Total — দুই কিট পয়েন্টের সর্বমোট জার্সি</span>
+                </span>
+                <span id="combinedKitMatrixTotalBadge" style="font-size: 0.75rem; font-weight: 700; background: rgba(0,255,136,0.15); color: #00ff88; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0,255,136,0.3);">
+                  0 Jerseys Grand Total
+                </span>
+              </div>
+              <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #fff; text-align: center;">
+                  <thead>
+                    <tr style="background: rgba(0, 255, 136, 0.08); border-bottom: 1px solid rgba(0, 255, 136, 0.2); color: #00ff88;">
+                      <th style="padding: 6px 8px; text-align: left;">Category (Color)</th>
+                      <th style="padding: 6px 4px;">S</th>
+                      <th style="padding: 6px 4px;">M</th>
+                      <th style="padding: 6px 4px;">L</th>
+                      <th style="padding: 6px 4px;">XL</th>
+                      <th style="padding: 6px 4px;">XXL</th>
+                      <th style="padding: 6px 4px;">3XL</th>
+                      <th style="padding: 6px 8px; text-align: right;">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody id="combinedKitMatrixBody">
+                    <!-- Populated dynamically via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
           <button type="button" id="openVendorSheetBtn" class="btn btn-outline btn-sm" style="margin-top: 14px; width: 100%; border-color: rgba(193, 216, 47, 0.4); color: var(--color-accent); font-weight: 700;">
             <span>🖨️ Generate & Print Vendor PO Sheet</span>
           </button>
@@ -927,13 +1051,15 @@ create policy "Allow admin full access on volunteers" on public.volunteers for a
                 🎯 Target Audience (কাদের মেসেজ পাঠাবেন)
               </label>
               <select id="broadcastAudience" class="form-select" style="background: rgba(0,0,0,0.4); color: #fff; font-size: 0.85rem;">
-                <option value="all">👥 All Registered Runners (সকল রানার)</option>
-                <option value="pending">⏳ Pending Payment Runners (পেন্ডিং পেমেন্ট)</option>
-                <option value="verified">✅ Verified Payment Runners (ভেরিফায়েড রানার)</option>
+                <option value="verified_du_kit" selected>🏛️ Verified: Dhaka University Kit Desk (ভেরিফায়েড - ঢাবি কিট পয়েন্ট)</option>
+                <option value="verified_ju_kit">🌳 Verified: JU Campus Kit Desk (ভেরিফায়েড - জাবি কিট পয়েন্ট)</option>
+                <option value="verified">✅ All Verified Payment Runners (সকল ভেরিফায়েড রানার)</option>
                 <option value="verified_no_sms">📩 Verified - SMS Not Sent Yet (যাদের SMS যায়নি)</option>
                 <option value="verified_has_sms">✅ Verified - SMS Already Sent (যাদের SMS গিয়েছে)</option>
-                <option value="du_kit">🏛️ Dhaka University Kit Pickup (ঢাবি বুথ)</option>
-                <option value="ju_kit">🌳 Jahangirnagar University Kit Pickup (জাবি বুথ)</option>
+                <option value="all">👥 All Registered Runners (সকল নিবন্ধিত রানার)</option>
+                <option value="pending">⏳ Pending Payment Runners (পেন্ডিং পেমেন্ট)</option>
+                <option value="du_kit">🏛️ All: Dhaka University Kit (সকল - ঢাবি বুথ)</option>
+                <option value="ju_kit">🌳 All: Jahangirnagar University Kit (সকল - জাবি বুথ)</option>
                 <option value="bus_uttara">🚌 Bus Route: Uttara</option>
                 <option value="bus_gulshan">🚌 Bus Route: Gulshan</option>
                 <option value="bus_bongobazar">🚌 Bus Route: Bongobazar</option>
@@ -948,7 +1074,9 @@ create policy "Allow admin full access on volunteers" on public.volunteers for a
                 📋 Message Template (মেসেজ টেমপ্লেট)
               </label>
               <select id="broadcastTemplate" class="form-select" style="background: rgba(0,0,0,0.4); color: #fff; font-size: 0.85rem;">
-                <option value="kit_reminder">📍 Kit Collection Reminder (কিট তোলার নোটিশ)</option>
+                <option value="kit_reminder_du" selected>🏛️ Dhaka University Kit Pickup SMS (ঢাবি কিট পয়েন্ট লোকেশন নোটিশ)</option>
+                <option value="kit_reminder_ju">🌳 Jahangirnagar University Kit Pickup SMS (জাবি কিট পয়েন্ট লোকেশন নোটিশ)</option>
+                <option value="kit_reminder">📍 Generic Kit Collection Reminder (সাধারণ কিট নোটিশ)</option>
                 <option value="bus_alert">🚌 Race Day Bus Departure Schedule (ভোর ৪:৩০ বাস শিডিউল)</option>
                 <option value="payment_reminder">💳 Payment Verification & TrxID Request</option>
                 <option value="ebib_confirmation">🎫 E-Bib & Registration Confirmation</option>
@@ -964,7 +1092,7 @@ create policy "Allow admin full access on volunteers" on public.volunteers for a
               <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: #fff; margin: 0;">
                 📝 Message Preview / Composer (ডায়নামিক টেমপ্লেট)
               </label>
-              <span style="font-size: 0.72rem; color: var(--color-text-muted);">Placeholders: <code>{name}</code>, <code>{bib}</code>, <code>{category}</code>, <code>{kit_point}</code>, <code>{pickup}</code></span>
+              <span style="font-size: 0.72rem; color: var(--color-text-muted);">Placeholders: <code>{name}</code>, <code>{bib}</code>, <code>{category}</code>, <code>{tshirt}</code>, <code>{kit_point}</code>, <code>{pickup}</code></span>
             </div>
             <textarea id="broadcastMessageText" class="form-input" rows="5" style="width: 100%; font-size: 0.85rem; line-height: 1.5; background: rgba(0,0,0,0.4); color: #fff; font-family: inherit; resize: vertical;"></textarea>
           </div>
@@ -1588,6 +1716,6 @@ create policy "Allow admin full access on volunteers" on public.volunteers for a
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=4.9"></script>
+  <script src="admin.js?v=5.0"></script>
 </body>
 </html>

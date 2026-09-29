@@ -2532,72 +2532,53 @@ function initVendorPrintSheet() {
    1-CLICK WHATSAPP & SMS NOTIFICATION BROADCASTER
    ========================================== */
 
+// Helper to detect non-ASCII or Unicode characters
+function isNonAsciiOrUnicode(text) {
+  if (!text) return false;
+  return /[^\x20-\x7E\r\n\t]/.test(text);
+}
+
+// Helper to strictly sanitize text into GSM 7-bit ASCII (preventing multi-SMS billing)
+function sanitizeGsmAscii(text) {
+  if (!text) return '';
+  return text
+    .replace(/[\u2010-\u2015]/g, '-') // en-dash, em-dash, figure dash to hyphen
+    .replace(/[\u2018\u2019]/g, "'")   // curly single quotes
+    .replace(/[\u201C\u201D]/g, '"')   // curly double quotes
+    .replace(/[\u00A0]/g, ' ')         // non-breaking space
+    .replace(/[^\x20-\x7E\r\n]/g, '')  // strip any remaining non-ASCII & emojis
+    .replace(/[ \t]+/g, ' ')           // collapse extra whitespace
+    .trim();
+}
+
 const BROADCAST_TEMPLATES = {
-  kit_reminder_du: `Dear {name},
-Official Kit Collection for JUCSU RUN 2026:
-📍 Venue: Physical Education Centre / TSC, Dhaka University Campus
-📅 Dates: 28 – 30 September 2026 (10:00 AM – 06:00 PM)
-🆔 Bib: #{bib} ({category}) | Jersey Size: {tshirt}
-⚠️ Note: Please bring your E-Bib screenshot and Student/Photo ID.
-Check E-Bib: https://jucsu-run-2026.pages.dev#checker
-Helpline: 01317982413
-- JUCSU RUN 2026 Committee`,
+  kit_reminder_du: `JUCSU RUN Kit: {name} (Bib #{bib}, {category}, {tshirt})
+Venue: TSC Physical Edu, DU
+Date: 30 Sep (6-9 PM)
+Bring ID & E-Bib: jucsu-run-2026.pages.dev`,
 
-  kit_reminder_ju: `Dear {name},
-Official Kit Collection for JUCSU RUN 2026:
-📍 Venue: JUCSU Office / Central Gymnasium, JU Campus, Savar
-📅 Dates: 28 September – 01 October 2026 (10:00 AM – 07:00 PM)
-🆔 Bib: #{bib} ({category}) | Jersey Size: {tshirt}
-⚠️ Note: Please bring your E-Bib screenshot and Student/Photo ID.
-Check E-Bib: https://jucsu-run-2026.pages.dev#checker
-Helpline: 01317982413
-- JUCSU RUN 2026 Committee`,
+  kit_reminder_ju: `JUCSU RUN Kit: {name} (Bib #{bib}, {category}, {tshirt})
+Venue: JU Gymnasium, Savar
+Date: 28 Sep-1 Oct (10AM-7PM)
+Bring ID & E-Bib: jucsu-run-2026.pages.dev`,
 
-  kit_reminder: `Dear {name},
-Official Kit Collection for JUCSU RUN 2026 (The Farewell) is open!
-📅 Dates: 28 Sep - 01 Oct (10:00 AM - 06:00 PM)
-📍 Point: {kit_point}
-🆔 Bib: #{bib} ({category}) | Jersey Size: {tshirt}
-⚠️ Note: Please bring your E-Bib screenshot and Student ID/Photo ID.
-Check status & E-Bib: https://jucsu-run-2026.pages.dev#checker
-Helpline: 01317982413
-- JUCSU RUN 2026 Committee`,
+  kit_reminder: `JUCSU RUN Kit: {name} (Bib #{bib}, {category}, {tshirt})
+Venue: {kit_point}
+Date: 28 Sep-1 Oct (10AM-7PM)
+Bring ID & E-Bib: jucsu-run-2026.pages.dev`,
 
-  bus_alert: `Dear {name},
-Important Travel Alert for JUCSU RUN 2026!
-🚌 Selected Bus Route: {pickup}
-⏰ Departure Time: 04:30 AM Sharp (October 2, 2026)
-🏁 Race Venue: Central Shaheed Minar, JU Campus, Savar
-📞 Bus Coordinator: 01317982413
-Please report to your pickup point 15 mins early.
-Full Schedule: https://jucsu-run-2026.pages.dev#logistics
-- JUCSU RUN 2026 Committee`,
+  bus_alert: `JUCSU RUN Bus: {name} (Bib #{bib})
+Route: {pickup}
+Departs: 4:30 AM, Oct 2 (Report 15m early)
+Help: 01317982413 | jucsu-run-2026.pages.dev`,
 
-  payment_reminder: `Hello {name},
-We noticed your registration for JUCSU RUN 2026 (Bib #{bib} - {category}) is pending verification.
-If you have already sent the fee via bKash to 01317982413, please reply with your Transaction ID or verify your status at: https://jucsu-run-2026.pages.dev#checker
-Helpline: 01317982413
-- JUCSU RUN 2026 Committee`,
+  payment_reminder: `JUCSU RUN: {name}, Bib #{bib} fee verification pending. Send bKash TrxID to 01317982413 or verify at: jucsu-run-2026.pages.dev`,
 
-  ebib_confirmation: `Congratulations {name}!
-JUCSU RUN 2026 Confirmed. Bib: #{bib} ({category}).
-Get E-Bib & Event Info:
-https://jucsu-run-2026.pages.dev`,
+  ebib_confirmation: `JUCSU RUN: Confirmed! {name}, Bib #{bib} ({category}, {tshirt}). Download E-Bib & guide: https://jucsu-run-2026.pages.dev`,
 
-  race_day_guide: `Get ready {name}!
-JUCSU RUN 2026 starts tomorrow, Oct 2, 2026!
-⏰ Reporting Time: 05:15 AM
-🚩 Flag-off: 06:10 AM Sharp
-📍 Assembly: Central Shaheed Minar Square, JU Campus
-Baggage counters & warm-up zone will be ready. See you at the starting line!
-- JUCSU RUN 2026 Committee`,
+  race_day_guide: `JUCSU RUN: {name} (Bib #{bib}), Race tomorrow Oct 2! Assembly: 5:15 AM, JU Shaheed Minar. Flag-off: 6:10 AM sharp. Web: jucsu-run-2026.pages.dev`,
 
-  custom: `Dear {name},
-Important update regarding JUCSU RUN 2026 for Bib #{bib} ({category}):
-[Type your message here]
-Website: https://jucsu-run-2026.pages.dev
-Helpline: 01317982413
-- JUCSU RUN 2026 Committee`
+  custom: `JUCSU RUN: {name} (Bib #{bib}) - [Your msg here]. Web: jucsu-run-2026.pages.dev | Help: 01317982413`
 };
 
 function getCleanPhone(phone) {
@@ -2611,14 +2592,41 @@ function getCleanPhone(phone) {
 
 function personalizeMessage(template, runner) {
   if (!template) return '';
-  const name = runner.name || runner.full_name || runner.fullName || 'Runner';
-  const bib = runner.bib || runner.bib_number || 'TBD';
-  const category = runner.category || 'Mini Marathon';
-  const kitPoint = runner.kitpoint || runner.kit_point || runner.kit_pickup || runner.kitPickup || 'Jahangirnagar University Desk';
-  const pickup = runner.pickup || runner.bus_route || runner.pickup_location || runner.pickupLocation || 'Self Arrival (JU Campus)';
-  const tshirt = (runner.tshirt || runner.tShirt || 'M').toUpperCase();
+  
+  // Format Name: clean and capped at 16 chars to guarantee 1 SMS fit even with long names
+  let rawName = (runner.name || runner.full_name || runner.fullName || 'Runner').trim();
+  rawName = rawName.replace(/[^\x20-\x7E]/g, ''); // strip non-ASCII
+  if (rawName.length > 16) {
+    const parts = rawName.split(' ');
+    rawName = parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1]}` : rawName.substring(0, 16);
+    if (rawName.length > 16) rawName = rawName.substring(0, 16);
+  }
+  const name = rawName || 'Runner';
 
-  return template
+  const bib = runner.bib || runner.bib_number || 'TBD';
+  
+  // Short category: 10K or 5K
+  const rawCat = runner.category || '';
+  const category = rawCat.includes('10K') ? '10K' : (rawCat.includes('5K') ? '5K' : 'Run');
+
+  // Short kit point name
+  const rawKp = (runner.kitpoint || runner.kit_point || runner.kit_pickup || runner.kitPickup || '').toLowerCase();
+  const kitPoint = (rawKp.includes('dhaka') || rawKp.includes('du')) 
+    ? 'TSC Physical Edu, DU' 
+    : 'JU Gymnasium, Savar';
+
+  // Short pickup route name
+  const rawPickup = (runner.pickup || runner.bus_route || runner.pickup_location || runner.pickupLocation || '').toLowerCase();
+  let pickup = 'Self-Arranged';
+  if (rawPickup.includes('uttara')) pickup = 'Uttara';
+  else if (rawPickup.includes('gulshan')) pickup = 'Gulshan';
+  else if (rawPickup.includes('bongo') || rawPickup.includes('du route')) pickup = 'Bongobazar';
+
+  let tshirt = (runner.tshirt || runner.tShirt || 'M').toUpperCase().trim();
+  if (tshirt === 'XXXL') tshirt = '3XL';
+  if (!['S', 'M', 'L', 'XL', 'XXL', '3XL'].includes(tshirt)) tshirt = 'M';
+
+  let res = template
     .replace(/{name}/g, name)
     .replace(/{bib}/g, bib)
     .replace(/{category}/g, category)
@@ -2626,6 +2634,8 @@ function personalizeMessage(template, runner) {
     .replace(/{kit_point}/g, kitPoint)
     .replace(/{pickup}/g, pickup)
     .replace(/{website_link}/g, 'https://jucsu-run-2026.pages.dev');
+
+  return sanitizeGsmAscii(res);
 }
 
 function getFilteredBroadcastRunners(audienceFilter) {
@@ -2693,6 +2703,53 @@ function showBroadcastToast(msg) {
   }, 3500);
 }
 
+function updateBroadcastSmsCounter() {
+  const msgTextarea = document.getElementById('broadcastMessageText');
+  const charBadge = document.getElementById('broadcastCharCountBadge');
+  const costBadge = document.getElementById('broadcastCostBadge');
+  const unicodeAlert = document.getElementById('broadcastUnicodeAlert');
+  if (!msgTextarea) return;
+
+  const text = msgTextarea.value || '';
+  const len = text.length;
+  const isUnicode = isNonAsciiOrUnicode(text);
+
+  const singleLimit = isUnicode ? 70 : 160;
+  const multiLimit = isUnicode ? 67 : 153;
+  let parts = 1;
+  if (len === 0) {
+    parts = 0;
+  } else if (len > singleLimit) {
+    parts = Math.ceil(len / multiLimit);
+  }
+
+  if (charBadge) {
+    if (parts <= 1) {
+      charBadge.style.background = 'rgba(0,255,136,0.15)';
+      charBadge.style.color = '#00ff88';
+      charBadge.style.borderColor = 'rgba(0,255,136,0.3)';
+      charBadge.textContent = `🟢 ${len} / ${singleLimit} Chars (1 SMS Credit)`;
+    } else {
+      charBadge.style.background = 'rgba(255,68,68,0.15)';
+      charBadge.style.color = '#ff4444';
+      charBadge.style.borderColor = 'rgba(255,68,68,0.3)';
+      charBadge.textContent = `🔴 ${len} Chars (${parts} SMS Credits)`;
+    }
+  }
+
+  if (costBadge) {
+    if (parts <= 1) {
+      costBadge.innerHTML = `খরচ: <strong style="color: #00ff88;">১টি SMS</strong> প্রতি রানার`;
+    } else {
+      costBadge.innerHTML = `খরচ: <strong style="color: #ff4444;">${parts}টি SMS</strong> প্রতি রানার (${parts} গুণ খরচ!)`;
+    }
+  }
+
+  if (unicodeAlert) {
+    unicodeAlert.style.display = isUnicode ? 'inline-block' : 'none';
+  }
+}
+
 function updateBroadcastTool() {
   const audienceSelect = document.getElementById('broadcastAudience');
   const countBadge = document.getElementById('broadcastRecipientCount');
@@ -2710,6 +2767,7 @@ function updateBroadcastTool() {
   const currentMsg = msgTextarea ? msgTextarea.value : (BROADCAST_TEMPLATES.kit_reminder || '');
   
   renderBroadcastRunnersList(runners, currentMsg, searchQuery);
+  updateBroadcastSmsCounter();
 }
 
 function renderBroadcastRunnersList(runners, rawTemplate, searchQuery) {
@@ -2831,13 +2889,26 @@ function initBroadcastTool() {
     updateBroadcastTool();
   });
 
-  // Message typing event -> re-render runner links
+  // Message typing event -> re-render runner links & update SMS counter
   msgTextarea.addEventListener('input', () => {
     const audience = audienceSelect.value;
     const runners = getFilteredBroadcastRunners(audience);
     const searchQuery = searchInput ? searchInput.value.trim() : '';
     renderBroadcastRunnersList(runners, msgTextarea.value, searchQuery);
+    updateBroadcastSmsCounter();
   });
+
+  // Strip Unicode & Force 1-SMS Button
+  const stripUnicodeBtn = document.getElementById('stripUnicodeBtn');
+  if (stripUnicodeBtn) {
+    stripUnicodeBtn.addEventListener('click', () => {
+      if (msgTextarea) {
+        msgTextarea.value = sanitizeGsmAscii(msgTextarea.value);
+        updateBroadcastTool();
+        showBroadcastToast('⚡ বার্তাটি GSM স্ট্যান্ডার্ডে ১টি SMS এর উপযোগী করা হয়েছে!');
+      }
+    });
+  }
 
   // Search filter typing event
   if (searchInput) {
@@ -4082,20 +4153,25 @@ function updateSingleSmsCounter() {
   const countEl = document.getElementById('singleSmsCharCount');
   if (!textarea || !countEl) return;
 
-  const text = textarea.value;
+  const text = textarea.value || '';
   const len = text.length;
-  const isUnicode = containsBengali(text);
+  const isUnicode = isNonAsciiOrUnicode(text);
   
   // Character limits
   let partSize = isUnicode ? 70 : 160;
   let multipartSize = isUnicode ? 67 : 153;
   let parts = 1;
-  
-  if (len > partSize) {
+  if (len === 0) {
+    parts = 0;
+  } else if (len > partSize) {
     parts = Math.ceil(len / multipartSize);
   }
 
-  countEl.textContent = `${len} characters | ${parts} SMS (${isUnicode ? 'Unicode/বাংলা' : 'English'})`;
+  if (parts <= 1) {
+    countEl.innerHTML = `<span style="color: #00ff88; font-weight: 700;">🟢 ${len} / ${partSize} Chars</span> | <strong style="color: #00ff88;">1 SMS Credit</strong> (${isUnicode ? '⚠️ Unicode/বাংলা' : 'GSM English'})`;
+  } else {
+    countEl.innerHTML = `<span style="color: #ff4444; font-weight: 700;">🔴 ${len} Chars</span> | <strong style="color: #ff4444;">${parts} SMS Credits</strong> (${isUnicode ? '⚠️ Unicode/বাংলা' : 'GSM English'})`;
+  }
 }
 
 // Bulk SMS Broadcast Process
@@ -4240,6 +4316,14 @@ function initBulkSmsManager() {
 
   if (singleTextarea) {
     singleTextarea.oninput = updateSingleSmsCounter;
+  }
+
+  const stripSingleBtn = document.getElementById('stripSingleUnicodeBtn');
+  if (stripSingleBtn && singleTextarea) {
+    stripSingleBtn.onclick = () => {
+      singleTextarea.value = sanitizeGsmAscii(singleTextarea.value);
+      updateSingleSmsCounter();
+    };
   }
 
   const closeSingle = () => { if (singleModal) singleModal.style.display = 'none'; };

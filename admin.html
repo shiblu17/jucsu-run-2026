@@ -1094,7 +1094,27 @@ create policy "Allow admin full access on volunteers" on public.volunteers for a
               </label>
               <span style="font-size: 0.72rem; color: var(--color-text-muted);">Placeholders: <code>{name}</code>, <code>{bib}</code>, <code>{category}</code>, <code>{tshirt}</code>, <code>{kit_point}</code>, <code>{pickup}</code></span>
             </div>
-            <textarea id="broadcastMessageText" class="form-input" rows="5" style="width: 100%; font-size: 0.85rem; line-height: 1.5; background: rgba(0,0,0,0.4); color: #fff; font-family: inherit; resize: vertical;"></textarea>
+            <textarea id="broadcastMessageText" class="form-input" rows="4" style="width: 100%; font-size: 0.85rem; line-height: 1.5; background: rgba(0,0,0,0.4); color: #fff; font-family: inherit; resize: vertical;"></textarea>
+            
+            <!-- Live SMS Cost & Character Indicator -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 8px; font-size: 0.78rem;">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span id="broadcastCharCountBadge" style="padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; background: rgba(0,255,136,0.15); color: #00ff88; border: 1px solid rgba(0,255,136,0.3);">
+                  🟢 0 / 160 Chars (1 SMS Credit)
+                </span>
+                <span id="broadcastCostBadge" style="color: #aaa; font-size: 0.74rem;">
+                  খরচ: <strong style="color: #00ff88;">১টি SMS</strong> প্রতি রানার
+                </span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span id="broadcastUnicodeAlert" style="display: none; color: #ffaa00; font-size: 0.72rem; font-weight: 600;">
+                  ⚠️ ইমোজি/Unicode আছে! প্রতি ৭০ অক্ষরে ১টি SMS
+                </span>
+                <button type="button" id="stripUnicodeBtn" class="btn btn-outline btn-sm" style="font-size: 0.72rem; padding: 2px 8px; border-color: rgba(0, 229, 255, 0.4); color: #00e5ff; cursor: pointer;" title="ইমোজি বা অতিরিক্ত ক্যারেক্টার মুছে নিশ্চিত ১টি SMS এ নামিয়ে আনুন">
+                  ⚡ 1-SMS এ রূপান্তর করুন
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Bulk Action Bar -->
@@ -1563,7 +1583,12 @@ create policy "Allow admin full access on volunteers" on public.volunteers for a
       </div>
 
       <div class="form-group" style="margin-bottom: 10px;">
-        <label for="singleSmsText" class="form-label" style="font-size: 0.82rem; font-weight: 600; color: #00e5ff;">Message Content (বার্তা):</label>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <label for="singleSmsText" class="form-label" style="font-size: 0.82rem; font-weight: 600; color: #00e5ff; margin-bottom: 0;">Message Content (বার্তা):</label>
+          <button type="button" id="stripSingleUnicodeBtn" class="btn btn-outline btn-sm" style="font-size: 0.7rem; padding: 1px 7px; border-color: rgba(0, 229, 255, 0.4); color: #00e5ff; cursor: pointer;" title="ইমোজি বা অতিরিক্ত ক্যারেক্টার মুছে নিশ্চিত ১টি SMS এ নামিয়ে আনুন">
+            ⚡ 1-SMS এ রূপান্তর
+          </button>
+        </div>
         <textarea id="singleSmsText" class="form-input" rows="5" style="width: 100%; font-size: 0.85rem; line-height: 1.4; background: rgba(0,0,0,0.4); color: #fff; resize: vertical; font-family: inherit;"></textarea>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 0.72rem; color: var(--color-text-muted);">
           <span id="singleSmsCharCount">0 characters | 1 SMS</span>
@@ -1716,6 +1741,6 @@ create policy "Allow admin full access on volunteers" on public.volunteers for a
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=5.0"></script>
+  <script src="admin.js?v=5.1"></script>
 </body>
 </html>

@@ -2182,6 +2182,9 @@ function setupLogisticsSettingsHandler() {
 /* ==========================================
    ON-SPOT KIT DISTRIBUTION DESK
    ========================================== */
+let activeKitRunner = null;
+let currentRenderKitCardFn = null;
+
 function initKitDistributionDesk() {
   const input = document.getElementById('kitScanInput');
   const btn = document.getElementById('kitLookupBtn');
@@ -2193,6 +2196,7 @@ function initKitDistributionDesk() {
     const rawQ = input.value.trim();
     if (!rawQ) {
       resultCard.style.display = 'none';
+      activeKitRunner = null;
       return;
     }
 
@@ -2212,6 +2216,7 @@ function initKitDistributionDesk() {
     });
 
     if (!runner) {
+      activeKitRunner = null;
       resultCard.style.display = 'block';
       resultCard.innerHTML = `
         <div style="color: #ffccd0; display: flex; align-items: center; gap: 8px;">
@@ -2222,6 +2227,8 @@ function initKitDistributionDesk() {
       return;
     }
 
+    activeKitRunner = runner;
+    currentRenderKitCardFn = renderKitCard;
     renderKitCard(runner);
   }
 
@@ -2238,9 +2245,14 @@ function initKitDistributionDesk() {
             Bib: <strong class="text-lime">#${runner.bib}</strong> • 📞 ${runner.phone}
           </span>
         </div>
-        <span class="badge" style="font-size: 0.8rem; padding: 4px 10px; border-radius: 4px; ${isVerified ? 'background: rgba(0,255,136,0.15); color: #00ff88; border: 1px solid rgba(0,255,136,0.3);' : 'background: rgba(255,170,0,0.15); color: #ffaa00; border: 1px solid rgba(255,170,0,0.3);'}">
-          ${isVerified ? '✅ Payment Verified' : '⏳ Payment ' + runner.status}
-        </span>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <span class="badge" style="font-size: 0.8rem; padding: 4px 10px; border-radius: 4px; ${isVerified ? 'background: rgba(0,255,136,0.15); color: #00ff88; border: 1px solid rgba(0,255,136,0.3);' : 'background: rgba(255,170,0,0.15); color: #ffaa00; border: 1px solid rgba(255,170,0,0.3);'}">
+            ${isVerified ? '✅ Payment Verified' : '⏳ Payment ' + runner.status}
+          </span>
+          <button type="button" id="kitEditRunnerBtn" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 3px 10px; border-color: rgba(193, 216, 47, 0.4); color: var(--color-accent); font-weight: 700; cursor: pointer;" title="জার্সির সাইজ বা রানারের তথ্য পরিবর্তন করতে ক্লিক করুন">
+            ✏️ Edit Info / Jersey
+          </button>
+        </div>
       </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; font-size: 0.88rem; color: #fff;">
@@ -2264,18 +2276,28 @@ function initKitDistributionDesk() {
         </div>
       </div>
 
-      <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-end;">
+      <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
         ${isDelivered ? `
-          <button type="button" class="btn btn-outline btn-sm disabled" disabled style="opacity: 0.6; cursor: not-allowed;">
+          <button type="button" id="unmarkDeliveredBtn" class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 7px 14px; border-color: rgba(255,170,0,0.5); color: #ffaa00; cursor: pointer;" title="ভুলবশত কিট ডেলিভারি মার্ক করা হয়ে থাকলে এটি ক্লিক করে বাতিল করতে পারেন">
+            ↩️ Unmark / Revert
+          </button>
+          <button type="button" class="btn btn-outline btn-sm disabled" disabled style="opacity: 0.85; cursor: not-allowed; background: rgba(0,255,136,0.12); border-color: rgba(0,255,136,0.4); color: #00ff88; font-weight: 700;">
             ✓ Kit Already Handed Over
           </button>
         ` : `
-          <button type="button" id="markDeliveredBtn" class="btn btn-lime btn-sm" style="font-weight: 700; padding: 9px 20px;">
+          <button type="button" id="markDeliveredBtn" class="btn btn-lime btn-sm" style="font-weight: 700; padding: 9px 22px; cursor: pointer;">
             📦 Mark Kit Handed Over
           </button>
         `}
       </div>
     `;
+
+    const editBtn = document.getElementById('kitEditRunnerBtn');
+    if (editBtn) {
+      editBtn.onclick = () => {
+        openEditRunnerModal(runner.bib);
+      };
+    }
 
     const markBtn = document.getElementById('markDeliveredBtn');
     if (markBtn) {
@@ -2300,6 +2322,35 @@ function initKitDistributionDesk() {
               .eq('bib', runner.bib);
           } catch (e) {
             console.warn('Supabase kit delivery update error:', e);
+          }
+        }
+
+        renderKitCard(runner);
+        refreshDashboard();
+      };
+    }
+
+    const unmarkBtn = document.getElementById('unmarkDeliveredBtn');
+    if (unmarkBtn) {
+      unmarkBtn.onclick = async () => {
+        if (!confirm(`আপনি কি #${runner.bib} (${runner.name}) এর কিট ডেলিভারি স্ট্যাটাস বাতিল (Unmark) করতে চান?`)) return;
+        unmarkBtn.disabled = true;
+        unmarkBtn.textContent = 'Reverting...';
+
+        runner.kit_status = 'Pending';
+        runner.kit_delivered = false;
+        runner.kit_delivered_at = null;
+
+        saveDatabase();
+
+        if (supabaseClient) {
+          try {
+            await supabaseClient
+              .from('registrations')
+              .update({ kit_status: 'Pending', kit_delivered: false, kit_delivered_at: null })
+              .eq('bib', runner.bib);
+          } catch (e) {
+            console.warn('Supabase kit delivery revert error:', e);
           }
         }
 
@@ -3243,6 +3294,14 @@ function setupEditRunnerHandler() {
     }
 
     refreshDashboard();
+
+    // Auto refresh active Kit Desk view if the currently inspected runner was edited
+    if (activeKitRunner && (activeKitRunner.bib.toString() === originalBib.toString() || activeKitRunner.bib.toString() === newBib.toString())) {
+      activeKitRunner = runner;
+      if (typeof currentRenderKitCardFn === 'function') {
+        currentRenderKitCardFn(runner);
+      }
+    }
 
     saveBtn.disabled = false;
     saveBtn.innerHTML = '<span>💾 Save Changes</span>';

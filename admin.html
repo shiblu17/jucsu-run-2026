@@ -710,6 +710,21 @@ create policy "Allow admin full access on volunteers" on public.volunteers for a
           <div id="kitResultCard" style="display: none; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 16px; margin-top: 10px;">
             <!-- Populated dynamically via JS -->
           </div>
+
+          <!-- 1-Click PDF Export Bar for Kit Desks -->
+          <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="font-size: 0.82rem; color: #a0aec0;">
+              <strong style="color: #fff;">📄 1-Click Kit Collection PDF:</strong> ঢাকা ও জাহাঙ্গীরনগর পয়েন্টের তথ্যসহ আলাদা পিডিএফ ডাউনলোড
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" id="downloadDhakaKitPdfBtn" class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 6px 14px; border-color: rgba(0, 229, 255, 0.5); color: #00e5ff; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;" title="ঢাকা বিশ্ববিদ্যালয় কিট পয়েন্টের সবার তথ্যসহ আলাদা PDF ডাউনলোড করুন">
+                <span>🏛️ ঢাকা কিট পয়েন্ট PDF</span>
+              </button>
+              <button type="button" id="downloadJuKitPdfBtn" class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 6px 14px; border-color: rgba(193, 216, 47, 0.5); color: var(--color-accent); font-weight: 700; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;" title="জাহাঙ্গীরনগর বিশ্ববিদ্যালয় কিট পয়েন্টের সবার তথ্যসহ আলাদা PDF ডাউনলোড করুন">
+                <span>🌳 জাহাঙ্গীরনগর কিট পয়েন্ট PDF</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Logistics & Order Summary Panel -->
@@ -805,9 +820,14 @@ create policy "Allow admin full access on volunteers" on public.volunteers for a
                   <span>🏛️</span>
                   <span>Dhaka University (DU) Desk — ঢাকা বিশ্ববিদ্যালয় কিট পয়েন্ট</span>
                 </span>
-                <span id="duKitMatrixTotalBadge" style="font-size: 0.75rem; font-weight: 700; background: rgba(0,229,255,0.15); color: #00e5ff; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0,229,255,0.3);">
-                  0 Jerseys Total
-                </span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span id="duKitMatrixTotalBadge" style="font-size: 0.75rem; font-weight: 700; background: rgba(0,229,255,0.15); color: #00e5ff; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0,229,255,0.3);">
+                    0 Jerseys Total
+                  </span>
+                  <button type="button" id="duDeskCardPdfBtn" class="btn btn-outline btn-sm" style="font-size: 0.72rem; padding: 2px 8px; border-color: rgba(0,229,255,0.4); color: #00e5ff; font-weight: 700; cursor: pointer;" title="ঢাকা কিট পয়েন্টের সম্পূর্ণ রানার তালিকা PDF ডাউনলোড করুন">
+                    📄 ঢাকা PDF
+                  </button>
+                </div>
               </div>
               <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #fff; text-align: center;">
@@ -837,9 +857,14 @@ create policy "Allow admin full access on volunteers" on public.volunteers for a
                   <span>🌳</span>
                   <span>Jahangirnagar University (JU) Desk — জাহাঙ্গীরনগর বিশ্ববিদ্যালয় কিট পয়েন্ট</span>
                 </span>
-                <span id="juKitMatrixTotalBadge" style="font-size: 0.75rem; font-weight: 700; background: rgba(193,216,47,0.15); color: var(--color-accent); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(193,216,47,0.3);">
-                  0 Jerseys Total
-                </span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span id="juKitMatrixTotalBadge" style="font-size: 0.75rem; font-weight: 700; background: rgba(193,216,47,0.15); color: var(--color-accent); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(193,216,47,0.3);">
+                    0 Jerseys Total
+                  </span>
+                  <button type="button" id="juDeskCardPdfBtn" class="btn btn-outline btn-sm" style="font-size: 0.72rem; padding: 2px 8px; border-color: rgba(193,216,47,0.4); color: var(--color-accent); font-weight: 700; cursor: pointer;" title="জাহাঙ্গীরনগর কিট পয়েন্টের সম্পূর্ণ রানার তালিকা PDF ডাউনলোড করুন">
+                    📄 জাহাঙ্গীরনগর PDF
+                  </button>
+                </div>
               </div>
               <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #fff; text-align: center;">
@@ -1740,7 +1765,9 @@ create policy "Allow admin full access on volunteers" on public.volunteers for a
 
   <!-- Script links -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="config.js"></script>
-  <script src="admin.js?v=5.2"></script>
+  <script src="admin.js?v=5.3"></script>
 </body>
 </html>

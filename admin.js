@@ -2367,6 +2367,397 @@ function initKitDistributionDesk() {
       performLookup();
     }
   };
+
+  // Bind 1-Click Kit Collection PDF Download Buttons
+  const dlDhakaBtn = document.getElementById('downloadDhakaKitPdfBtn');
+  if (dlDhakaBtn) {
+    dlDhakaBtn.onclick = () => exportKitCollectionPdf('du');
+  }
+
+  const dlJuBtn = document.getElementById('downloadJuKitPdfBtn');
+  if (dlJuBtn) {
+    dlJuBtn.onclick = () => exportKitCollectionPdf('ju');
+  }
+
+  const cardDuBtn = document.getElementById('duDeskCardPdfBtn');
+  if (cardDuBtn) {
+    cardDuBtn.onclick = () => exportKitCollectionPdf('du');
+  }
+
+  const cardJuBtn = document.getElementById('juDeskCardPdfBtn');
+  if (cardJuBtn) {
+    cardJuBtn.onclick = () => exportKitCollectionPdf('ju');
+  }
+}
+
+/* ==========================================
+   OFFICIAL KIT COLLECTION MANIFEST PDF GENERATOR
+   ========================================== */
+function exportKitCollectionPdf(deskType, forcePrintWindow = false) {
+  if (!runnerDatabase || !runnerDatabase.length) {
+    alert('কোনো রানার ডেটা পাওয়া যায়নি। অনুগ্রহ করে অপেক্ষা করুন ডেটা লোড হওয়া পর্যন্ত।');
+    return;
+  }
+
+  const isDU = (deskType === 'du');
+  const deskTitle = isDU ? 'Dhaka University (DU) Desk' : 'Jahangirnagar University (JU) Desk';
+  const venueBangla = isDU ? 'ঢাকা বিশ্ববিদ্যালয় কিট পয়েন্ট (TSC / শারীরিক শিক্ষা কেন্দ্র)' : 'জাহাঙ্গীরনগর বিশ্ববিদ্যালয় কিট পয়েন্ট (কেন্দ্রীয় জিমনেসিয়াম, সাভার)';
+  const venueLocation = isDU ? 'TSC Physical Education Centre, DU Campus, Dhaka' : 'Central Gymnasium, Jahangirnagar University Campus, Savar';
+  const fileName = isDU ? 'JUCSU_RUN_2026_Dhaka_Kit_Collection.pdf' : 'JUCSU_RUN_2026_Jahangirnagar_Kit_Collection.pdf';
+
+  // Filter runners for this specific kit desk
+  const deskRunners = runnerDatabase.filter(r => {
+    const kp = (r.kitpoint || r.kit_pickup || r.kitPickup || '').toLowerCase();
+    const matchesDU = kp.includes('dhaka') || kp.includes('du');
+    return isDU ? matchesDU : !matchesDU;
+  });
+
+  if (!deskRunners.length) {
+    alert(`এই কিট পয়েন্টে (${deskTitle}) কোনো রানার পাওয়া যায়নি।`);
+    return;
+  }
+
+  // Sort by Bib number ascending (clean integer sort)
+  deskRunners.sort((a, b) => {
+    const bibA = parseInt((a.bib || '0').toString().replace(/\D/g, ''), 10) || 0;
+    const bibB = parseInt((b.bib || '0').toString().replace(/\D/g, ''), 10) || 0;
+    return bibA - bibB;
+  });
+
+  // Calculate detailed statistics
+  const sizes10k = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
+  const sizes5k  = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
+  const sizesTotal = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
+  let total10K = 0, total5K = 0;
+  let delivered10k = 0, delivered5k = 0;
+  let totalVerified = 0, totalPending = 0;
+
+  deskRunners.forEach(r => {
+    let sz = (r.tshirt || 'M').toUpperCase().trim();
+    if (sz === 'XXXL') sz = '3XL';
+    if (!['S', 'M', 'L', 'XL', 'XXL', '3XL'].includes(sz)) sz = 'M';
+
+    const is10 = (r.category || '').includes('10K');
+    const isDelivered = r.kit_status === 'Delivered' || r.kit_delivered === true;
+    const isVer = r.status === 'Verified';
+
+    if (isVer) totalVerified++;
+    else totalPending++;
+
+    if (is10) {
+      total10K++;
+      if (sizes10k[sz] !== undefined) sizes10k[sz]++;
+      if (isDelivered) delivered10k++;
+    } else {
+      total5K++;
+      if (sizes5k[sz] !== undefined) sizes5k[sz]++;
+      if (isDelivered) delivered5k++;
+    }
+
+    if (sizesTotal[sz] !== undefined) sizesTotal[sz]++;
+  });
+
+  const totalDelivered = delivered10k + delivered5k;
+  const totalRemaining = deskRunners.length - totalDelivered;
+  const nowStr = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+
+  // Direct jsPDF Download (if available and not forced to print window)
+  if (!forcePrintWindow && window.jspdf && window.jspdf.jsPDF) {
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'pt',
+        format: 'a4'
+      });
+
+      // Top Banner
+      doc.setFillColor(3, 43, 26); // dark green #032b1a
+      doc.rect(0, 0, doc.internal.pageSize.width, 55, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(15);
+      doc.setTextColor(255, 255, 255);
+      doc.text('JUCSU RUN 2026 — OFFICIAL KIT DISTRIBUTION MANIFEST', 36, 26);
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(193, 216, 47); // Lime
+      doc.text(`VENUE: ${venueLocation.toUpperCase()} (${deskTitle.toUpperCase()})`, 36, 43);
+
+      doc.setTextColor(200, 200, 200);
+      doc.setFontSize(8.5);
+      doc.text(`Generated: ${nowStr} | Total Desk Allocation: ${deskRunners.length} Runners`, doc.internal.pageSize.width - 36, 36, { align: 'right' });
+
+      // Inventory Summary Table
+      const summaryHead = [['Category (Jersey Color)', 'S', 'M', 'L', 'XL', '2XL', '3XL', 'Total Required', 'Handed Over', 'Remaining']];
+      const summaryBody = [
+        ['10K Mini Marathon (Color 1)', sizes10k.S, sizes10k.M, sizes10k.L, sizes10k.XL, sizes10k.XXL, sizes10k['3XL'], total10K, delivered10k, total10K - delivered10k],
+        ['5K Fun Run (Color 2)', sizes5k.S, sizes5k.M, sizes5k.L, sizes5k.XL, sizes5k.XXL, sizes5k['3XL'], total5K, delivered5k, total5K - delivered5k],
+        ['COMBINED DESK TOTAL', sizesTotal.S, sizesTotal.M, sizesTotal.L, sizesTotal.XL, sizesTotal.XXL, sizesTotal['3XL'], deskRunners.length, totalDelivered, totalRemaining]
+      ];
+
+      doc.autoTable({
+        startY: 65,
+        head: summaryHead,
+        body: summaryBody,
+        theme: 'grid',
+        headStyles: { fillColor: [15, 60, 40], textColor: 255, fontSize: 8, fontStyle: 'bold', halign: 'center' },
+        bodyStyles: { fontSize: 8, halign: 'center', cellPadding: 3 },
+        columnStyles: {
+          0: { halign: 'left', fontStyle: 'bold', cellWidth: 160 },
+          7: { fontStyle: 'bold', fillColor: [240, 248, 240] },
+          8: { textColor: [0, 140, 60], fontStyle: 'bold' },
+          9: { textColor: [180, 40, 0], fontStyle: 'bold' }
+        },
+        margin: { left: 36, right: 36 }
+      });
+
+      // Runners List Table
+      const tableData = deskRunners.map((r, idx) => {
+        const bib = '#' + (r.bib || 'TBD');
+        const name = (r.name || 'Runner').substring(0, 26);
+        const cat = (r.category || '5K').includes('10K') ? '10K' : '5K';
+        let sz = (r.tshirt || 'M').toUpperCase().trim();
+        if (sz === 'XXXL') sz = '3XL';
+        const phone = r.phone || 'N/A';
+        const payStatus = r.status || 'Verified';
+        const isDelivered = r.kit_status === 'Delivered' || r.kit_delivered === true;
+        const kitStatus = isDelivered ? `✓ Handed (${r.kit_delivered_at || 'Earlier'})` : '⚪ Pending';
+        const signBox = isDelivered ? '[✓ Handed Over]' : '[                  ]';
+
+        return [idx + 1, bib, name, cat, sz, phone, payStatus, kitStatus, signBox];
+      });
+
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 12,
+        head: [['#', 'Bib', 'Runner Name', 'Cat', 'Size', 'Phone Number', 'Payment', 'Kit Status', 'Received Sign / Check']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [3, 43, 26], textColor: [0, 255, 136], fontSize: 8, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 7.8, textColor: [30, 30, 30], cellPadding: 3 },
+        columnStyles: {
+          0: { cellWidth: 26, halign: 'center' },
+          1: { cellWidth: 48, fontStyle: 'bold', textColor: [0, 100, 50] },
+          2: { cellWidth: 140, fontStyle: 'bold' },
+          3: { cellWidth: 45, halign: 'center' },
+          4: { cellWidth: 42, halign: 'center', fontStyle: 'bold', textColor: [180, 50, 0] },
+          5: { cellWidth: 88 },
+          6: { cellWidth: 65, halign: 'center' },
+          7: { cellWidth: 120 },
+          8: { cellWidth: 140, halign: 'center', fontStyle: 'italic', textColor: [100, 100, 100] }
+        },
+        margin: { left: 36, right: 36 },
+        didDrawPage: function (data) {
+          doc.setFontSize(8);
+          doc.setTextColor(120, 120, 120);
+          doc.text(
+            `Page ${doc.internal.getNumberOfPages()} — JUCSU RUN 2026 Official Kit Manifest (${deskTitle})`,
+            doc.internal.pageSize.width / 2,
+            doc.internal.pageSize.height - 15,
+            { align: 'center' }
+          );
+        }
+      });
+
+      doc.save(fileName);
+      if (typeof showBroadcastToast === 'function') {
+        showBroadcastToast(`📥 ${isDU ? 'ঢাকা' : 'জাহাঙ্গীরনগর'} কিট পয়েন্ট PDF ডাউনলোড সম্পন্ন হয়েছে!`);
+      }
+      return;
+    } catch (err) {
+      console.warn('jsPDF generation failed, falling back to print window:', err);
+    }
+  }
+
+  // Fallback to high-res printable document window
+  openPrintableKitManifestWindow(deskType, deskRunners, {
+    deskTitle,
+    venueBangla,
+    venueLocation,
+    sizes10k,
+    sizes5k,
+    sizesTotal,
+    total10K,
+    total5K,
+    delivered10k,
+    delivered5k,
+    totalDelivered,
+    totalRemaining,
+    totalVerified,
+    totalPending,
+    nowStr
+  });
+}
+
+function openPrintableKitManifestWindow(deskType, runners, stats) {
+  const win = window.open('', '_blank');
+  if (!win) {
+    alert('পপআপ উইন্ডো ব্লক করা আছে। অনুগ্রহ করে আপনার ব্রাউজারে পপআপ অ্যালাউ (Allow Popups) করুন।');
+    return;
+  }
+
+  const {
+    deskTitle,
+    venueBangla,
+    venueLocation,
+    sizes10k,
+    sizes5k,
+    sizesTotal,
+    total10K,
+    total5K,
+    delivered10k,
+    delivered5k,
+    totalDelivered,
+    totalRemaining,
+    totalVerified,
+    totalPending,
+    nowStr
+  } = stats;
+
+  const rowsHtml = runners.map((r, idx) => {
+    const bib = '#' + (r.bib || 'TBD');
+    const name = r.name || 'Runner';
+    const cat = (r.category || '5K').includes('10K') ? '10K Mini Marathon' : '5K Run';
+    let sz = (r.tshirt || 'M').toUpperCase().trim();
+    if (sz === 'XXXL') sz = '3XL';
+    const phone = r.phone || 'N/A';
+    const payStatus = r.status || 'Verified';
+    const isDelivered = r.kit_status === 'Delivered' || r.kit_delivered === true;
+    const kitText = isDelivered ? `✓ Delivered (${r.kit_delivered_at || 'Yes'})` : '⚪ Not Handed';
+
+    return `
+      <tr style="border-bottom: 1px solid #ddd; ${idx % 2 === 1 ? 'background-color: #f9fdfa;' : ''}">
+        <td style="padding: 5px 8px; text-align: center; font-size: 11px; color: #666;">${idx + 1}</td>
+        <td style="padding: 5px 8px; font-weight: bold; font-size: 13px; color: #004d26;">${bib}</td>
+        <td style="padding: 5px 8px; font-weight: 600; font-size: 12px;">${name}</td>
+        <td style="padding: 5px 8px; font-size: 11px;">${cat}</td>
+        <td style="padding: 5px 8px; text-align: center; font-weight: bold; font-size: 13px; color: #c43d00;">${sz}</td>
+        <td style="padding: 5px 8px; font-family: monospace; font-size: 11px;">${phone}</td>
+        <td style="padding: 5px 8px; text-align: center; font-size: 11px;">${payStatus}</td>
+        <td style="padding: 5px 8px; font-size: 11px;">${kitText}</td>
+        <td style="padding: 5px 8px; border-left: 1px dashed #ccc; min-width: 120px; height: 24px;"></td>
+      </tr>
+    `;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <title>JUCSU RUN 2026 - ${deskTitle} Kit Manifest</title>
+  <style>
+    @page { size: A4 landscape; margin: 10mm; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      margin: 0; padding: 20px; color: #111; background: #fff;
+    }
+    .header-bar {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      border-bottom: 2px solid #004d26; padding-bottom: 12px; margin-bottom: 14px;
+    }
+    .title { font-size: 20px; font-weight: 800; color: #004d26; margin: 0 0 4px 0; }
+    .sub { font-size: 13px; color: #444; margin: 0; }
+    .meta { text-align: right; font-size: 11px; color: #666; }
+    .btn-bar { margin-bottom: 16px; display: flex; gap: 10px; }
+    .btn {
+      background: #004d26; color: #fff; border: none; padding: 8px 16px;
+      border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px;
+    }
+    .btn-outline { background: #fff; color: #004d26; border: 1px solid #004d26; }
+    .summary-box {
+      border: 1px solid #004d26; border-radius: 6px; padding: 10px 14px;
+      margin-bottom: 16px; background: #f2faf5; font-size: 12px;
+    }
+    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .stat-card { background: #fff; border: 1px solid #d4ebd9; padding: 8px 12px; border-radius: 4px; }
+    .stat-val { font-size: 16px; font-weight: bold; color: #004d26; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+    th {
+      background: #004d26; color: #fff; padding: 7px 8px; text-align: left;
+      font-weight: 700; font-size: 11px;
+    }
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; }
+    @media print {
+      .btn-bar { display: none !important; }
+      body { padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="btn-bar">
+    <button class="btn" onclick="window.print()">🖨️ প্রিন্ট / Save as PDF</button>
+    <button class="btn btn-outline" onclick="window.close()">✕ বন্ধ করুন</button>
+  </div>
+
+  <div class="header-bar">
+    <div>
+      <h1 class="title">JUCSU RUN 2026 — OFFICIAL KIT DISTRIBUTION MANIFEST</h1>
+      <p class="sub"><strong>VENUE:</strong> ${venueLocation} (${venueBangla})</p>
+    </div>
+    <div class="meta">
+      <strong>রিপোর্ট তৈরির সময়:</strong> ${nowStr}<br>
+      <strong>মোট কিট বরাদ্দ:</strong> ${runners.length} জন রানার
+    </div>
+  </div>
+
+  <div class="summary-box">
+    <div class="summary-grid">
+      <div class="stat-card">
+        <div style="font-size: 10px; color: #666; text-transform: uppercase;">মোট রানার সংখ্যা</div>
+        <div class="stat-val">${runners.length} জন</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size: 10px; color: #666; text-transform: uppercase;">১০ কিমি মিনি ম্যারাথন</div>
+        <div class="stat-val">${total10K} টি</div>
+        <div style="font-size: 10px; color: #555; margin-top: 3px;">S:${sizes10k.S} M:${sizes10k.M} L:${sizes10k.L} XL:${sizes10k.XL} 2XL:${sizes10k.XXL} 3XL:${sizes10k['3XL']}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size: 10px; color: #666; text-transform: uppercase;">৫ কিমি ফান রান</div>
+        <div class="stat-val">${total5K} টি</div>
+        <div style="font-size: 10px; color: #555; margin-top: 3px;">S:${sizes5k.S} M:${sizes5k.M} L:${sizes5k.L} XL:${sizes5k.XL} 2XL:${sizes5k.XXL} 3XL:${sizes5k['3XL']}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size: 10px; color: #666; text-transform: uppercase;">বিতরণ স্ট্যাটাস</div>
+        <div class="stat-val" style="color: #00883a;">হ্যান্ডওভার: ${totalDelivered}</div>
+        <div style="font-size: 10px; color: #c43d00;">অবশিষ্ট: ${totalRemaining}</div>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 30px; text-align: center;">#</th>
+        <th style="width: 55px;">বিব (Bib)</th>
+        <th>রানার নাম (Name)</th>
+        <th style="width: 80px;">ক্যাটাগরি</th>
+        <th style="width: 45px; text-align: center;">সাইজ</th>
+        <th style="width: 95px;">মোবাইল নম্বর</th>
+        <th style="width: 70px; text-align: center;">পেমেন্ট</th>
+        <th style="width: 100px;">কিট স্ট্যাটাস</th>
+        <th style="width: 130px; text-align: center;">রানার স্বাক্ষর / তারিখ</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rowsHtml}
+    </tbody>
+  </table>
+</body>
+</html>`;
+
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+
+  setTimeout(() => {
+    try {
+      win.print();
+    } catch (e) {
+      console.warn('Auto print error:', e);
+    }
+  }, 500);
 }
 
 /* ==========================================

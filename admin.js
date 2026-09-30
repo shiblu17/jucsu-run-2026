@@ -16,6 +16,7 @@ if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CO
 
 let runnerDatabase = [];
 let smsDeliveryLogs = {}; // Tracks runners who have received SMS: { [bib]: { bib, phone, name, sentAt } }
+let kitDeliveryLogs = {}; // Tracks runners who have received official kit: { [bib]: { bib, name, delivered: true, deliveredAt, category, tshirt, kitpoint } }
 
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Password Verification Gate
@@ -142,6 +143,7 @@ async function initLoginGate() {
 async function initAdminDashboard() {
   await loadDatabase();
   await loadSmsDeliveryLogs();
+  await loadKitDeliveryLogs();
   refreshDashboard();
 
   // Setup Event Listeners for actions
@@ -2180,11 +2182,256 @@ function setupLogisticsSettingsHandler() {
 }
 
 /* ==========================================
-   ON-SPOT KIT DISTRIBUTION DESK
+   CLOUD KIT DISTRIBUTION SYNC & RECOVERY ENGINE
    ========================================== */
 let activeKitRunner = null;
 let currentRenderKitCardFn = null;
 
+async function loadKitDeliveryLogs() {
+  kitDeliveryLogs = {};
+
+  // 1. Read from localStorage 'jucsu_kit_delivery_logs'
+  try {
+    const local = localStorage.getItem('jucsu_kit_delivery_logs');
+    if (local) {
+      kitDeliveryLogs = JSON.parse(local) || {};
+    }
+  } catch (e) {}
+
+  // 2. Auto-recover from localStorage 'jucsu_registrations' if any existed
+  recoverFromLocalRegistrations();
+
+  // 3. Fetch from Supabase event_settings (id: 'kit_delivery_logs')
+  if (supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('event_settings')
+        .select('*')
+        .eq('id', 'kit_delivery_logs')
+        .maybeSingle();
+
+      if (data && data.data && typeof data.data === 'object') {
+        const cloudLogs = data.data;
+        // Merge cloud logs with local
+        Object.keys(cloudLogs).forEach(b => {
+          kitDeliveryLogs[b] = {
+            ...(kitDeliveryLogs[b] || {}),
+            ...cloudLogs[b]
+          };
+        });
+      }
+    } catch (err) {
+      console.warn('Could not sync Kit delivery logs from Supabase:', err);
+    }
+  }
+
+  // 4. Save merged set locally & push back to cloud if needed
+  try {
+    localStorage.setItem('jucsu_kit_delivery_logs', JSON.stringify(kitDeliveryLogs));
+  } catch (e) {}
+
+  if (supabaseClient && Object.keys(kitDeliveryLogs).length > 0) {
+    syncKitDeliveryLogsToCloud().catch(() => {});
+  }
+
+  // 5. Apply kit delivery status to all runners in runnerDatabase
+  applyKitDeliveryLogsToDatabase();
+  updateKitDistributionBadges();
+}
+
+function recoverFromLocalRegistrations() {
+  let recoveredCount = 0;
+  try {
+    const localRegs = localStorage.getItem('jucsu_registrations');
+    if (localRegs) {
+      const parsed = JSON.parse(localRegs);
+      if (Array.isArray(parsed)) {
+        parsed.forEach(r => {
+          if (r && (r.kit_status === 'Delivered' || r.kit_delivered === true)) {
+            const b = (r.bib || '').toString();
+            if (b) {
+              if (!kitDeliveryLogs[b]) recoveredCount++;
+              kitDeliveryLogs[b] = {
+                bib: b,
+                name: r.name || 'Runner',
+                delivered: true,
+                deliveredAt: r.kit_delivered_at || 'Earlier',
+                category: r.category || '',
+                tshirt: r.tshirt || '',
+                kitpoint: r.kitpoint || ''
+              };
+            }
+          }
+        });
+      }
+    }
+  } catch (e) {
+    console.warn('Error recovering from local registrations:', e);
+  }
+  return recoveredCount;
+}
+
+function applyKitDeliveryLogsToDatabase() {
+  if (!runnerDatabase || !runnerDatabase.length) return;
+
+  runnerDatabase.forEach(r => {
+    const bibStr = (r.bib || '').toString();
+    const log = kitDeliveryLogs[bibStr];
+    if (log && log.delivered) {
+      r.kit_status = 'Delivered';
+      r.kit_delivered = true;
+      r.kit_delivered_at = log.deliveredAt || r.kit_delivered_at || 'Earlier';
+    } else if (r.kit_status === 'Delivered' && (!log || log.delivered !== false)) {
+      kitDeliveryLogs[bibStr] = {
+        bib: bibStr,
+        name: r.name || 'Runner',
+        delivered: true,
+        deliveredAt: r.kit_delivered_at || 'Earlier',
+        category: r.category || '',
+        tshirt: r.tshirt || '',
+        kitpoint: r.kitpoint || ''
+      };
+    }
+  });
+
+  saveDatabase();
+}
+
+async function syncKitDeliveryLogsToCloud() {
+  try {
+    localStorage.setItem('jucsu_kit_delivery_logs', JSON.stringify(kitDeliveryLogs));
+  } catch (e) {}
+
+  if (supabaseClient) {
+    try {
+      await supabaseClient
+        .from('event_settings')
+        .upsert({
+          id: 'kit_delivery_logs',
+          data: kitDeliveryLogs,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+    } catch (err) {
+      console.warn('Cloud sync of Kit delivery logs failed:', err);
+    }
+  }
+}
+
+async function recordKitDelivery(bib, runner, isDelivered = true) {
+  if (!bib) return;
+  const bibStr = bib.toString();
+  const nowStr = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  if (isDelivered) {
+    kitDeliveryLogs[bibStr] = {
+      bib: bibStr,
+      name: runner.name || 'Runner',
+      delivered: true,
+      deliveredAt: nowStr,
+      category: runner.category || '',
+      tshirt: runner.tshirt || '',
+      kitpoint: runner.kitpoint || runner.kit_pickup || ''
+    };
+    runner.kit_status = 'Delivered';
+    runner.kit_delivered = true;
+    runner.kit_delivered_at = nowStr;
+  } else {
+    delete kitDeliveryLogs[bibStr];
+    runner.kit_status = 'Pending';
+    runner.kit_delivered = false;
+    runner.kit_delivered_at = null;
+  }
+
+  applyKitDeliveryLogsToDatabase();
+  await syncKitDeliveryLogsToCloud();
+  updateKitDistributionBadges();
+}
+
+function updateKitDistributionBadges() {
+  const count = Object.values(kitDeliveryLogs || {}).filter(l => l && l.delivered).length;
+  
+  const badge = document.getElementById('kitCloudSyncBadge');
+  if (badge) {
+    badge.textContent = `☁️ কিট বিতরণ: ${count} জন`;
+  }
+
+  const span = document.getElementById('kitDeliveredCountSpan');
+  if (span) {
+    span.textContent = count;
+  }
+
+  const modalCount = document.getElementById('kitHistoryModalCount');
+  if (modalCount) {
+    modalCount.textContent = `${count} Handed Over`;
+  }
+}
+
+function openKitHistoryModal() {
+  const modal = document.getElementById('kitHistoryModal');
+  if (!modal) return;
+
+  renderKitHistoryTable();
+  modal.style.display = 'flex';
+}
+
+function renderKitHistoryTable(searchQuery = '') {
+  const tbody = document.getElementById('kitHistoryTableBody');
+  if (!tbody) return;
+
+  const entries = Object.values(kitDeliveryLogs || {}).filter(l => l && l.delivered);
+  const q = (searchQuery || '').toLowerCase().trim();
+
+  const filtered = entries.filter(e => {
+    if (!q) return true;
+    return (e.bib || '').toString().toLowerCase().includes(q) ||
+           (e.name || '').toLowerCase().includes(q) ||
+           (e.kitpoint || '').toLowerCase().includes(q);
+  });
+
+  if (!filtered.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 25px; color: var(--color-text-muted);">
+          ${q ? 'কোনো কিট ডেলিভারি রেকর্ড পাওয়া যায়নি' : 'এখনও কোনো কিট হ্যান্ডওভার রেকর্ড নেই।'}
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(item => {
+    return `
+      <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+        <td style="padding: 8px 12px; font-weight: 700; color: var(--color-accent);">#${item.bib}</td>
+        <td style="padding: 8px 12px; font-weight: 600;">${item.name || 'Runner'}</td>
+        <td style="padding: 8px 12px; font-size: 0.78rem; color: #a0aec0;">${item.category || ''} (${item.tshirt || 'M'})</td>
+        <td style="padding: 8px 12px; font-size: 0.78rem; color: #00e5ff;">${item.kitpoint || 'JU'}</td>
+        <td style="padding: 8px 12px; font-family: monospace; font-size: 0.8rem; color: #00ff88;">✓ ${item.deliveredAt || 'Earlier'}</td>
+        <td style="padding: 8px 12px; text-align: right;">
+          <button type="button" class="btn-unmark-kit-item btn btn-outline btn-sm" data-bib="${item.bib}" style="padding: 2px 8px; font-size: 0.7rem; border-color: rgba(255,100,100,0.4); color: #ff6666; cursor: pointer;">
+            ✕ Unmark
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('.btn-unmark-kit-item').forEach(btn => {
+    btn.onclick = async (e) => {
+      const bib = e.currentTarget.getAttribute('data-bib');
+      const runner = runnerDatabase.find(r => r.bib.toString() === bib.toString());
+      if (confirm(`আপনি কি #${bib} এর কিট বিতরণ বাতিল (Unmark) করতে চান?`)) {
+        await recordKitDelivery(bib, runner || { bib }, false);
+        renderKitHistoryTable(document.getElementById('kitHistorySearch')?.value || '');
+        refreshDashboard();
+      }
+    };
+  });
+}
+
+/* ==========================================
+   ON-SPOT KIT DISTRIBUTION DESK
+   ========================================== */
 function initKitDistributionDesk() {
   const input = document.getElementById('kitScanInput');
   const btn = document.getElementById('kitLookupBtn');
@@ -2303,27 +2550,9 @@ function initKitDistributionDesk() {
     if (markBtn) {
       markBtn.onclick = async () => {
         markBtn.disabled = true;
-        markBtn.textContent = 'Saving...';
+        markBtn.textContent = 'Saving to Cloud...';
 
-        const nowStr = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        runner.kit_status = 'Delivered';
-        runner.kit_delivered = true;
-        runner.kit_delivered_at = nowStr;
-
-        // Save local
-        saveDatabase();
-
-        // Save Supabase
-        if (supabaseClient) {
-          try {
-            await supabaseClient
-              .from('registrations')
-              .update({ kit_status: 'Delivered', kit_delivered: true, kit_delivered_at: nowStr })
-              .eq('bib', runner.bib);
-          } catch (e) {
-            console.warn('Supabase kit delivery update error:', e);
-          }
-        }
+        await recordKitDelivery(runner.bib, runner, true);
 
         renderKitCard(runner);
         refreshDashboard();
@@ -2337,22 +2566,7 @@ function initKitDistributionDesk() {
         unmarkBtn.disabled = true;
         unmarkBtn.textContent = 'Reverting...';
 
-        runner.kit_status = 'Pending';
-        runner.kit_delivered = false;
-        runner.kit_delivered_at = null;
-
-        saveDatabase();
-
-        if (supabaseClient) {
-          try {
-            await supabaseClient
-              .from('registrations')
-              .update({ kit_status: 'Pending', kit_delivered: false, kit_delivered_at: null })
-              .eq('bib', runner.bib);
-          } catch (e) {
-            console.warn('Supabase kit delivery revert error:', e);
-          }
-        }
+        await recordKitDelivery(runner.bib, runner, false);
 
         renderKitCard(runner);
         refreshDashboard();
@@ -2367,6 +2581,110 @@ function initKitDistributionDesk() {
       performLookup();
     }
   };
+
+  // Bind Kit Distribution Cloud & Recovery Buttons
+  const refreshCloudBtn = document.getElementById('refreshKitCloudBtn');
+  if (refreshCloudBtn) {
+    refreshCloudBtn.onclick = async () => {
+      refreshCloudBtn.disabled = true;
+      refreshCloudBtn.textContent = '⏳ সিঙ্ক হচ্ছে...';
+      await loadKitDeliveryLogs();
+      refreshDashboard();
+      refreshCloudBtn.disabled = false;
+      refreshCloudBtn.textContent = '🔄 ক্লাউড সিঙ্ক';
+      if (typeof showBroadcastToast === 'function') {
+        showBroadcastToast('✓ ক্লাউড থেকে সর্বশেষ কিট ডেলিভারি ডাটা সিঙ্ক সম্পন্ন হয়েছে!');
+      }
+    };
+  }
+
+  const recoverBtn = document.getElementById('recoverLocalKitDeliveriesBtn');
+  if (recoverBtn) {
+    recoverBtn.onclick = async () => {
+      recoverBtn.disabled = true;
+      recoverBtn.textContent = '⏳ স্ক্যান হচ্ছে...';
+      const count = recoverFromLocalRegistrations();
+      await syncKitDeliveryLogsToCloud();
+      applyKitDeliveryLogsToDatabase();
+      updateKitDistributionBadges();
+      refreshDashboard();
+      recoverBtn.disabled = false;
+      recoverBtn.textContent = '⚡ ডাটা রিকভার';
+      alert(`🎉 লোকাল ডিভাইস স্ক্যান সম্পন্ন!\n\nমোট ${Object.keys(kitDeliveryLogs).length} টি কিট বিতরণ ক্লাউডে সুরক্ষিত করা হয়েছে। (নতুন রিকভার: ${count} টি)`);
+    };
+  }
+
+  const viewLogsBtn = document.getElementById('viewKitDeliveryLogsBtn');
+  const modal = document.getElementById('kitHistoryModal');
+  const closeLogsBtn = document.getElementById('closeKitHistoryModalBtn');
+  if (viewLogsBtn && modal) {
+    viewLogsBtn.onclick = () => {
+      openKitHistoryModal();
+    };
+  }
+  if (closeLogsBtn && modal) {
+    closeLogsBtn.onclick = () => {
+      modal.style.display = 'none';
+    };
+  }
+  if (modal) {
+    modal.onclick = (e) => {
+      if (e.target === modal) modal.style.display = 'none';
+    };
+  }
+
+  const searchInputKit = document.getElementById('kitHistorySearch');
+  if (searchInputKit) {
+    searchInputKit.oninput = () => {
+      renderKitHistoryTable(searchInputKit.value);
+    };
+  }
+
+  const modalRecoverBtn = document.getElementById('modalRecoverKitBtn');
+  if (modalRecoverBtn) {
+    modalRecoverBtn.onclick = async () => {
+      const count = recoverFromLocalRegistrations();
+      await syncKitDeliveryLogsToCloud();
+      applyKitDeliveryLogsToDatabase();
+      updateKitDistributionBadges();
+      renderKitHistoryTable(document.getElementById('kitHistorySearch')?.value || '');
+      refreshDashboard();
+      alert(`✓ এই ডিভাইসের ব্রাউজার হিস্টোরি থেকে রিকভার ও ক্লাউডে সিঙ্ক সম্পন্ন হয়েছে!`);
+    };
+  }
+
+  const modalForceSyncBtn = document.getElementById('modalForceCloudSyncBtn');
+  if (modalForceSyncBtn) {
+    modalForceSyncBtn.onclick = async () => {
+      await loadKitDeliveryLogs();
+      renderKitHistoryTable(document.getElementById('kitHistorySearch')?.value || '');
+      refreshDashboard();
+      alert('✓ ক্লাউড থেকে সর্বশেষ ডেলিভারি ডাটা রিলোড হয়েছে!');
+    };
+  }
+
+  const exportKitCsvBtn = document.getElementById('exportKitHistoryCsvBtn');
+  if (exportKitCsvBtn) {
+    exportKitCsvBtn.onclick = () => {
+      const entries = Object.values(kitDeliveryLogs || {}).filter(l => l && l.delivered);
+      if (!entries.length) {
+        alert('এক্সপোর্ট করার মতো কোনো ডাটা নেই।');
+        return;
+      }
+      let csv = 'Bib,Name,Category,TShirt,KitPoint,DeliveredAt\n';
+      entries.forEach(e => {
+        csv += `"${e.bib}","${e.name || ''}","${e.category || ''}","${e.tshirt || ''}","${e.kitpoint || ''}","${e.deliveredAt || ''}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `jucsu_kit_delivery_log_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+  }
 
   // Bind 1-Click Kit Collection PDF Download Buttons
   const dlDhakaBtn = document.getElementById('downloadDhakaKitPdfBtn');
@@ -2388,6 +2706,8 @@ function initKitDistributionDesk() {
   if (cardJuBtn) {
     cardJuBtn.onclick = () => exportKitCollectionPdf('ju');
   }
+
+  updateKitDistributionBadges();
 }
 
 /* ==========================================

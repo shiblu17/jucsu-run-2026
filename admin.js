@@ -2242,27 +2242,46 @@ async function loadKitDeliveryLogs() {
 function recoverFromLocalRegistrations() {
   let recoveredCount = 0;
   try {
+    const processArray = (arr) => {
+      if (!Array.isArray(arr)) return;
+      arr.forEach(r => {
+        if (!r) return;
+        const ks = (r.kit_status || '').toString().toLowerCase();
+        const kd = r.kit_delivered === true || r.kit_delivered === 'true' || r.kit_delivered === 1;
+        if (ks === 'delivered' || ks === 'handed' || ks === 'received' || kd) {
+          const b = (r.bib || '').toString().trim();
+          if (b) {
+            if (!kitDeliveryLogs[b] || !kitDeliveryLogs[b].delivered) recoveredCount++;
+            kitDeliveryLogs[b] = {
+              bib: b,
+              name: r.name || 'Runner',
+              delivered: true,
+              deliveredAt: r.kit_delivered_at || 'Earlier',
+              category: r.category || '',
+              tshirt: r.tshirt || '',
+              kitpoint: r.kitpoint || r.pickup || ''
+            };
+          }
+        }
+      });
+    };
+
+    // 1. Check primary registrations key
     const localRegs = localStorage.getItem('jucsu_registrations');
     if (localRegs) {
-      const parsed = JSON.parse(localRegs);
-      if (Array.isArray(parsed)) {
-        parsed.forEach(r => {
-          if (r && (r.kit_status === 'Delivered' || r.kit_delivered === true)) {
-            const b = (r.bib || '').toString();
-            if (b) {
-              if (!kitDeliveryLogs[b]) recoveredCount++;
-              kitDeliveryLogs[b] = {
-                bib: b,
-                name: r.name || 'Runner',
-                delivered: true,
-                deliveredAt: r.kit_delivered_at || 'Earlier',
-                category: r.category || '',
-                tshirt: r.tshirt || '',
-                kitpoint: r.kitpoint || ''
-              };
-            }
+      try { processArray(JSON.parse(localRegs)); } catch (e) {}
+    }
+
+    // 2. Check any other backup or cache keys in localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key !== 'jucsu_registrations' && (key.includes('reg') || key.includes('kit') || key.includes('runner'))) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw && (raw.includes('Delivered') || raw.includes('delivered'))) {
+            processArray(JSON.parse(raw));
           }
-        });
+        } catch (e) {}
       }
     }
   } catch (e) {
@@ -2686,25 +2705,70 @@ function initKitDistributionDesk() {
     };
   }
 
-  // Bind 1-Click Kit Collection PDF Download Buttons
+  // Bind 1-Click Kit Collection PDF Download Buttons with Modal Choices
   const dlDhakaBtn = document.getElementById('downloadDhakaKitPdfBtn');
   if (dlDhakaBtn) {
-    dlDhakaBtn.onclick = () => exportKitCollectionPdf('du');
+    dlDhakaBtn.onclick = () => openKitPdfChoiceModal('du');
   }
 
   const dlJuBtn = document.getElementById('downloadJuKitPdfBtn');
   if (dlJuBtn) {
-    dlJuBtn.onclick = () => exportKitCollectionPdf('ju');
+    dlJuBtn.onclick = () => openKitPdfChoiceModal('ju');
   }
 
   const cardDuBtn = document.getElementById('duDeskCardPdfBtn');
   if (cardDuBtn) {
-    cardDuBtn.onclick = () => exportKitCollectionPdf('du');
+    cardDuBtn.onclick = () => openKitPdfChoiceModal('du');
   }
 
   const cardJuBtn = document.getElementById('juDeskCardPdfBtn');
   if (cardJuBtn) {
-    cardJuBtn.onclick = () => exportKitCollectionPdf('ju');
+    cardJuBtn.onclick = () => openKitPdfChoiceModal('ju');
+  }
+
+  // Bind Export Delivered Kits PDF in Kit Handover History Modal
+  const exportKitPdfBtn = document.getElementById('exportKitHistoryPdfBtn');
+  if (exportKitPdfBtn) {
+    exportKitPdfBtn.onclick = () => exportAllDeliveredKitsPdf();
+  }
+
+  // Bind Kit PDF Choice Modal Buttons
+  const choiceModal = document.getElementById('kitPdfChoiceModal');
+  const closeChoiceBtn = document.getElementById('closeKitPdfChoiceModalBtn');
+  const cancelChoiceBtn = document.getElementById('cancelKitPdfChoiceBtn');
+  const btnDeliveredOnly = document.getElementById('kitPdfDownloadDeliveredOnlyBtn');
+  const btnAllRunners = document.getElementById('kitPdfDownloadAllBtn');
+  const btnPendingOnly = document.getElementById('kitPdfDownloadPendingOnlyBtn');
+
+  function closePdfChoiceModal() {
+    if (choiceModal) choiceModal.style.display = 'none';
+  }
+
+  if (closeChoiceBtn) closeChoiceBtn.onclick = closePdfChoiceModal;
+  if (cancelChoiceBtn) cancelChoiceBtn.onclick = closePdfChoiceModal;
+  if (choiceModal) {
+    choiceModal.onclick = (e) => {
+      if (e.target === choiceModal) closePdfChoiceModal();
+    };
+  }
+
+  if (btnDeliveredOnly) {
+    btnDeliveredOnly.onclick = () => {
+      closePdfChoiceModal();
+      exportKitCollectionPdf(currentKitPdfDesk, 'delivered');
+    };
+  }
+  if (btnAllRunners) {
+    btnAllRunners.onclick = () => {
+      closePdfChoiceModal();
+      exportKitCollectionPdf(currentKitPdfDesk, 'all');
+    };
+  }
+  if (btnPendingOnly) {
+    btnPendingOnly.onclick = () => {
+      closePdfChoiceModal();
+      exportKitCollectionPdf(currentKitPdfDesk, 'pending');
+    };
   }
 
   updateKitDistributionBadges();
@@ -2713,7 +2777,59 @@ function initKitDistributionDesk() {
 /* ==========================================
    OFFICIAL KIT COLLECTION MANIFEST PDF GENERATOR
    ========================================== */
-function exportKitCollectionPdf(deskType, forcePrintWindow = false) {
+let currentKitPdfDesk = 'du';
+
+function openKitPdfChoiceModal(deskType) {
+  currentKitPdfDesk = deskType;
+  const isDU = (deskType === 'du');
+  const modal = document.getElementById('kitPdfChoiceModal');
+
+  applyKitDeliveryLogsToDatabase();
+
+  const deskRunners = (runnerDatabase || []).filter(r => {
+    const kp = (r.kitpoint || r.kit_pickup || r.kitPickup || '').toLowerCase();
+    const matchesDU = kp.includes('dhaka') || kp.includes('du');
+    return isDU ? matchesDU : !matchesDU;
+  });
+
+  let deliveredCount = 0;
+  deskRunners.forEach(r => {
+    const b = (r.bib || '').toString().trim();
+    const log = kitDeliveryLogs[b];
+    if ((log && log.delivered === true) || r.kit_status === 'Delivered' || r.kit_delivered === true) {
+      deliveredCount++;
+    }
+  });
+
+  const total = deskRunners.length;
+  const pending = total - deliveredCount;
+
+  const titleEl = document.getElementById('kitPdfModalTitle');
+  const venueEl = document.getElementById('kitPdfModalVenue');
+  const totalEl = document.getElementById('kitPdfModalTotal');
+  const delEl = document.getElementById('kitPdfModalDelivered');
+  const penEl = document.getElementById('kitPdfModalPending');
+
+  if (titleEl) titleEl.textContent = `কিট কালেকশন PDF (${isDU ? 'ঢাকা বিশ্ববিদ্যালয় পয়েন্ট' : 'জাহাঙ্গীরনগর বিশ্ববিদ্যালয় পয়েন্ট'})`;
+  if (venueEl) venueEl.textContent = isDU ? '🏛️ ঢাকা বিশ্ববিদ্যালয় কিট পয়েন্ট (TSC / শারীরিক শিক্ষা কেন্দ্র)' : '🌳 জাহাঙ্গীরনগর বিশ্ববিদ্যালয় কিট পয়েন্ট (কেন্দ্রীয় জিমনেসিয়াম, সাভার)';
+  if (totalEl) totalEl.textContent = `${total} জন`;
+  if (delEl) delEl.textContent = `${deliveredCount} জন`;
+  if (penEl) penEl.textContent = `${pending} জন`;
+
+  if (modal) {
+    modal.style.display = 'flex';
+  } else {
+    exportKitCollectionPdf(deskType, 'all');
+  }
+}
+
+async function exportKitCollectionPdf(deskType, filterMode = 'all', forcePrintWindow = false) {
+  // Ensure freshest cloud logs & in-memory merge
+  if (typeof loadKitDeliveryLogs === 'function') {
+    await loadKitDeliveryLogs();
+  }
+  applyKitDeliveryLogsToDatabase();
+
   if (!runnerDatabase || !runnerDatabase.length) {
     alert('কোনো রানার ডেটা পাওয়া যায়নি। অনুগ্রহ করে অপেক্ষা করুন ডেটা লোড হওয়া পর্যন্ত।');
     return;
@@ -2723,7 +2839,6 @@ function exportKitCollectionPdf(deskType, forcePrintWindow = false) {
   const deskTitle = isDU ? 'Dhaka University (DU) Desk' : 'Jahangirnagar University (JU) Desk';
   const venueBangla = isDU ? 'ঢাকা বিশ্ববিদ্যালয় কিট পয়েন্ট (TSC / শারীরিক শিক্ষা কেন্দ্র)' : 'জাহাঙ্গীরনগর বিশ্ববিদ্যালয় কিট পয়েন্ট (কেন্দ্রীয় জিমনেসিয়াম, সাভার)';
   const venueLocation = isDU ? 'TSC Physical Education Centre, DU Campus, Dhaka' : 'Central Gymnasium, Jahangirnagar University Campus, Savar';
-  const fileName = isDU ? 'JUCSU_RUN_2026_Dhaka_Kit_Collection.pdf' : 'JUCSU_RUN_2026_Jahangirnagar_Kit_Collection.pdf';
 
   // Filter runners for this specific kit desk
   const deskRunners = runnerDatabase.filter(r => {
@@ -2737,6 +2852,20 @@ function exportKitCollectionPdf(deskType, forcePrintWindow = false) {
     return;
   }
 
+  const isRunnerDelivered = (r) => {
+    const bibStr = (r.bib || '').toString().trim();
+    const log = kitDeliveryLogs[bibStr];
+    if (log && log.delivered === true) return true;
+    return r.kit_status === 'Delivered' || r.kit_delivered === true;
+  };
+
+  const getRunnerDeliveredAt = (r) => {
+    const bibStr = (r.bib || '').toString().trim();
+    const log = kitDeliveryLogs[bibStr];
+    if (log && log.deliveredAt) return log.deliveredAt;
+    return r.kit_delivered_at || 'Earlier';
+  };
+
   // Sort by Bib number ascending (clean integer sort)
   deskRunners.sort((a, b) => {
     const bibA = parseInt((a.bib || '0').toString().replace(/\D/g, ''), 10) || 0;
@@ -2744,7 +2873,7 @@ function exportKitCollectionPdf(deskType, forcePrintWindow = false) {
     return bibA - bibB;
   });
 
-  // Calculate detailed statistics
+  // Calculate detailed desk statistics across ALL desk runners
   const sizes10k = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
   const sizes5k  = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
   const sizesTotal = { S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL': 0 };
@@ -2758,7 +2887,7 @@ function exportKitCollectionPdf(deskType, forcePrintWindow = false) {
     if (!['S', 'M', 'L', 'XL', 'XXL', '3XL'].includes(sz)) sz = 'M';
 
     const is10 = (r.category || '').includes('10K');
-    const isDelivered = r.kit_status === 'Delivered' || r.kit_delivered === true;
+    const isDelivered = isRunnerDelivered(r);
     const isVer = r.status === 'Verified';
 
     if (isVer) totalVerified++;
@@ -2779,7 +2908,33 @@ function exportKitCollectionPdf(deskType, forcePrintWindow = false) {
 
   const totalDelivered = delivered10k + delivered5k;
   const totalRemaining = deskRunners.length - totalDelivered;
-  const nowStr = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+  const now = new Date();
+  const nowStr = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+
+  // Apply display filter
+  let displayRunners = [...deskRunners];
+  let filterTitleTag = 'ALL ALLOCATED RUNNERS';
+  if (filterMode === 'delivered') {
+    displayRunners = deskRunners.filter(r => isRunnerDelivered(r));
+    filterTitleTag = 'DELIVERED RUNNERS ONLY';
+    if (!displayRunners.length) {
+      alert(`এই কিট পয়েন্টে (${deskTitle}) এখনো কাউকে কিট বিতরণ করা হয়নি।`);
+      return;
+    }
+  } else if (filterMode === 'pending') {
+    displayRunners = deskRunners.filter(r => !isRunnerDelivered(r));
+    filterTitleTag = 'PENDING RUNNERS ONLY';
+    if (!displayRunners.length) {
+      alert(`এই কিট পয়েন্টে (${deskTitle}) কোনো পেন্ডিং রানার নেই। সবার কিট দেওয়া সম্পন্ন হয়েছে!`);
+      return;
+    }
+  }
+
+  // Create unique timestamped filename
+  const dateTag = now.toISOString().slice(0, 10);
+  const timeTag = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).replace(/[\s:]/g, '-');
+  const modeFileTag = filterMode === 'delivered' ? 'Delivered_Only' : (filterMode === 'pending' ? 'Pending_Only' : 'All_Runners');
+  const fileName = `JUCSU_RUN_2026_${isDU ? 'Dhaka' : 'Jahangirnagar'}_${modeFileTag}_${dateTag}_${timeTag}.pdf`;
 
   // Direct jsPDF Download (if available and not forced to print window)
   if (!forcePrintWindow && window.jspdf && window.jspdf.jsPDF) {
@@ -2796,18 +2951,18 @@ function exportKitCollectionPdf(deskType, forcePrintWindow = false) {
       doc.rect(0, 0, doc.internal.pageSize.width, 55, 'F');
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(15);
+      doc.setFontSize(13.5);
       doc.setTextColor(255, 255, 255);
-      doc.text('JUCSU RUN 2026 — OFFICIAL KIT DISTRIBUTION MANIFEST', 36, 26);
+      doc.text(`JUCSU RUN 2026 — KIT MANIFEST (${filterTitleTag})`, 36, 25);
 
-      doc.setFontSize(10);
+      doc.setFontSize(9.5);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(193, 216, 47); // Lime
-      doc.text(`VENUE: ${venueLocation.toUpperCase()} (${deskTitle.toUpperCase()})`, 36, 43);
+      doc.text(`VENUE: ${venueLocation.toUpperCase()} (${deskTitle.toUpperCase()})`, 36, 42);
 
       doc.setTextColor(200, 200, 200);
-      doc.setFontSize(8.5);
-      doc.text(`Generated: ${nowStr} | Total Desk Allocation: ${deskRunners.length} Runners`, doc.internal.pageSize.width - 36, 36, { align: 'right' });
+      doc.setFontSize(8);
+      doc.text(`Generated: ${nowStr} | Showing: ${displayRunners.length} / ${deskRunners.length} Runners | Handed Over: ${totalDelivered}`, doc.internal.pageSize.width - 36, 36, { align: 'right' });
 
       // Inventory Summary Table
       const summaryHead = [['Category (Jersey Color)', 'S', 'M', 'L', 'XL', '2XL', '3XL', 'Total Required', 'Handed Over', 'Remaining']];
@@ -2834,7 +2989,7 @@ function exportKitCollectionPdf(deskType, forcePrintWindow = false) {
       });
 
       // Runners List Table
-      const tableData = deskRunners.map((r, idx) => {
+      const tableData = displayRunners.map((r, idx) => {
         const bib = '#' + (r.bib || 'TBD');
         const name = (r.name || 'Runner').substring(0, 26);
         const cat = (r.category || '5K').includes('10K') ? '10K' : '5K';
@@ -2842,8 +2997,8 @@ function exportKitCollectionPdf(deskType, forcePrintWindow = false) {
         if (sz === 'XXXL') sz = '3XL';
         const phone = r.phone || 'N/A';
         const payStatus = r.status || 'Verified';
-        const isDelivered = r.kit_status === 'Delivered' || r.kit_delivered === true;
-        const kitStatus = isDelivered ? `✓ Handed (${r.kit_delivered_at || 'Earlier'})` : '⚪ Pending';
+        const isDelivered = isRunnerDelivered(r);
+        const kitStatus = isDelivered ? `✓ Handed (${getRunnerDeliveredAt(r)})` : '⚪ Pending';
         const signBox = isDelivered ? '[✓ Handed Over]' : '[                  ]';
 
         return [idx + 1, bib, name, cat, sz, phone, payStatus, kitStatus, signBox];
@@ -2872,7 +3027,7 @@ function exportKitCollectionPdf(deskType, forcePrintWindow = false) {
           doc.setFontSize(8);
           doc.setTextColor(120, 120, 120);
           doc.text(
-            `Page ${doc.internal.getNumberOfPages()} — JUCSU RUN 2026 Official Kit Manifest (${deskTitle})`,
+            `Page ${doc.internal.getNumberOfPages()} — JUCSU RUN 2026 Official Kit Manifest (${deskTitle} - ${filterTitleTag})`,
             doc.internal.pageSize.width / 2,
             doc.internal.pageSize.height - 15,
             { align: 'center' }
@@ -2882,7 +3037,7 @@ function exportKitCollectionPdf(deskType, forcePrintWindow = false) {
 
       doc.save(fileName);
       if (typeof showBroadcastToast === 'function') {
-        showBroadcastToast(`📥 ${isDU ? 'ঢাকা' : 'জাহাঙ্গীরনগর'} কিট পয়েন্ট PDF ডাউনলোড সম্পন্ন হয়েছে!`);
+        showBroadcastToast(`📥 ${isDU ? 'ঢাকা' : 'জাহাঙ্গীরনগর'} কিট পয়েন্ট PDF (${modeFileTag}) ডাউনলোড সম্পন্ন হয়েছে!`);
       }
       return;
     } catch (err) {
@@ -2891,7 +3046,7 @@ function exportKitCollectionPdf(deskType, forcePrintWindow = false) {
   }
 
   // Fallback to high-res printable document window
-  openPrintableKitManifestWindow(deskType, deskRunners, {
+  openPrintableKitManifestWindow(deskType, displayRunners, {
     deskTitle,
     venueBangla,
     venueLocation,
@@ -2906,8 +3061,116 @@ function exportKitCollectionPdf(deskType, forcePrintWindow = false) {
     totalRemaining,
     totalVerified,
     totalPending,
-    nowStr
+    nowStr,
+    filterTitleTag
   });
+}
+
+/* ==========================================
+   OFFICIAL ALL-DELIVERED KITS PDF AUDIT REPORT
+   ========================================== */
+async function exportAllDeliveredKitsPdf() {
+  if (typeof loadKitDeliveryLogs === 'function') {
+    await loadKitDeliveryLogs();
+  }
+  applyKitDeliveryLogsToDatabase();
+
+  const deliveredList = [];
+  const logs = kitDeliveryLogs || {};
+  Object.keys(logs).forEach(bib => {
+    const log = logs[bib];
+    if (log && log.delivered) {
+      const runner = (runnerDatabase || []).find(r => (r.bib || '').toString().trim() === bib.toString().trim());
+      deliveredList.push({
+        bib: '#' + bib,
+        name: log.name || runner?.name || 'Runner',
+        category: (log.category || runner?.category || '5K Run').includes('10K') ? '10K' : '5K',
+        tshirt: (log.tshirt || runner?.tshirt || 'M').toUpperCase(),
+        kitpoint: log.kitpoint || runner?.kitpoint || 'Kit Point',
+        phone: runner?.phone || 'N/A',
+        deliveredAt: log.deliveredAt || 'Earlier'
+      });
+    }
+  });
+
+  if (!deliveredList.length) {
+    alert('কোনো কিট বিতরণের ডাটা পাওয়া যায়নি।');
+    return;
+  }
+
+  deliveredList.sort((a, b) => {
+    const bibA = parseInt(a.bib.replace(/\D/g, ''), 10) || 0;
+    const bibB = parseInt(b.bib.replace(/\D/g, ''), 10) || 0;
+    return bibA - bibB;
+  });
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+
+  doc.setFillColor(3, 43, 26);
+  doc.rect(0, 0, doc.internal.pageSize.width, 50, 'F');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(0, 255, 136);
+  doc.text('JUCSU RUN 2026 — OFFICIAL KIT HANDOVER AUDIT REPORT', 36, 24);
+
+  const now = new Date();
+  const nowStr = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(255, 255, 255);
+  doc.text(`Total Delivered: ${deliveredList.length} Runners | Generated: ${nowStr} | Cloud Synced`, 36, 40);
+
+  const tableData = deliveredList.map((r, idx) => [
+    idx + 1,
+    r.bib,
+    r.name.substring(0, 28),
+    r.category,
+    r.tshirt,
+    r.kitpoint,
+    r.phone,
+    r.deliveredAt,
+    '[✓ Verified & Received]'
+  ]);
+
+  doc.autoTable({
+    startY: 60,
+    head: [['#', 'Bib', 'Runner Name', 'Cat', 'Size', 'Kit Point', 'Phone', 'Handover Time', 'Audit Status']],
+    body: tableData,
+    theme: 'striped',
+    headStyles: { fillColor: [3, 43, 26], textColor: [0, 255, 136], fontSize: 8, fontStyle: 'bold' },
+    bodyStyles: { fontSize: 8, cellPadding: 3 },
+    columnStyles: {
+      0: { cellWidth: 26, halign: 'center' },
+      1: { cellWidth: 50, fontStyle: 'bold', textColor: [0, 100, 50] },
+      2: { cellWidth: 150, fontStyle: 'bold' },
+      3: { cellWidth: 45, halign: 'center' },
+      4: { cellWidth: 45, halign: 'center', fontStyle: 'bold', textColor: [180, 50, 0] },
+      5: { cellWidth: 120 },
+      6: { cellWidth: 90 },
+      7: { cellWidth: 110 },
+      8: { cellWidth: 110, halign: 'center', textColor: [0, 140, 60], fontStyle: 'bold' }
+    },
+    margin: { left: 36, right: 36 },
+    didDrawPage: function () {
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text(
+        `Page ${doc.internal.getNumberOfPages()} — JUCSU RUN 2026 Kit Handover Audit Report`,
+        doc.internal.pageSize.width / 2,
+        doc.internal.pageSize.height - 15,
+        { align: 'center' }
+      );
+    }
+  });
+
+  const dateTag = now.toISOString().slice(0, 10);
+  const timeTag = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).replace(/[\s:]/g, '-');
+  doc.save(`JUCSU_RUN_2026_All_Delivered_Kits_${dateTag}_${timeTag}.pdf`);
+  if (typeof showBroadcastToast === 'function') {
+    showBroadcastToast('📥 বিতরণকৃতদের পূর্ণাঙ্গ PDF রিপোর্ট ডাউনলোড হয়েছে!');
+  }
 }
 
 function openPrintableKitManifestWindow(deskType, runners, stats) {
@@ -4001,6 +4264,22 @@ function setupEditRunnerHandler() {
       delete smsDeliveryLogs[originalBib];
       if (typeof syncSmsDeliveryLogsToCloud === 'function') {
         syncSmsDeliveryLogsToCloud();
+      }
+    }
+
+    // Migrate Kit delivery log if bib changed
+    if (newBib !== originalBib && typeof kitDeliveryLogs !== 'undefined' && kitDeliveryLogs[originalBib]) {
+      kitDeliveryLogs[newBib] = {
+        ...kitDeliveryLogs[originalBib],
+        bib: newBib,
+        name: updatedData.name,
+        category: updatedData.category,
+        tshirt: updatedData.tshirt,
+        kitpoint: updatedData.kitpoint
+      };
+      delete kitDeliveryLogs[originalBib];
+      if (typeof syncKitDeliveryLogsToCloud === 'function') {
+        syncKitDeliveryLogsToCloud().catch(() => {});
       }
     }
 
